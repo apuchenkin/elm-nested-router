@@ -1,4 +1,4 @@
-module Router.Types (..) where
+module Router.Types where
 
 import Dict           exposing (Dict)
 import Html           exposing (Html)
@@ -59,9 +59,9 @@ type alias Handler state = {
 
 {-| Route configuration -}
 type alias RouteConfig route state = {
-      segment:      RawSegment
-    , constraints:  Dict Param Constraint
-    , handler:      Router route state -> Handler state
+    segment:      RawSegment
+  , constraints:  Dict Param Constraint
+  , handler:      Router route state -> Handler state
   }
 
 -----------------------------------------
@@ -74,37 +74,38 @@ type alias WithRouter route state = { state | router : RouterState route}
 type alias Transition route state = Maybe (Route route) -> Route route -> Action state
 
 type alias RouterResult state =
-    { html  : Signal Html
-    , state : Signal state
-    , tasks : Signal (Task Never ())
-    }
+  { html  : Signal Html
+  , state : Signal state
+  , tasks : Signal (Task Never ())
+  }
 
 type alias RouterCache route = {
-  rawUrl:     Dict String RawURL,
-  unwrap:     Dict String (List String),
-  traverse:   Dict String (List route)
-}
+    rawUrl:     Dict String RawURL
+  , unwrap:     Dict String (List String)
+  , traverse:   Dict String (List route)
+  }
 
 type alias RouterState route = {
-    route:  Maybe route,
-    params: RouteParams,
-    cache:  RouterCache route
+    route:  Maybe route
+  , params: RouteParams
+  , cache:  RouterCache route
   }
 
 type alias RouterConfig route state = {
-  init:         state,
-  useCache:     Bool,
-  fallback:     Route route,
-  fallbackHtml: Html,
-  config:       route -> RouteConfig route state,
-  routes:       Forest route,
-  inits:        List (Signal.Signal (Action state)),
-  inputs:       List (Signal.Signal (Action state))
-}
+    init:         state
+  , useCache:     Bool
+  , fallback:     Route route
+  , fallbackHtml: Html
+  , config:       route -> RouteConfig route state
+  , routes:       Forest route
+  , inits:        List (Signal.Signal (Action state))
+  , inputs:       List (Signal.Signal (Action state))
+  }
 
 type Router route state = Router {
-  config        : RouterConfig route state,
-  bindForward   : Route route -> List Html.Attribute -> List Html.Attribute,
-  buildUrl      : Route route -> URL,
-  forward       : Route route -> Action state
-}
+    config        : RouterConfig route state
+  , bindForward   : Route route -> List Html.Attribute -> List Html.Attribute
+  , buildUrl      : Route route -> URL
+  , forward       : Route route -> Action state
+  , redirect      : Route route -> Action state
+  }

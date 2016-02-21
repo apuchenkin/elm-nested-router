@@ -53,9 +53,15 @@ buildUrl config cache (route, params) =
 forward : RouterConfig route (WithRouter route state) -> Route route -> Action (WithRouter route state)
 forward config route state =
   let
-    _ = Debug.log "forward" route
     url   = buildUrl config state.router.cache route
     task  = History.setPath url |> Task.map (always (\s -> Response <| noFx s))
+  in Response (state, Effects.task task)
+
+redirect : RouterConfig route (WithRouter route state) -> Route route -> Action (WithRouter route state)
+redirect config route state =
+  let
+    url   = buildUrl config state.router.cache route
+    task  = History.replacePath url |> Task.map (always (\s -> Response <| noFx s))
   in Response (state, Effects.task task)
 
 {-| Router constructor -}
@@ -73,12 +79,12 @@ router config =
   , bindForward   = bindForward   config state'.router.cache
   , buildUrl      = buildUrl      config state'.router.cache
   , forward       = forward       config
+  , redirect      = redirect      config
   }
 
 runRouter : Router route (WithRouter route state) -> RouterResult (WithRouter route state)
 runRouter router =
   let
-    -- _ = Debug.log "initialState" initialState
     (Router r) = router
     initialState = r.config.init
     init = (Signal.map (singleton << (,) True << setUrl router initialState.router.cache) History.path)

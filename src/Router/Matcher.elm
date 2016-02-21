@@ -114,6 +114,7 @@ buildRawUrl raws (route, params) =
             string
           ) raw params
       ) raws
+    _ = Debug.log "urls" urls
     urls' = List.filter (not << String.contains (String.fromChar paramChar)) urls
 
   in case List.head urls' of

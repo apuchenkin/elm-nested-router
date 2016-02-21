@@ -65,7 +65,7 @@ setUrl : Router route (WithRouter route state) -> RouterCache route -> String ->
 setUrl router cache url =
   let (Router r) = router
   in case (matchRoute r.config cache url) of
-    Nothing               -> setRoute router r.config.fallback
+    Nothing               -> r.redirect r.config.fallback -- let _ = Debug.log "sd" "asd" in setRoute router
     Just route            -> setRoute router route
 
 {-| @Private
@@ -88,10 +88,9 @@ setRoute router route state =
 transition : Router route (WithRouter route state) -> Transition route (WithRouter route state)
 transition router from to state =
   let
-    -- _ = Debug.log "transition: from" (from, to)
     handlers = getHandlers router state.router.cache from to
     actions  = List.map (combineActions << .actions) handlers
-  in  Response <| List.foldl runAction (noFx state) actions
+  in Response <| List.foldl runAction (noFx state) actions
 
 {-| @Private
   Returns a set of handlers applicable to transtition between "from" and "to" routes.
