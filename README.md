@@ -2,11 +2,6 @@
 
 A simple router for single page applications, written in Elm
 
-before release
-- update documentation
-- complete/fix tests
-- private / public contexts types
-
 ### Currently supports
 - [x] HTML5 push state
 - [x] Route params
@@ -14,8 +9,10 @@ before release
 - [x] Optional params
 
 ### Todos
+- [ ] Named views (Maybe Html -> Dict Html)
 - [ ] Add example
+- [ ] Complete documentation
+- [ ] Complete tests
 - [ ] Improve perfomance
-- [ ] greedy matcher config (matches first found route or latest one)
 - [ ] Better handling for trailing slashes
-- [ ] Support for named views (Maybe Html -> Dict Html)
+- [ ] greedy matcher config (matches first found route or latest one / bypass route config)

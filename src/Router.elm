@@ -1,5 +1,10 @@
 module Router (router, runRouter, initialState) where
 
+{-| A simple nested router for single page applications
+
+@docs router, runRouter, initialState
+
+-}
 import Dict
 import History
 import Html             exposing (Html)
@@ -16,7 +21,7 @@ import Router.Types        exposing (..)
 import Router.Functions    exposing (..)
 import Router.Mailbox      exposing (..)
 
--- import Response as R
+{-| Initial state for router. Fed this intou your application state -}
 initialState : RouterState route
 initialState = {
     route = Nothing
@@ -24,8 +29,7 @@ initialState = {
   , cache = {unwrap = Dict.empty, rawUrl = Dict.empty, traverse = Dict.empty}
   }
 
--- @public
--- binds forward action to existing HTML attributes
+{-| binds forward action to existing HTML attributes. Exposed by `Router` -}
 bindForward : RouterConfig route (WithRouter route state) -> RouterCache route -> Route route -> List Html.Attribute -> List Html.Attribute
 bindForward config cache route attrs =
   let
@@ -36,7 +40,7 @@ bindForward config cache route attrs =
     :: onWithOptions "click" options Json.value action
     :: attrs
 
--- decompose Route to string
+{-| Decomposes Route to string. Exposed by `Router` -}
 buildUrl : RouterConfig route (WithRouter route state) -> RouterCache route -> Route route -> String
 buildUrl config cache (route, params) =
   let
@@ -48,8 +52,9 @@ buildUrl config cache (route, params) =
     Just value -> value
     Nothing -> Matcher.unwrap raw
 
-  in Matcher.buildRawUrl raws (route, params) -- Lib.Matcher.combineParams state.params
+  in Matcher.buildRawUrl raws (route, params)
 
+{-| Preforms a transition to provided `Route`. Exposed by `Router` -}
 forward : RouterConfig route (WithRouter route state) -> Route route -> Action (WithRouter route state)
 forward config route state =
   let
@@ -57,6 +62,7 @@ forward config route state =
     task  = History.setPath url |> Task.map (always (\s -> Response <| noFx s))
   in Response (state, Effects.task task)
 
+{-| Redirects to provided `Route`. Exposed by `Router` -}
 redirect : RouterConfig route (WithRouter route state) -> Route route -> Action (WithRouter route state)
 redirect config route state =
   let
@@ -82,6 +88,7 @@ router config =
   , redirect      = redirect      config
   }
 
+{-| Launches the router -}
 runRouter : Router route (WithRouter route state) -> RouterResult (WithRouter route state)
 runRouter router =
   let

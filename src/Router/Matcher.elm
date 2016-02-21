@@ -12,7 +12,7 @@ import Combine.Char   exposing (char, noneOf, anyChar)
 import Combine.Infix  exposing ((<$>), (*>), (<*), (<*>), (<|>))
 import Combine.Num
 
-import Router.Types    exposing (RouteParams, Route, Constraint (..), RawURL, URL, RawSegment)
+import Router.Types    exposing (..)
 import Router.Helpers  exposing (singleton, combineParams)
 
 paramChar : Char
@@ -114,11 +114,10 @@ buildRawUrl raws (route, params) =
             string
           ) raw params
       ) raws
-    _ = Debug.log "urls" urls
     urls' = List.filter (not << String.contains (String.fromChar paramChar)) urls
 
   in case List.head urls' of
-    Nothing -> Debug.crash "not enough params to build URL"
+    Nothing -> Debug.crash <| "not enough params to build URL: " ++ toString route
     Just url -> url
 
 composeRawUrl : (route -> RawSegment) -> Forest route -> route -> RawURL

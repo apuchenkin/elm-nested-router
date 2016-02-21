@@ -25,13 +25,11 @@ buildUrlMock config (route, params) =
     raws = Matcher.unwrap raw
   in Matcher.buildRawUrl raws (route, params)
 
-forwardMock : RouterConfig route (WithRouter route state) -> Route route -> Action (WithRouter route state)
-forwardMock config route state = Response <| noFx state
-
 routerMock : RouterConfig route (WithRouter route state) -> Router route (WithRouter route state)
 routerMock config = Router {
     config        = config
   , bindForward   = bindForwardMock   config
   , buildUrl      = buildUrlMock      config
-  , forward       = forwardMock       config
+  , forward       = (\route state -> Response <| noFx state)
+  , redirect      = (\route state -> Response <| noFx state)
   }

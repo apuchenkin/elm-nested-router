@@ -12,6 +12,8 @@ import Router.Types        exposing (..)
 import Router.Helpers      exposing (..)
 import Router.Mailbox      exposing (address)
 
+type alias Transition route state = Maybe (Route route) -> Route route -> Action state
+
 {-| @Private
   Runs the action for the specified state and initial effects
  -}
@@ -126,7 +128,7 @@ getHandlers router cache from to =
   in List.map ((\h -> h router) << .handler << r.config.config) <| routes
 
 {-| @Private
-  preforms attempt to match provided url to a route by a given routes configuration
+  Preforms attempt to match provided url to a route by a given routes configuration
   -}
 matchRoute : RouterConfig route state -> RouterCache route -> String -> Maybe (Route route)
 matchRoute config cache url =
