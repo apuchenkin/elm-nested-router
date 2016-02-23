@@ -13233,7 +13233,7 @@ Elm.App.Actions.make = function (_elm) {
          var fetch = $Task.toMaybe(A2($Http.get,
          decodePosts,
          A2($Basics._op["++"],
-         "/data/category/",
+         "data/category/",
          A2($Basics._op["++"],c,".json"))));
          return A2($Task.andThen,
          fetch,
@@ -13258,7 +13258,7 @@ Elm.App.Actions.make = function (_elm) {
          var fetch = $Task.toMaybe(A2($Http.get,
          decodePost,
          A2($Basics._op["++"],
-         "/data/post/",
+         "data/post/",
          A2($Basics._op["++"],pid,".json"))));
          return A2($Task.andThen,
          fetch,
@@ -13282,7 +13282,7 @@ Elm.App.Actions.make = function (_elm) {
    var loadCategories = F2(function (router,state) {
       var fetch = $Task.toMaybe(A2($Http.get,
       decodeCategories,
-      "/data/categories.json"));
+      "data/categories.json"));
       var task = A2($Task.andThen,
       fetch,
       function (mcategories) {
