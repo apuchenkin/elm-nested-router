@@ -2,6 +2,10 @@
 
 A simple router for single page applications, written in Elm
 
+
+
+Example: [live demo](http://apuchenkin.github.io/elm-nested-router/example)
+
 ### Currently supports
 - [x] HTML5 push state
 - [x] Route params
