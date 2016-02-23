@@ -13846,7 +13846,8 @@ Elm.App.Handlers.make = function (_elm) {
       _U.list([$Html.text("Home")]));
    };
    var categoryHandler = function (router) {
-      var view = F3(function (address,state,_p7) {
+      var view = F3(function (address,state,parsed) {
+         var body = A3(renderPosts,router,state,state.posts);
          return $Dict.fromList(_U.list([{ctor: "_Tuple2"
                                         ,_0: "header"
                                         ,_1: A2($Html.header,
@@ -13858,13 +13859,17 @@ Elm.App.Handlers.make = function (_elm) {
                                                 $App$Actions.getCategory(state)))]))}
                                        ,{ctor: "_Tuple2"
                                         ,_0: "body"
-                                        ,_1: A3(renderPosts,router,state,state.posts)}]));
+                                        ,_1: A2($Html.div,
+                                        _U.list([$Html$Attributes.$class("content")]),
+                                        A2($List.filterMap,
+                                        $Basics.identity,
+                                        _U.list([$Maybe.Just(body),A2($Dict.get,"post",parsed)])))}]));
       });
       return {view: view
              ,actions: _U.list([$App$Actions.loadPosts(router)])};
    };
    var postHandler = function (router) {
-      var view = F3(function (address,state,_p8) {
+      var view = F3(function (address,state,_p7) {
          var text = A2($Maybe.withDefault,
          "",
          A2($App$Actions._op["&>"],
@@ -13886,7 +13891,7 @@ Elm.App.Handlers.make = function (_elm) {
                                                 "error",
                                                 $App$Actions.getCategory(state)))]))}
                                        ,{ctor: "_Tuple2"
-                                        ,_0: "body"
+                                        ,_0: "post"
                                         ,_1: A2($Html.div,
                                         _U.list([$Html$Attributes.$class("post")]),
                                         _U.list([A2($Html.h1,_U.list([]),_U.list([$Html.text(title)]))
@@ -13894,24 +13899,30 @@ Elm.App.Handlers.make = function (_elm) {
       });
       return {view: view,actions: _U.list([$App$Actions.loadPost])};
    };
-   var notFoundHandler = function () {
+   var notFoundHandler = function (router) {
       var body = $Html.text("404");
-      var view = F3(function (address,state,_p9) {
+      var view = F3(function (address,state,_p8) {
          return $Dict.fromList(_U.list([{ctor: "_Tuple2"
-                                        ,_0: "body"
-                                        ,_1: body}]));
-      });
-      return {view: view,actions: _U.list([])};
-   }();
-   var staticHandler = function (page) {
-      var body = $Html.text(page);
-      var view = F3(function (address,state,parsed) {
-         return $Dict.fromList(_U.list([{ctor: "_Tuple2"
-                                        ,_0: "body"
-                                        ,_1: body}]));
+                                        ,_0: "header"
+                                        ,_1: A2($Html.header,_U.list([]),_U.list([homeLink(router)]))}
+                                       ,{ctor: "_Tuple2",_0: "body",_1: body}]));
       });
       return {view: view,actions: _U.list([])};
    };
+   var staticHandler = F2(function (page,router) {
+      var body = $Html.text(page);
+      var view = F3(function (address,state,parsed) {
+         return $Dict.fromList(_U.list([{ctor: "_Tuple2"
+                                        ,_0: "header"
+                                        ,_1: A2($Html.header,
+                                        _U.list([]),
+                                        _U.list([homeLink(router)
+                                                ,$Html.text(" >> ")
+                                                ,$Html.text(page)]))}
+                                       ,{ctor: "_Tuple2",_0: "body",_1: body}]));
+      });
+      return {view: view,actions: _U.list([])};
+   });
    return _elm.App.Handlers.values = {_op: _op
                                      ,staticHandler: staticHandler
                                      ,notFoundHandler: notFoundHandler
@@ -13931,6 +13942,8 @@ Elm.App.Layout.make = function (_elm) {
    _elm.App.Layout = _elm.App.Layout || {};
    if (_elm.App.Layout.values) return _elm.App.Layout.values;
    var _U = Elm.Native.Utils.make(_elm),
+   $App$Actions = Elm.App.Actions.make(_elm),
+   $App$Routes = Elm.App.Routes.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Dict = Elm.Dict.make(_elm),
@@ -13938,15 +13951,36 @@ Elm.App.Layout.make = function (_elm) {
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
+   $Router$Types = Elm.Router.Types.make(_elm),
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
-   var layout = function (parsed) {
+   var footer = function (router) {
+      var sep = $Html.text(" | ");
+      var _p0 = router;
+      var r = _p0._0;
+      var about = A2($Html.a,
+      A2(r.bindForward,
+      {ctor: "_Tuple2"
+      ,_0: $App$Routes.Static("about")
+      ,_1: $Dict.empty},
+      _U.list([])),
+      _U.list([$Html.text("About")]));
+      var contacts = A2($Html.a,
+      A2(r.bindForward,
+      {ctor: "_Tuple2"
+      ,_0: $App$Routes.Static("contacts")
+      ,_1: $Dict.empty},
+      _U.list([])),
+      _U.list([$Html.text("Contacts")]));
+      return A2($Html.footer,
+      _U.list([]),
+      _U.list([about,sep,contacts]));
+   };
+   var layout = F3(function (router,_p1,parsed) {
       var defaultBody = A2($Html.div,
       _U.list([]),
       _U.list([$Html.text("empty")]));
-      var defaultFooter = A2($Html.footer,
-      _U.list([]),
-      _U.list([$Html.text("Default footer")]));
+      var defaultFooter = footer(router);
       var defaultHeader = A2($Html.header,
       _U.list([]),
       _U.list([$Html.text("Default header")]));
@@ -13959,8 +13993,10 @@ Elm.App.Layout.make = function (_elm) {
               ,A2($Maybe.withDefault,
               defaultFooter,
               A2($Dict.get,"footer",parsed))]));
-   };
-   return _elm.App.Layout.values = {_op: _op,layout: layout};
+   });
+   return _elm.App.Layout.values = {_op: _op
+                                   ,footer: footer
+                                   ,layout: layout};
 };Elm.Native = Elm.Native || {};
 Elm.Native.History = {};
 Elm.Native.History.make = function(localRuntime){
@@ -15490,7 +15526,7 @@ Elm.Router.Functions.make = function (_elm) {
       var _p7 = router;
       var r = _p7._0;
       var layout = r.config.layout;
-      return layout(htmlParts);
+      return A3(layout,router,state,htmlParts);
    });
    var prepareCache = F2(function (getSegment,forest) {
       var routes = $List.concat(A2($List.map,
@@ -15837,11 +15873,11 @@ Elm.Main.make = function (_elm) {
                            ,handler: $App$Handlers.homeHandler};
          case "NotFound": return {segment: "/404"
                                  ,constraints: $Dict.empty
-                                 ,handler: $Basics.always($App$Handlers.notFoundHandler)};
+                                 ,handler: $App$Handlers.notFoundHandler};
          case "Static": var _p1 = _p0._0;
            return {segment: A2($Basics._op["++"],"/",_p1)
                   ,constraints: $Dict.empty
-                  ,handler: $Basics.always($App$Handlers.staticHandler(_p1))};
+                  ,handler: $App$Handlers.staticHandler(_p1)};
          case "Category": return {segment: ":category[/:subcategory]"
                                  ,constraints: $Dict.fromList(_U.list([{ctor: "_Tuple2"
                                                                        ,_0: "category"
