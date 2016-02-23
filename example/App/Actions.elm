@@ -57,7 +57,7 @@ decodePosts = Json.list decodePost
 loadCategories : Router Route State -> Action State
 loadCategories router state =
   let
-    fetch = Task.toMaybe <| Http.get decodeCategories "/data/categories.json"
+    fetch = Task.toMaybe <| Http.get decodeCategories "data/categories.json"
     task = fetch `Task.andThen` \mcategories ->
       let
         categories = Maybe.withDefault [] mcategories
@@ -74,7 +74,7 @@ loadPosts (Router router) state =
   let
     category = getCategory state
     fetch = flip Maybe.map category <| \c ->
-      let fetch = Task.toMaybe <| Http.get decodePosts ("/data/category/" ++ c ++ ".json")
+      let fetch = Task.toMaybe <| Http.get decodePosts ("data/category/" ++ c ++ ".json")
       in fetch `Task.andThen` \posts -> Task.succeed <| updatePosts <| Maybe.withDefault [] posts
 
   in Response (state, Maybe.withDefault Effects.none <| Maybe.map Effects.task fetch)
@@ -84,7 +84,7 @@ loadPost state =
   let
     postId = Dict.get "postId" state.router.params
     task = flip Maybe.map postId <| \pid ->
-      let fetch = Task.toMaybe <| Http.get decodePost ("/data/post/" ++ pid ++ ".json")
+      let fetch = Task.toMaybe <| Http.get decodePost ("data/post/" ++ pid ++ ".json")
       in fetch `Task.andThen` \post -> Task.succeed <| updatePost post
 
   in Response (state, Maybe.withDefault Effects.none <| Maybe.map Effects.task task)
