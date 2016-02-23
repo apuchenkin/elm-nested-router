@@ -8,22 +8,28 @@ import Router.Types exposing (Router (..), Handler)
 import App.Routes as Route exposing (Route)
 import App.Actions exposing (..)
 
-staticHandler : String -> Handler State
-staticHandler page =
+staticHandler : String -> Router Route State -> Handler State
+staticHandler page router =
   let
     body = Html.text page
-    view address state parsed = Dict.fromList [("body", body)]
+    view address state parsed = Dict.fromList [
+      ("header", Html.header [] [homeLink router, Html.text " >> ", Html.text page])
+    , ("body", body)
+    ]
   in
     {
       view = view,
       actions = []
     }
 
-notFoundHandler : Handler State
-notFoundHandler =
+notFoundHandler : Router Route State -> Handler State
+notFoundHandler router =
   let
     body = Html.text "404"
-    view address state _ = Dict.fromList [("body", body)]
+    view address state _ = Dict.fromList [
+      ("header", Html.header [] [homeLink router])
+    , ("body", body)
+    ]
   in
     {
       view = view,
@@ -83,9 +89,11 @@ homeHandler router =
 categoryHandler : Router Route State -> Handler State
 categoryHandler router =
   let
-    view address state _ = Dict.fromList [
+    view address state parsed =
+    let body = renderPosts router state state.posts
+    in Dict.fromList [
       ("header", Html.header [] [homeLink router, Html.text " >> ", Html.text <| Maybe.withDefault "error" <| getCategory state])
-    , ("body", renderPosts router state state.posts)
+    , ("body", Html.div [Attr.class "content"] <| List.filterMap identity [Just body, Dict.get "post" parsed])
     ]
   in
     {
@@ -105,7 +113,7 @@ postHandler router =
         text =  Maybe.withDefault "" <| state.post &> \post -> post.text
       in Dict.fromList [
         ("header", Html.header [] [homeLink router, Html.text " >> ", Html.text <| Maybe.withDefault "error" <| getCategory state])
-      , ("body",  Html.div [Attr.class "post"] [Html.h1 [] [Html.text title], Html.text text])
+      , ("post",  Html.div [Attr.class "post"] [Html.h1 [] [Html.text title], Html.text text])
       ]
   in
     {

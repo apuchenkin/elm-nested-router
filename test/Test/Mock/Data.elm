@@ -60,8 +60,8 @@ init = {
     sum = 0
   }
 
-layout : Dict String Html -> Html
-layout parsed =
+layout : Router Route State -> State -> Dict String Html -> Html
+layout _ _ parsed =
   let fallback = Html.text "error"
   in Maybe.withDefault (Maybe.withDefault (Maybe.withDefault fallback
     <| Dict.get "handlerA" parsed)
@@ -72,6 +72,7 @@ routerConfig : RouterConfig Route State
 routerConfig = {
     init      = init,
     useCache  = True,
+    html5     = True,
     fallback  = (NotFound, Dict.empty),
     layout    = layout,
     routes    = routeTree,

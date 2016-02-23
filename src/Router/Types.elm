@@ -131,7 +131,7 @@ type alias RouterConfig route state = {
   , useCache:     Bool
   , html5:        Bool
   , fallback:     Route route
-  , layout:       Dict String Html -> Html
+  , layout:       Router route state -> state -> Dict String Html -> Html
   , config:       route -> RouteConfig route state
   , routes:       Forest route
   , inits:        List (Signal.Signal (Action state))
@@ -145,7 +145,7 @@ type alias RouterConfig route state = {
   * `forward` &mdash; Preforms a transition to provided `Route`
   * `redirect` &mdash; Redirects to provided `Route`
 
-  `config` record is a router configuration used on router construction
+  `config` is a router configuration used on router construction
 -}
 type Router route state = Router {
     config        : RouterConfig route state

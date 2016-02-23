@@ -21,12 +21,12 @@ config route = case route of
   NotFound -> {
       segment = "/404",
       constraints = Dict.empty,
-      handler = always notFoundHandler
+      handler = notFoundHandler
     }
   Static page -> {
       segment = "/" ++ page,
       constraints = Dict.empty,
-      handler = always (staticHandler page)
+      handler = staticHandler page
     }
   Category -> {
       segment = ":category[/:subcategory]",

@@ -60,7 +60,7 @@ render router state =
 
       views     = List.map .view handlers
       htmlParts = List.foldr (\view parsed -> Dict.union parsed <| view address state parsed) Dict.empty views
-    in layout htmlParts
+    in layout router state htmlParts
 
 {-| @Private
   Performs attempt to match provided url, returns fallback action on fail
