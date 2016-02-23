@@ -118,6 +118,7 @@ type alias WithRouter route state = { state | router : RouterState route}
 
   * `init` &mdash; Initial application state
   * `useCache` &mdash; A boolean flag that turns caching on or off. Using cache might slow down application at start-up but will give a perfomance boost in runtime.
+  * `html5` &mdash; Use html5 pushState
   * `fallback` &mdash; A fallback route is used when url matching fails
   * `fallbackHtml` &mdash; Default Html, udes when handlres has provided empty view
   * `config` &mdash; A mapping between route and route configuration
@@ -128,6 +129,7 @@ type alias WithRouter route state = { state | router : RouterState route}
 type alias RouterConfig route state = {
     init:         state
   , useCache:     Bool
+  , html5:        Bool
   , fallback:     Route route
   , layout:       Dict String Html -> Html
   , config:       route -> RouteConfig route state

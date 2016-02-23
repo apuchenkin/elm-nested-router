@@ -3,9 +3,10 @@ module Router (router, runRouter, initialState) where
 {-| A simple nested router for single page applications
 
 @docs router, runRouter, initialState
-
 -}
+
 import Dict
+import String
 import History
 import Html             exposing (Html)
 import Effects          exposing (Effects)
@@ -20,6 +21,9 @@ import Router.Helpers      exposing (..)
 import Router.Types        exposing (..)
 import Router.Functions    exposing (..)
 import Router.Mailbox      exposing (..)
+
+hash : Char
+hash = '#'
 
 {-| Initial state for router. Fed this intou your application state -}
 initialState : RouterState route
@@ -59,7 +63,8 @@ forward : RouterConfig route (WithRouter route state) -> Route route -> Action (
 forward config route state =
   let
     url   = buildUrl config state.router.cache route
-    task  = History.setPath url |> Task.map (always (\s -> Response <| noFx s))
+    url'  = if config.html5 then url else String.cons hash url
+    task  = History.setPath url' |> Task.map (always (\s -> Response <| noFx s))
   in Response (state, Effects.task task)
 
 {-| Redirects to provided `Route`. Exposed by `Router` -}
@@ -67,7 +72,8 @@ redirect : RouterConfig route (WithRouter route state) -> Route route -> Action 
 redirect config route state =
   let
     url   = buildUrl config state.router.cache route
-    task  = History.replacePath url |> Task.map (always (\s -> Response <| noFx s))
+    url'  = if config.html5 then url else String.cons hash url
+    task  = History.replacePath url' |> Task.map (always (\s -> Response <| noFx s))
   in Response (state, Effects.task task)
 
 {-| Router constructor -}
@@ -94,7 +100,11 @@ runRouter router =
   let
     (Router r) = router
     initialState = r.config.init
-    init = (Signal.map (singleton << (,) True << setUrl router initialState.router.cache) History.path)
+    pathSignal = if r.config.html5
+      then History.path
+      else Signal.map (\hash -> Maybe.withDefault "/" <| Maybe.map snd <| String.uncons hash) History.hash
+
+    init = Signal.map (singleton << (,) True << setUrl router initialState.router.cache) pathSignal
 
     -- inputs : Signal (List (Bool, Action state))
     inputs =

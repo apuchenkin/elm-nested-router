@@ -2,10 +2,6 @@
 
 A simple router for single page applications, written in Elm
 
-### TODO:
-- Add example
-- Complete documentation
-
 ### Currently supports
 - [x] HTML5 push state
 - [x] Route params
@@ -19,4 +15,4 @@ A simple router for single page applications, written in Elm
 - [ ] Greedy matcher config (matches first found route or latest one / bypass route config)
 - [ ] Check the possibility to replace router cache with Automaton
 - [ ] Query string parameters support
-- [ ] Hashbang urls support
+- [ ] Drop dependencies on libs
