@@ -1,6 +1,6 @@
 module Test.Mock.Data where
 
-import Html
+import Html exposing (Html)
 import Dict exposing (Dict)
 import MultiwayTree exposing (Tree (..), Forest)
 
@@ -60,12 +60,20 @@ init = {
     sum = 0
   }
 
+layout : Dict String Html -> Html
+layout parsed =
+  let fallback = Html.text "error"
+  in Maybe.withDefault (Maybe.withDefault (Maybe.withDefault fallback
+    <| Dict.get "handlerA" parsed)
+    <| Dict.get "handlerB" parsed)
+    <| Dict.get "handlerC" parsed
+
 routerConfig : RouterConfig Route State
 routerConfig = {
     init      = init,
     useCache  = True,
     fallback  = (NotFound, Dict.empty),
-    fallbackHtml  = Html.text "error",
+    layout    = layout,
     routes    = routeTree,
     config    = config,
     inits  = [],
@@ -87,7 +95,7 @@ append string state = Response <| noFx {state | str = state.str ++ string}
 
 handlerA : Handler State
 handlerA = {
-    view = \address state parsed -> Just <| Maybe.withDefault (Html.text "handlerA") parsed,
+    view = \address state parsed -> Dict.fromList [("handlerA", Html.text "handlerA")],
     actions = [
       noAction
     ]
@@ -95,7 +103,7 @@ handlerA = {
 
 handlerB : Handler State
 handlerB = {
-    view = \address state parsed -> Just <| Maybe.withDefault (Html.text <| toString state.sum) parsed,
+    view = \address state parsed -> Dict.fromList [("handlerB", Html.text <| toString state.sum)],
     actions = [
       succ
     ]
@@ -103,7 +111,7 @@ handlerB = {
 
 handlerC : Handler State
 handlerC = {
-    view = \address state parsed -> Just <| Maybe.withDefault (Html.text state.str) parsed,
+    view = \address state parsed -> Dict.fromList [("handlerC", Html.text state.str)],
     actions = [
       succ,
       append "foo"

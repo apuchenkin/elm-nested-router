@@ -73,22 +73,21 @@ testPrepareCache =
 testRender : Test
 testRender =
   let
-   fallback = Html.text "error"
    state' route = let rs = init.router in {init | router = {rs | route = Just route}}
   in suite "render"
   [
     test "fail render"
-      <| assertEqual fallback
-      <| render router fallback init
+      <| assertEqual (toString <| Html.text "error")
+      <| toString <| render router init
   , test "render home"
       <| assertEqual (toString <| Html.text "handlerA")
-      <| toString <| render router fallback (state' Home)
+      <| toString <| render router (state' Home)
   , test "render Page"
       <| assertEqual (toString <| Html.text "0")
-      <| toString <| render router fallback (state' Page)
+      <| toString <| render router (state' Page)
   , test "render Subpage"
       <| assertEqual (toString <| Html.text "")
-      <| toString <| render router fallback (state' Subpage)
+      <| toString <| render router (state' Subpage)
   ]
 
 -- setRoute : Router route (WithRouter route state) -> Route route -> Action (WithRouter route state)
