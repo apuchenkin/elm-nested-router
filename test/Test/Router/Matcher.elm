@@ -87,30 +87,36 @@ testParseUrlParams = suite "parseUrlParams"
 testMatch : Test
 testMatch = suite "match"
   [
-    test "match"
+    test "match Home"
       <| assertEqual (Just (Home, Dict.empty))
       <| match routeMap routeTree "/"
-  , test "match"
-      <| assertEqual (Just (Page, (Dict.fromList [("category","param")])))
-      <| match routeMap routeTree "/param"
-  , test "match"
+  , test "match Page"
+      <| assertEqual (Just (Page, (Dict.fromList [("category","B")])))
+      <| match routeMap routeTree "/B"
+  , test "no match Page by constraint"
+      <| assertEqual Nothing
+      <| match routeMap routeTree "/D"
+  , test "match NotFound"
       <| assertEqual (Just (NotFound, Dict.empty))
       <| match routeMap routeTree "/404"
-  , test "match"
-      <| assertEqual (Just (Page, (Dict.fromList [("category","param"),("subcategory","param2")])))
-      <| match routeMap routeTree "/param/param2"
-  , test "match"
-      <| assertEqual (Just (Subpage,Dict.fromList [("category","param"),("item","3")]))
-      <| match routeMap routeTree "/param/item/3"
-  , test "match"
-      <| assertEqual (Just (Subpage,Dict.fromList [("category","param"),("subcategory","param2"),("item","4")]))
-      <| match routeMap routeTree "/param/param2/item/4"
-  , test "no-match"
+  , test "match Page with optional params"
+      <| assertEqual (Just (Page, (Dict.fromList [("category","A"),("subcategory","param2")])))
+      <| match routeMap routeTree "/A/param2"
+  , test "match Subpage without optional params"
+      <| assertEqual (Just (Subpage, Dict.fromList [("category","C"),("item","3")]))
+      <| match routeMap routeTree "/C/item/3"
+  , test "no-match Page without optional params"
+      <| assertEqual Nothing
+      <| match routeMap routeTree "/C/item/item3"
+  , test "match Subpage"
+      <| assertEqual (Just (Subpage, Dict.fromList [("category","A"),("subcategory","param2"),("item","4")]))
+      <| match routeMap routeTree "/A/param2/item/4"
+  , test "no-match by pattern"
       <| assertEqual (Nothing)
-      <| match routeMap routeTree "/param/param2/param3"
-  , test "no-match"
+      <| match routeMap routeTree "/B/param2/param3"
+  , test "no-match by pattern"
       <| assertEqual (Nothing)
-      <| match routeMap routeTree "/param/param2/item/4/4"
+      <| match routeMap routeTree "/C/param2/item/4/4"
   ]
 
 testBuildUrl : Test
@@ -139,21 +145,24 @@ testReversible = suite "reversible"
     test "match"
       <| assertEqual (Just "/")
       <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/")
-  , test "match"
-      <| assertEqual (Just "/param")
+  , test "fail by constraint"
+      <| assertEqual Nothing
       <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/param")
-  , test "match"
+  , test "equal with constraint"
+      <| assertEqual (Just "/A")
+      <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/A")
+  , test "match 404"
       <| assertEqual (Just "/404")
       <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/404")
-  , test "match"
-      <| assertEqual (Just "/param/param2")
-      <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/param/param2")
-  , test "match"
-      <| assertEqual (Just "/param/item/3")
-      <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/param/item/3")
-  , test "match"
-      <| assertEqual (Just "/param/param2/item/4")
-      <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/param/param2/item/4")
+  , test "match with optional param"
+      <| assertEqual (Just "/A/subcategory")
+      <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/A/subcategory")
+  , test "match Subpage without optional param"
+      <| assertEqual (Just "/B/item/3")
+      <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/B/item/3")
+  , test "match Subpage with optional param"
+      <| assertEqual (Just "/C/subcategory/item/4")
+      <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/C/subcategory/item/4")
   ]
 
 testGetPath : Test

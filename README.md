@@ -5,7 +5,6 @@ A simple router for single page applications, written in Elm
 ### TODO:
 - Add example
 - Complete documentation
-- Complete tests
 
 ### Currently supports
 - [x] HTML5 push state

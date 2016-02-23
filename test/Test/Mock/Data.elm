@@ -29,24 +29,24 @@ type alias State = WithRouter Route
 
 config : Route -> RouteConfig Route State
 config route = case route of
-    Home        -> {
+    Home -> {
       segment = "/"
     , constraints = Dict.empty
     , handler = always handlerA
     }
-    NotFound    -> {
+    NotFound -> {
       segment = "/404"
     , constraints = Dict.empty
     , handler = always handlerA
     }
-    Page        -> {
+    Page -> {
       segment = ":category[/:subcategory]"
-    , constraints = Dict.empty
+    , constraints = Dict.fromList [("category", Enum ["A","B","C"])]
     , handler = always handlerB
     }
-    Subpage     -> {
+    Subpage -> {
       segment = "/item/:item"
-    , constraints = Dict.empty
+    , constraints = Dict.fromList [("item", Int)]
     , handler = always handlerC
     }
 
