@@ -62,7 +62,7 @@ type alias ActionEffects state = Effects (Action state)
   * `actions` &mdash; A set of necessary to perform actions
 -}
 type alias Handler state = {
-    view: Signal.Address (Action state) -> state -> Maybe Html -> Maybe Html
+    view: Signal.Address (Action state) -> state -> Dict String Html -> Dict String Html
   , actions: List (Action state)
   }
 
@@ -129,7 +129,7 @@ type alias RouterConfig route state = {
     init:         state
   , useCache:     Bool
   , fallback:     Route route
-  , fallbackHtml: Html
+  , layout:       Dict String Html -> Html
   , config:       route -> RouteConfig route state
   , routes:       Forest route
   , inits:        List (Signal.Signal (Action state))

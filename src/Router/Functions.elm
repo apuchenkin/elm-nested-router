@@ -48,17 +48,19 @@ prepareCache getSegment forest =
 {-| @Private
   Renders handlers for current route
  -}
-render : Router route (WithRouter route state) -> Html -> (WithRouter route state) ->  Html
-render router fallback state =
+render : Router route (WithRouter route state) -> (WithRouter route state) -> Html
+render router state =
     let
-      route     = state.router.route
-      handlers  = Maybe.withDefault []
+      (Router r)  = router
+      layout      = r.config.layout
+      route       = state.router.route
+      handlers    = Maybe.withDefault []
          <| flip Maybe.map route
          <| \r -> getHandlers router state.router.cache Nothing (r, Dict.empty)
 
       views     = List.map .view handlers
-      html      = List.foldr (\view parsed -> view address state parsed) Nothing views
-    in Maybe.withDefault fallback html
+      htmlParts = List.foldr (\view parsed -> Dict.union parsed <| view address state parsed) Dict.empty views
+    in layout htmlParts
 
 {-| @Private
   Performs attempt to match provided url, returns fallback action on fail

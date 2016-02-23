@@ -117,7 +117,7 @@ runRouter router =
     state = Signal.map fst result
   in
     {
-      html  = Signal.map (render router r.config.fallbackHtml) state
+      html  = Signal.map (render router) state
     , state = state
     , tasks = Signal.map (Effects.toTask mailbox.address << snd) result
     }
