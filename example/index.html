@@ -13037,18 +13037,16 @@ Elm.Router.Types.make = function (_elm) {
    var RouterResult = F3(function (a,b,c) {
       return {html: a,state: b,tasks: c};
    });
-   var Router = function (a) {    return {ctor: "Router",_0: a};};
-   var RouterConfig = F9(function (a,b,c,d,e,f,g,h,i) {
-      return {init: a
-             ,useCache: b
-             ,html5: c
-             ,fallback: d
-             ,layout: e
-             ,config: f
-             ,routes: g
-             ,inits: h
-             ,inputs: i};
+   var Router = F5(function (a,b,c,d,e) {
+      return {config: a
+             ,bindForward: b
+             ,buildUrl: c
+             ,forward: d
+             ,redirect: e};
    });
+   var RouterConfig = function (a) {
+      return {ctor: "RouterConfig",_0: a};
+   };
    var RouterState = F3(function (a,b,c) {
       return {route: a,params: b,cache: c};
    });
@@ -13223,8 +13221,7 @@ Elm.App.Actions.make = function (_elm) {
    "text",
    $Json$Decode.string)));
    var decodePosts = $Json$Decode.list(decodePost);
-   var loadPosts = F2(function (_p1,state) {
-      var _p2 = _p1;
+   var loadPosts = F2(function (router,state) {
       var category = getCategory(state);
       var fetch = A3($Basics.flip,
       $Maybe.map,
@@ -13770,14 +13767,13 @@ Elm.App.Handlers.make = function (_elm) {
    $Router$Types = Elm.Router.Types.make(_elm),
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
-   var postLink = F3(function (_p0,state,post) {
-      var _p1 = _p0;
+   var postLink = F3(function (router,state,post) {
       var attributes = _U.list([]);
       var params = $Dict.fromList(_U.list([{ctor: "_Tuple2"
                                            ,_0: "postId"
                                            ,_1: $Basics.toString(post.id)}]));
       return A2($Html.a,
-      A2(_p1._0.bindForward,
+      A2(router.bindForward,
       {ctor: "_Tuple2"
       ,_0: $App$Routes.Post
       ,_1: A2($Dict.union,params,state.router.params)},
@@ -13798,14 +13794,13 @@ Elm.App.Handlers.make = function (_elm) {
               },
               posts))]));
    });
-   var categoryLink = F2(function (_p2,category) {
-      var _p3 = _p2;
+   var categoryLink = F2(function (router,category) {
       var attributes = _U.list([]);
       var params = _U.list([{ctor: "_Tuple2"
                             ,_0: "category"
                             ,_1: category.id}]);
       return A2($Html.a,
-      A2(_p3._0.bindForward,
+      A2(router.bindForward,
       {ctor: "_Tuple2"
       ,_0: $App$Routes.Category
       ,_1: $Dict.fromList(params)},
@@ -13829,7 +13824,7 @@ Elm.App.Handlers.make = function (_elm) {
               categories))]));
    });
    var homeHandler = function (router) {
-      var view = F3(function (address,state,_p4) {
+      var view = F3(function (address,state,_p0) {
          return $Dict.fromList(_U.list([{ctor: "_Tuple2"
                                         ,_0: "body"
                                         ,_1: A2(renderCategories,router,state.categories)}]));
@@ -13837,10 +13832,9 @@ Elm.App.Handlers.make = function (_elm) {
       return {view: view
              ,actions: _U.list([$App$Actions.loadCategories(router)])};
    };
-   var homeLink = function (_p5) {
-      var _p6 = _p5;
+   var homeLink = function (router) {
       return A2($Html.a,
-      A2(_p6._0.bindForward,
+      A2(router.bindForward,
       {ctor: "_Tuple2",_0: $App$Routes.Home,_1: $Dict.empty},
       _U.list([])),
       _U.list([$Html.text("Home")]));
@@ -13869,7 +13863,7 @@ Elm.App.Handlers.make = function (_elm) {
              ,actions: _U.list([$App$Actions.loadPosts(router)])};
    };
    var postHandler = function (router) {
-      var view = F3(function (address,state,_p7) {
+      var view = F3(function (address,state,_p1) {
          var text = A2($Maybe.withDefault,
          "",
          A2($App$Actions._op["&>"],
@@ -13901,7 +13895,7 @@ Elm.App.Handlers.make = function (_elm) {
    };
    var notFoundHandler = function (router) {
       var body = $Html.text("404");
-      var view = F3(function (address,state,_p8) {
+      var view = F3(function (address,state,_p2) {
          return $Dict.fromList(_U.list([{ctor: "_Tuple2"
                                         ,_0: "header"
                                         ,_1: A2($Html.header,_U.list([]),_U.list([homeLink(router)]))}
@@ -13956,27 +13950,25 @@ Elm.App.Layout.make = function (_elm) {
    var _op = {};
    var footer = function (router) {
       var sep = $Html.text(" | ");
-      var _p0 = router;
-      var r = _p0._0;
-      var about = A2($Html.a,
-      A2(r.bindForward,
-      {ctor: "_Tuple2"
-      ,_0: $App$Routes.Static("about")
-      ,_1: $Dict.empty},
-      _U.list([])),
-      _U.list([$Html.text("About")]));
       var contacts = A2($Html.a,
-      A2(r.bindForward,
+      A2(router.bindForward,
       {ctor: "_Tuple2"
       ,_0: $App$Routes.Static("contacts")
       ,_1: $Dict.empty},
       _U.list([])),
       _U.list([$Html.text("Contacts")]));
+      var about = A2($Html.a,
+      A2(router.bindForward,
+      {ctor: "_Tuple2"
+      ,_0: $App$Routes.Static("about")
+      ,_1: $Dict.empty},
+      _U.list([])),
+      _U.list([$Html.text("About")]));
       return A2($Html.footer,
       _U.list([]),
       _U.list([about,sep,contacts]));
    };
-   var layout = F3(function (router,_p1,parsed) {
+   var layout = F3(function (router,_p0,parsed) {
       var defaultBody = A2($Html.div,
       _U.list([]),
       _U.list([$Html.text("empty")]));
@@ -15106,7 +15098,7 @@ Elm.Router.Matcher.make = function (_elm) {
                         }
                   } else {
                      return _U.crashCase("Router.Matcher",
-                     {start: {line: 49,column: 14},end: {line: 54,column: 52}},
+                     {start: {line: 51,column: 14},end: {line: 56,column: 52}},
                      _p0)("result = case matches of _");
                   }
             }
@@ -15183,7 +15175,7 @@ Elm.Router.Matcher.make = function (_elm) {
          var _p9 = $List$Extra.last(sringParsers);
          if (_p9.ctor === "Nothing") {
                return _U.crashCase("Router.Matcher",
-               {start: {line: 74,column: 12},end: {line: 76,column: 19}},
+               {start: {line: 76,column: 12},end: {line: 78,column: 19}},
                _p9)("List.Extra.last sringParsers");
             } else {
                return _p9._0;
@@ -15316,7 +15308,7 @@ Elm.Router.Matcher.make = function (_elm) {
       var _p24 = $List.head(urls$);
       if (_p24.ctor === "Nothing") {
             return _U.crashCase("Router.Matcher",
-            {start: {line: 119,column: 6},end: {line: 121,column: 20}},
+            {start: {line: 121,column: 6},end: {line: 123,column: 20}},
             _p24)(A2($Basics._op["++"],
             "not enough params to build URL: ",
             $Basics.toString(_p22._0)));
@@ -15400,30 +15392,33 @@ Elm.Router.Functions.make = function (_elm) {
    $Router$Types = Elm.Router.Types.make(_elm),
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
-   var matchRoute = F3(function (config,cache,url) {
-      var rawRoute = function (route) {
-         var _p0 = A2($Dict.get,
-         function (_) {
+   var matchRoute = F3(function (_p0,cache,url) {
+      var _p1 = _p0;
+      var _p5 = _p1._0;
+      var routeConfig = _p5.routeConfig;
+      var getSegment = function (_p2) {
+         return function (_) {
             return _.segment;
-         }(config.config(route)),
-         cache.unwrap);
-         if (_p0.ctor === "Just") {
+         }(routeConfig(_p2));
+      };
+      var getConstraints = function (_p3) {
+         return function (_) {
+            return _.constraints;
+         }(routeConfig(_p3));
+      };
+      var rawRoute = function (route) {
+         var _p4 = A2($Dict.get,getSegment(route),cache.unwrap);
+         if (_p4.ctor === "Just") {
                return {ctor: "_Tuple2"
-                      ,_0: _p0._0
-                      ,_1: function (_) {
-                         return _.constraints;
-                      }(config.config(route))};
+                      ,_0: _p4._0
+                      ,_1: getConstraints(route)};
             } else {
                return {ctor: "_Tuple2"
-                      ,_0: $Router$Matcher.unwrap(function (_) {
-                         return _.segment;
-                      }(config.config(route)))
-                      ,_1: function (_) {
-                         return _.constraints;
-                      }(config.config(route))};
+                      ,_0: $Router$Matcher.unwrap(getSegment(route))
+                      ,_1: getConstraints(route)};
             }
       };
-      return A3($Router$Matcher.matchRaw,rawRoute,config.routes,url);
+      return A3($Router$Matcher.matchRaw,rawRoute,_p5.routes,url);
    });
    var getHandlers = F4(function (router,cache,from,to) {
       var toParams = $Basics.snd(to);
@@ -15432,29 +15427,29 @@ Elm.Router.Functions.make = function (_elm) {
       $Dict.empty,
       A2($Maybe.map,$Basics.snd,from));
       var fromRoute = A2($Maybe.map,$Basics.fst,from);
-      var _p1 = router;
-      var r = _p1._0;
+      var _p6 = router.config;
+      var config = _p6._0;
       var fromPath = A2($Maybe.withDefault,
       _U.list([]),
       A3($Basics.flip,
       $Maybe.map,
       fromRoute,
       function (f) {
-         var _p2 = A2($Dict.get,$Basics.toString(f),cache.traverse);
-         if (_p2.ctor === "Just") {
-               return _p2._0;
+         var _p7 = A2($Dict.get,$Basics.toString(f),cache.traverse);
+         if (_p7.ctor === "Just") {
+               return _p7._0;
             } else {
-               return A2($Router$Matcher.getPath,f,r.config.routes);
+               return A2($Router$Matcher.getPath,f,config.routes);
             }
       }));
       var toPath = function () {
-         var _p3 = A2($Dict.get,
+         var _p8 = A2($Dict.get,
          $Basics.toString(toRoute),
          cache.traverse);
-         if (_p3.ctor === "Just") {
-               return _p3._0;
+         if (_p8.ctor === "Just") {
+               return _p8._0;
             } else {
-               return A2($Router$Matcher.getPath,toRoute,r.config.routes);
+               return A2($Router$Matcher.getPath,toRoute,config.routes);
             }
       }();
       var path = A3($List.map2,
@@ -15464,18 +15459,18 @@ Elm.Router.Functions.make = function (_elm) {
       fromPath,
       toPath);
       var fromPath$ = A3($Router$Matcher.mapParams,
-      function (_p4) {
+      function (_p9) {
          return function (_) {
             return _.segment;
-         }(r.config.config(_p4));
+         }(config.routeConfig(_p9));
       },
       fromPath,
       fromParams);
       var toPath$ = A3($Router$Matcher.mapParams,
-      function (_p5) {
+      function (_p10) {
          return function (_) {
             return _.segment;
-         }(r.config.config(_p5));
+         }(config.routeConfig(_p10));
       },
       toPath,
       toParams);
@@ -15489,10 +15484,12 @@ Elm.Router.Functions.make = function (_elm) {
       toPath$)));
       var routes = A2($List.drop,commons,toPath);
       return A2($List.map,
-      function (_p6) {
+      function (_p11) {
          return function (h) {
             return h(router);
-         }(function (_) {    return _.handler;}(r.config.config(_p6)));
+         }(function (_) {
+            return _.handler;
+         }(config.routeConfig(_p11)));
       },
       routes);
    });
@@ -15523,9 +15520,9 @@ Elm.Router.Functions.make = function (_elm) {
       }),
       $Dict.empty,
       views);
-      var _p7 = router;
-      var r = _p7._0;
-      var layout = r.config.layout;
+      var _p12 = router.config;
+      var config = _p12._0;
+      var layout = config.layout;
       return A3(layout,router,state,htmlParts);
    });
    var prepareCache = F2(function (getSegment,forest) {
@@ -15561,14 +15558,14 @@ Elm.Router.Functions.make = function (_elm) {
              ,unwrap: $Dict.fromList(unwraps)
              ,traverse: $Dict.fromList(traverses)};
    });
-   var runAction = F2(function (action,_p8) {
-      var _p9 = _p8;
-      var _p10 = action(_p9._0);
-      var state$ = _p10._0._0;
-      var effects$ = _p10._0._1;
+   var runAction = F2(function (action,_p13) {
+      var _p14 = _p13;
+      var _p15 = action(_p14._0);
+      var state$ = _p15._0._0;
+      var effects$ = _p15._0._1;
       return {ctor: "_Tuple2"
              ,_0: state$
-             ,_1: $Effects.batch(_U.list([_p9._1,effects$]))};
+             ,_1: $Effects.batch(_U.list([_p14._1,effects$]))};
    });
    var combineActions = F2(function (actions,state) {
       return $Router$Types.Response(A3($List.foldl,
@@ -15583,10 +15580,10 @@ Elm.Router.Functions.make = function (_elm) {
       from,
       to);
       var actions = A2($List.map,
-      function (_p11) {
+      function (_p16) {
          return combineActions(function (_) {
             return _.actions;
-         }(_p11));
+         }(_p16));
       },
       handlers);
       return $Router$Types.Response(A3($List.foldl,
@@ -15595,9 +15592,9 @@ Elm.Router.Functions.make = function (_elm) {
       actions));
    });
    var setRoute = F3(function (router,route,state) {
-      var _p12 = route;
-      var toRoute = _p12._0;
-      var toParams = _p12._1;
+      var _p17 = route;
+      var toRoute = _p17._0;
+      var toParams = _p17._1;
       var rs = state.router;
       var from = A2($Maybe.map,
       function (r) {
@@ -15610,13 +15607,13 @@ Elm.Router.Functions.make = function (_elm) {
       return A4(transition,router,from,route,state$);
    });
    var setUrl = F3(function (router,cache,url) {
-      var _p13 = router;
-      var r = _p13._0;
-      var _p14 = A3(matchRoute,r.config,cache,url);
-      if (_p14.ctor === "Nothing") {
-            return r.redirect(r.config.fallback);
+      var _p18 = router.config;
+      var config = _p18._0;
+      var _p19 = A3(matchRoute,router.config,cache,url);
+      if (_p19.ctor === "Nothing") {
+            return router.redirect(config.fallback);
          } else {
-            return A2(setRoute,router,_p14._0);
+            return A2(setRoute,router,_p19._0);
          }
    });
    return _elm.Router.Functions.values = {_op: _op
@@ -15665,16 +15662,16 @@ Elm.Router.make = function (_elm) {
          $Router$Helpers.noFx(_p1._0),
          A2($List.map,$Basics.snd,actions));
       });
-      var _p2 = router;
-      var r = _p2._0;
-      var initialState = r.config.init;
+      var _p2 = router.config;
+      var config = _p2._0;
+      var initialState = config.init;
       var update$ = function (actions) {
          return A3($List.foldl,
          $Router$Functions.runAction,
          $Router$Helpers.noFx(initialState),
          A2($List.map,$Basics.snd,A2($List.filter,$Basics.fst,actions)));
       };
-      var pathSignal = r.config.html5 ? $History.path : A2($Signal.map,
+      var pathSignal = config.html5 ? $History.path : A2($Signal.map,
       function (hash) {
          return A2($Maybe.withDefault,
          "/",
@@ -15711,7 +15708,7 @@ Elm.Router.make = function (_elm) {
          true,
          _p4));
       }),
-      r.config.inits),
+      config.inits),
       A2($List.map,
       $Signal.map(function (_p5) {
          return $Router$Helpers.singleton(A2(F2(function (v0,v1) {
@@ -15720,7 +15717,7 @@ Elm.Router.make = function (_elm) {
          false,
          _p5));
       }),
-      r.config.inputs))));
+      config.inputs))));
       var result = A3($Signal$Extra.foldp$,update,update$,inputs);
       var state = A2($Signal.map,$Basics.fst,result);
       return {html: A2($Signal.map,
@@ -15735,35 +15732,37 @@ Elm.Router.make = function (_elm) {
              },
              result)};
    };
-   var buildUrl = F3(function (config,cache,_p7) {
+   var buildUrl = F3(function (routerConfig,cache,_p7) {
       var _p8 = _p7;
-      var _p12 = _p8._0;
+      var _p13 = _p8._0;
+      var _p9 = routerConfig;
+      var config = _p9._0;
       var raw = function () {
-         var _p9 = A2($Dict.get,$Basics.toString(_p12),cache.rawUrl);
-         if (_p9.ctor === "Just") {
-               return _p9._0;
+         var _p10 = A2($Dict.get,$Basics.toString(_p13),cache.rawUrl);
+         if (_p10.ctor === "Just") {
+               return _p10._0;
             } else {
                return A3($Router$Matcher.composeRawUrl,
-               function (_p10) {
+               function (_p11) {
                   return function (_) {
                      return _.segment;
-                  }(config.config(_p10));
+                  }(config.routeConfig(_p11));
                },
                config.routes,
-               _p12);
+               _p13);
             }
       }();
       var raws = function () {
-         var _p11 = A2($Dict.get,raw,cache.unwrap);
-         if (_p11.ctor === "Just") {
-               return _p11._0;
+         var _p12 = A2($Dict.get,raw,cache.unwrap);
+         if (_p12.ctor === "Just") {
+               return _p12._0;
             } else {
                return $Router$Matcher.unwrap(raw);
             }
       }();
       return A2($Router$Matcher.buildRawUrl,
       raws,
-      {ctor: "_Tuple2",_0: _p12,_1: _p8._1});
+      {ctor: "_Tuple2",_0: _p13,_1: _p8._1});
    });
    var initialState = {route: $Maybe.Nothing
                       ,params: $Dict.empty
@@ -15771,8 +15770,10 @@ Elm.Router.make = function (_elm) {
                               ,rawUrl: $Dict.empty
                               ,traverse: $Dict.empty}};
    var hash = _U.chr("#");
-   var forward = F3(function (config,route,state) {
-      var url = A3(buildUrl,config,state.router.cache,route);
+   var forward = F3(function (routerConfig,route,state) {
+      var url = A3(buildUrl,routerConfig,state.router.cache,route);
+      var _p14 = routerConfig;
+      var config = _p14._0;
       var url$ = config.html5 ? url : A2($String.cons,hash,url);
       var task = A2($Task.map,
       $Basics.always(function (s) {
@@ -15784,7 +15785,7 @@ Elm.Router.make = function (_elm) {
                                     ,_1: $Effects.task(task)});
    });
    var bindForward = F4(function (config,cache,route,attrs) {
-      var action = function (_p13) {
+      var action = function (_p15) {
          return A2($Signal.message,
          $Router$Mailbox.address,
          A2(forward,config,route));
@@ -15800,8 +15801,10 @@ Elm.Router.make = function (_elm) {
       action),
       attrs));
    });
-   var redirect = F3(function (config,route,state) {
-      var url = A3(buildUrl,config,state.router.cache,route);
+   var redirect = F3(function (routerConfig,route,state) {
+      var url = A3(buildUrl,routerConfig,state.router.cache,route);
+      var _p16 = routerConfig;
+      var config = _p16._0;
       var url$ = config.html5 ? url : A2($String.cons,hash,url);
       var task = A2($Task.map,
       $Basics.always(function (s) {
@@ -15812,27 +15815,30 @@ Elm.Router.make = function (_elm) {
                                     ,_0: state
                                     ,_1: $Effects.task(task)});
    });
-   var router = function (config) {
-      var state = config.init;
+   var router = function (_p17) {
+      var _p18 = _p17;
+      var _p20 = _p18._0;
+      var state = _p20.init;
       var cache = A2($Router$Functions.prepareCache,
-      function (_p14) {
+      function (_p19) {
          return function (_) {
             return _.segment;
-         }(config.config(_p14));
+         }(_p20.routeConfig(_p19));
       },
-      config.routes);
+      _p20.routes);
       var state$ = function () {
-         if (config.useCache) {
+         if (_p20.useCache) {
                var rs = state.router;
                return _U.update(state,{router: _U.update(rs,{cache: cache})});
             } else return state;
       }();
-      return $Router$Types.Router({config: _U.update(config,
-                                  {init: state$})
-                                  ,bindForward: A2(bindForward,config,state$.router.cache)
-                                  ,buildUrl: A2(buildUrl,config,state$.router.cache)
-                                  ,forward: forward(config)
-                                  ,redirect: redirect(config)});
+      var config$ = $Router$Types.RouterConfig(_U.update(_p20,
+      {init: state$}));
+      return {config: config$
+             ,bindForward: A2(bindForward,config$,state$.router.cache)
+             ,buildUrl: A2(buildUrl,config$,state$.router.cache)
+             ,forward: forward(config$)
+             ,redirect: redirect(config$)};
    };
    return _elm.Router.values = {_op: _op
                                ,router: router
@@ -15891,17 +15897,17 @@ Elm.Main.make = function (_elm) {
                                                                ,_1: $Router$Types.Int}]))
                          ,handler: $App$Handlers.postHandler};}
    };
-   var router = $Router.router({init: initialState
-                               ,useCache: false
-                               ,html5: false
-                               ,fallback: {ctor: "_Tuple2"
-                                          ,_0: $App$Routes.NotFound
-                                          ,_1: $Dict.empty}
-                               ,layout: $App$Layout.layout
-                               ,routes: $App$Routes.routes
-                               ,config: config
-                               ,inits: _U.list([])
-                               ,inputs: _U.list([])});
+   var router = $Router.router($Router$Types.RouterConfig({init: initialState
+                                                          ,useCache: false
+                                                          ,html5: false
+                                                          ,fallback: {ctor: "_Tuple2"
+                                                                     ,_0: $App$Routes.NotFound
+                                                                     ,_1: $Dict.empty}
+                                                          ,layout: $App$Layout.layout
+                                                          ,routes: $App$Routes.routes
+                                                          ,routeConfig: config
+                                                          ,inits: _U.list([])
+                                                          ,inputs: _U.list([])}));
    var result = $Router.runRouter(router);
    var main = result.html;
    var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",
