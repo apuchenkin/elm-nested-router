@@ -22,16 +22,20 @@ import MultiwayTree   exposing (Tree, Forest)
 -----------------------------------------
 
 {-| A valid URL:
-        "/home/post/1"
+```
+"/home/post/1"
+```
 -}
 type alias URL = String
 
 {-| Raw URL template:
-        "/home/post/:postId"
+```
+"/home/post/:postId"
+```
 -}
 type alias RawURL = String
 
-{-| A single segment of raw URL template -}
+{-| A single segment of `RawURL` template -}
 type alias RawSegment = String
 
 {-| Dynamic route parameter name -}
@@ -73,29 +77,34 @@ type alias Handler state = {
   `RouteConfig` is a route configuration
 
   * `segment` &mdash; URL segment
+
   Expample:
-
-          "/home",
-          "/post/:postId",
-          "/author[/:authorId]"
-
-  * `constraints` &mdash; A set of constraints applied to route params
-  Supported constraints is (String, Int, Enum, Regexp)
+```
+"/home",
+"/post/:postId",
+"/author[/:authorId]"
+```
+  * `constraints` &mdash; A set of constraints applied to route params (`String`, `Int`, `Enum`, `Regexp`)
   * `handler` &mdash; A binding to handler. Router might be injected in handler
 
-  segment supports following notation:
-  Dynamic part of URL is a url param represented by ":" followed by parameter name
-  A piece of URL in brackets represents optional string that might be in URL or might be ommitted
+  **Exapmle of route configuration**:
+```
+  config = {
+    -- "author" and "postId" is dynamic url parts
+    -- "postId" is marked as optional and might me ommited in URL
+    segment = "/page/:author[/:postId]"
+    -- constraints specify that `author` param must be a string,
+    -- and postId an integer
+  , constraints = Dict.fromList [("author", String),("postId", Int)]
+  , handler = always PostHandler
+  }
+```
 
-  Exapmle of route configuration:
-
-        config = {
-          -- "author" and "postId" is dynamic url parts
-          -- "postId" is marked as optional and might me ommited in URL
-          segment = "/page/:author[/:postId]"
-        , constraints = Dict.fromList [("author", String),("postId", Int)]
-        , handler = always PostHandler
-        }
+  A `config` abowe will match following URLs:
+```
+"/page/mark/1", "/page/mark", "/page/joe"
+```
+  "mark" and "joe" will be stored as `author` param, and "1" as `postId`
 -}
 type alias RouteConfig route state = {
     segment:      RawSegment
@@ -147,8 +156,8 @@ type RouterConfig route state = RouterConfig {
 
 {-| A `Router` is a provider of following functions:
   * `bindForward` &mdash; Binds a `forward` action to a provided `Route` with a list of html attributes.
-    This is usefull to create links in application
-  * `buildUrl` &mdash; Buils an URL for provided `Route`
+    This is useful to create links in application
+  * `buildUrl` &mdash; Builds an URL for provided `Route`
   * `forward` &mdash; Preforms a transition to provided `Route`
   * `redirect` &mdash; Redirects to provided `Route`
 -}

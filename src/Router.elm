@@ -1,6 +1,5 @@
 module Router (router, runRouter, initialState) where
-
-{-| A simple nested router for single page applications
+{-| A simple nested router for single page applications.
 
 @docs router, runRouter, initialState
 -}

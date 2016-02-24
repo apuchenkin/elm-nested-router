@@ -3,9 +3,112 @@
 A simple router for single page applications, written in Elm.
 Inspired by [angular-ui-router](https://github.com/angular-ui/ui-router) and [Rails router](http://guides.rubyonrails.org/routing.html)
 
-**Elm nested router** allows to separate application to set of handlers, binded to specific routes. For every *Route* you can provide a list of actions that has to be performed on entering that *Route*, and a *view* function that manage to render specific to *Route* HTML parts.
+**Elm nested router** allows to separate application logic to handlers, binded to specific routes. For every `Route` you can provide a list of actions that has to be performed on entering that `Route`, and a `view` function that manage to render specific to `Route` HTML parts.
 
-Example: [live demo](http://apuchenkin.github.io/elm-nested-router/example)
+## Example
+
+To create a routeable application we have to store Router state (Current route and params) to application state.
+In order to do this we create our application state with a helper `WithRouter`
+```elm
+-- We use `WithRouter` to define application state
+type alias State = WithRouter Route
+  {
+    categories: List Category,
+    posts: List Post,
+    post: Maybe Post
+  }
+
+-- construct initialState with blanks
+initialState : State
+initialState = {
+    router      = Router.initialState
+  , categories  = []
+  , posts       = []
+  , post        = Nothing
+  }
+```
+Next step will be the definition of application routes and application routes connections:
+```elm
+type Route = Home | NotFound | Static String | Category | Post
+
+-- A route trees describes how routes is nested in application
+routes : Forest Route
+routes = [
+    Tree NotFound [],
+    Tree (Static "about") [],
+    Tree (Static "contacts") [],
+    Tree Home [
+      Tree Category [
+        Tree Post []
+      ]
+    ]
+  ]
+```
+Here route `Post` is rely on routes `Category` and `Home`.
+That means all actions binded to routes `Home` and `Category` will be executed to enter to `Post` route.
+
+Another thind that we need to define is a mapping between routes and route configuratins:
+```elm
+config : Route -> RouteConfig Route State
+config route = case route of
+  Home -> {
+      segment = "/",
+      constraints = Dict.empty,
+      handler = homeHandler
+    }
+  NotFound -> {
+      segment = "/404",
+      constraints = Dict.empty,
+      handler = notFoundHandler
+    }
+  Static page -> {
+      segment = "/" ++ page,
+      constraints = Dict.empty,
+      handler = staticHandler page
+    }
+  Category -> {
+      segment = ":category[/:subcategory]",
+      constraints = Dict.fromList [("category", Enum ["animals", "flowers", "colors"])],
+      handler = categoryHandler
+    }
+  Post -> {
+      segment = "/post/:postId",
+      constraints = Dict.fromList [("postId", Int)],
+      handler = postHandler
+    }
+```
+
+Now we have everything needed to create a router:
+```elm
+router : Router Route State
+router = Router.router <| RouterConfig {
+    init      = initialState,
+    useCache  = False,
+    html5     = False,
+    fallback  = (NotFound, Dict.empty),
+    layout    = layout,
+    routes    = routes,
+    routeConfig  = config,
+    inits     = [],
+    inputs    = []
+  }
+```
+
+Filnally we launch Router and fed it's output to application ports:
+
+```elm
+result : RouterResult State
+result = Router.runRouter router
+
+main : Signal Html
+main = result.html
+
+port tasks : Signal (Task Never ())
+port tasks = result.tasks
+```
+
+see (https://github.com/apuchenkin/elm-nested-router/tree/master/example) for more details.
+[Live demo](http://apuchenkin.github.io/elm-nested-router/example)
 
 ### Currently supports
 - [x] HTML5 push state
