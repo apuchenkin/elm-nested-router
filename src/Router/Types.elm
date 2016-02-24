@@ -100,11 +100,12 @@ type alias Handler state = {
   }
 ```
 
-  A `config` abowe will match following URLs:
+  A `config` above will match following URLs:
 ```
 "/page/mark/1", "/page/mark", "/page/joe"
 ```
   "mark" and "joe" will be stored as `author` param, and "1" as `postId`
+  Everything enclosed by brackets considered as optional.
 -}
 type alias RouteConfig route state = {
     segment:      RawSegment
@@ -136,8 +137,8 @@ type alias WithRouter route state = { state | router : RouterState route}
   * `useCache` &mdash; A boolean flag that turns caching on or off. Using cache might slow down application at start-up but will give a perfomance boost in runtime.
   * `html5` &mdash; Use html5 pushState
   * `fallback` &mdash; A fallback route is used when url matching fails
-  * `fallbackHtml` &mdash; Default Html, udes when handlres has provided empty view
-  * `config` &mdash; A mapping between route and route configuration
+  * `layout` &mdash; Main rendered function that combines named views gathered from Handlers in a single HTML
+  * `routeConfig` &mdash; A mapping between route and route configuration
   * `routes` &mdash; A list of route trees, used for nested navigation
   * `inits` &mdash; A list of signals that should run for inititialisation of state
   * `inputs` &mdash; A list of signals utilized in application in runtime

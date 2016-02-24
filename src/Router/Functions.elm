@@ -114,13 +114,14 @@ getHandlers router cache from to =
      <| \f -> case Dict.get (toString f) cache.traverse of
       Just path -> path
       Nothing   -> Matcher.getPath f config.routes
+
     toPath = case Dict.get (toString toRoute) cache.traverse of
      Just path -> path
      Nothing   -> Matcher.getPath toRoute config.routes
     path = List.map2 (,) fromPath toPath
 
     fromPath' = Matcher.mapParams (.segment << config.routeConfig) fromPath fromParams
-    toPath'   = Matcher.mapParams (.segment << config.routeConfig) toPath    toParams
+    toPath'   = Matcher.mapParams (.segment << config.routeConfig) toPath toParams
 
     commons = List.length
       <| List.Extra.takeWhile (uncurry (==))

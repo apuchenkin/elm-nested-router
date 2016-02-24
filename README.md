@@ -44,13 +44,12 @@ routes = [
     ]
   ]
 ```
-Here route `Post` is rely on routes `Category` and `Home`.
-That means all actions binded to routes `Home` and `Category` will be executed to enter to `Post` route.
+Route `Post` on the example above is rely on routes `Category` and `Home` - that means all actions binded to routes `Home`, `Category` and `Post` will be executed to enter to `Post` route. Full URL template that will match `Post` route will also be combined with its parent routes.
 
-Another thind that we need to define is a mapping between routes and route configuratins:
+Another thing that we need to define is a mapping between routes and route configurations:
 ```elm
-config : Route -> RouteConfig Route State
-config route = case route of
+routeConfig : Route -> RouteConfig Route State
+routeConfig route = case route of
   Home -> {
       segment = "/",
       constraints = Dict.empty,
@@ -67,34 +66,54 @@ config route = case route of
       handler = staticHandler page
     }
   Category -> {
+      -- `:category` and `:subcategory` is dynamic route params
+      -- `:category` param match only "animals", "flowers", "colors" because of its constraints
+      -- `:subcategory` might be ommitted, since it enclosed brackets
       segment = ":category[/:subcategory]",
       constraints = Dict.fromList [("category", Enum ["animals", "flowers", "colors"])],
       handler = categoryHandler
     }
   Post -> {
+      -- `:postId` must be an integer
       segment = "/post/:postId",
       constraints = Dict.fromList [("postId", Int)],
       handler = postHandler
     }
 ```
 
+Each handler might provide a set of named views: `Dict String Html`, these HTML parts are finally combined and rendered in application layout:
+
+```elm
+layout : Router Route State -> State -> Dict String Html -> Html
+layout router _ views =
+  let
+    defaultHeader = Html.header [] [Html.text "Default header"]
+    defaultFooter = Html.footer [] [Html.text "Default footer"]
+    defaultBody = Html.div [] []
+  in Html.div [] [
+    Maybe.withDefault defaultHeader <| Dict.get "header" views
+  , Maybe.withDefault defaultBody   <| Dict.get "body"   views
+  , Maybe.withDefault defaultFooter <| Dict.get "footer" views
+  ]
+```
+
 Now we have everything needed to create a router:
 ```elm
 router : Router Route State
 router = Router.router <| RouterConfig {
-    init      = initialState,
-    useCache  = False,
-    html5     = False,
-    fallback  = (NotFound, Dict.empty),
-    layout    = layout,
-    routes    = routes,
-    routeConfig  = config,
-    inits     = [],
-    inputs    = []
+    init = initialState
+  , useCache = True
+  , html5 = True
+  , fallback = (NotFound, Dict.empty)
+  , layout = layout
+  , routes = routes
+  , routeConfig = routeConfig
+  , inits = []
+  , inputs = []
   }
 ```
 
-Filnally we launch Router and fed it's output to application ports:
+Finally we launch Router and feed its output to application ports:
 
 ```elm
 result : RouterResult State
@@ -107,8 +126,8 @@ port tasks : Signal (Task Never ())
 port tasks = result.tasks
 ```
 
-see (https://github.com/apuchenkin/elm-nested-router/tree/master/example) for more details.
-[Live demo](http://apuchenkin.github.io/elm-nested-router/example)
+see [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/example) and [Tests](https://github.com/apuchenkin/elm-nested-router/tree/master/test/Test) for more details ([Live demo](http://apuchenkin.github.io/elm-nested-router/example))
+
 
 ### Currently supports
 - [x] HTML5 push state
