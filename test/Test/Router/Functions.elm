@@ -4,7 +4,7 @@ import Dict
 import Html
 import ElmTest exposing (..)
 
-import Router.Types     exposing (WithRouter, Action, Response (..), Router (..), Handler, RouteConfig)
+import Router.Types     exposing (..)
 import Router.Helpers   exposing (noFx)
 import Router.Functions exposing (..)
 

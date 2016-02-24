@@ -3,7 +3,7 @@ module App.Handlers where
 import Dict
 import Html exposing (Html)
 import Html.Attributes as Attr
-import Router.Types exposing (Router (..), Handler)
+import Router.Types exposing (Router, Handler)
 
 import App.Routes as Route exposing (Route)
 import App.Actions exposing (..)
@@ -37,11 +37,11 @@ notFoundHandler router =
     }
 
 homeLink : Router Route State -> Html
-homeLink (Router router) =
+homeLink router =
     Html.a (router.bindForward (Route.Home, Dict.empty) []) [Html.text "Home"]
 
 categoryLink : Router Route State -> Category -> Html
-categoryLink (Router router) category =
+categoryLink router category =
   let
     params = [("category", category.id)]
     attributes = []
@@ -49,7 +49,7 @@ categoryLink (Router router) category =
     Html.a (router.bindForward (Route.Category, Dict.fromList params) attributes) [Html.text category.title]
 
 postLink : Router Route State -> State -> Post -> Html
-postLink (Router router) state post =
+postLink router state post =
   let
     params = Dict.fromList [("postId", toString post.id)]
     attributes = []

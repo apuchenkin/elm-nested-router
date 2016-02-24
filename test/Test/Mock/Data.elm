@@ -69,14 +69,14 @@ layout _ _ parsed =
     <| Dict.get "handlerC" parsed
 
 routerConfig : RouterConfig Route State
-routerConfig = {
+routerConfig = RouterConfig {
     init      = init,
     useCache  = True,
     html5     = True,
     fallback  = (NotFound, Dict.empty),
     layout    = layout,
     routes    = routeTree,
-    config    = config,
+    routeConfig = config,
     inits  = [],
     inputs = []
   }

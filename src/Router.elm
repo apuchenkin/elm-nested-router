@@ -46,61 +46,65 @@ bindForward config cache route attrs =
 
 {-| Decomposes Route to string. Exposed by `Router` -}
 buildUrl : RouterConfig route (WithRouter route state) -> RouterCache route -> Route route -> String
-buildUrl config cache (route, params) =
+buildUrl routerConfig cache (route, params) =
   let
-  raw =  case Dict.get (toString route) cache.rawUrl of
-    Just value -> value
-    Nothing -> Matcher.composeRawUrl (.segment << config.config) config.routes route
+    (RouterConfig config) = routerConfig
+    raw =  case Dict.get (toString route) cache.rawUrl of
+      Just value -> value
+      Nothing -> Matcher.composeRawUrl (.segment << config.routeConfig) config.routes route
 
-  raws = case Dict.get raw cache.unwrap of
-    Just value -> value
-    Nothing -> Matcher.unwrap raw
+    raws = case Dict.get raw cache.unwrap of
+      Just value -> value
+      Nothing -> Matcher.unwrap raw
 
   in Matcher.buildRawUrl raws (route, params)
 
 {-| Preforms a transition to provided `Route`. Exposed by `Router` -}
 forward : RouterConfig route (WithRouter route state) -> Route route -> Action (WithRouter route state)
-forward config route state =
+forward routerConfig route state =
   let
-    url   = buildUrl config state.router.cache route
+    (RouterConfig config) = routerConfig
+    url   = buildUrl routerConfig state.router.cache route
     url'  = if config.html5 then url else String.cons hash url
     task  = History.setPath url' |> Task.map (always (\s -> Response <| noFx s))
   in Response (state, Effects.task task)
 
 {-| Redirects to provided `Route`. Exposed by `Router` -}
 redirect : RouterConfig route (WithRouter route state) -> Route route -> Action (WithRouter route state)
-redirect config route state =
+redirect routerConfig route state =
   let
-    url   = buildUrl config state.router.cache route
+    (RouterConfig config) = routerConfig
+    url   = buildUrl routerConfig state.router.cache route
     url'  = if config.html5 then url else String.cons hash url
     task  = History.replacePath url' |> Task.map (always (\s -> Response <| noFx s))
   in Response (state, Effects.task task)
 
 {-| Router constructor -}
 router : RouterConfig route (WithRouter route state) -> Router route (WithRouter route state)
-router config =
+router (RouterConfig config) =
   let
-    cache = prepareCache (.segment << config.config) config.routes
+    cache = prepareCache (.segment << config.routeConfig) config.routes
     state = config.init
     state' = if config.useCache
       then let rs = state.router in {state | router = {rs | cache = cache}}
       else state
+    config' = RouterConfig {config | init = state'}
 
-  in Router {
-    config        = {config | init = state'}
-  , bindForward   = bindForward   config state'.router.cache
-  , buildUrl      = buildUrl      config state'.router.cache
-  , forward       = forward       config
-  , redirect      = redirect      config
+  in {
+    config        = config'
+  , bindForward   = bindForward   config' state'.router.cache
+  , buildUrl      = buildUrl      config' state'.router.cache
+  , forward       = forward       config'
+  , redirect      = redirect      config'
   }
 
 {-| Launches the router -}
 runRouter : Router route (WithRouter route state) -> RouterResult (WithRouter route state)
 runRouter router =
   let
-    (Router r) = router
-    initialState = r.config.init
-    pathSignal = if r.config.html5
+    (RouterConfig config) = router.config
+    initialState = config.init
+    pathSignal = if config.html5
       then History.path
       else Signal.map (\hash -> Maybe.withDefault "/" <| Maybe.map snd <| String.uncons hash) History.hash
 
@@ -111,8 +115,8 @@ runRouter router =
       List.foldl (Signal.Extra.fairMerge List.append)
       init <|
       (Signal.map (List.map ((,) False)) mailbox.signal) -- actions from events
-      :: List.map (Signal.map (singleton << (,) True))  r.config.inits
-      ++ List.map (Signal.map (singleton << (,) False)) r.config.inputs
+      :: List.map (Signal.map (singleton << (,) True))  config.inits
+      ++ List.map (Signal.map (singleton << (,) False)) config.inputs
 
     -- update : List (Bool, Action state) -> (state, ActionEffects state) -> (state, ActionEffects state)
     update  actions (state,_) = List.foldl runAction (noFx state)

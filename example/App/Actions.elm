@@ -6,7 +6,7 @@ import Task exposing (Task)
 import Effects exposing (Never)
 
 import Json.Decode  as Json exposing ((:=))
-import Router.Types exposing (WithRouter, Action, Response (..), Router (..))
+import Router.Types exposing (WithRouter, Action, Response (..), Router)
 import Router.Helpers exposing (noFx, chainAction)
 
 import App.Routes as Routes exposing (Route)
@@ -70,7 +70,7 @@ loadCategories router state =
   in Response (state, Effects.task task)
 
 loadPosts : Router Route State -> Action State
-loadPosts (Router router) state =
+loadPosts router state =
   let
     category = getCategory state
     fetch = flip Maybe.map category <| \c ->
