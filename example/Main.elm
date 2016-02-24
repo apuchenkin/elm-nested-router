@@ -9,7 +9,7 @@ import App.Actions exposing (State)
 import App.Layout exposing (..)
 
 import Router
-import Router.Types  exposing (RouteConfig, Router, RouterResult, Response (..), Constraint (..))
+import Router.Types  exposing (Router, RouterConfig (..), RouteConfig, RouterResult, Constraint (..))
 
 config : Route -> RouteConfig Route State
 config route = case route of
@@ -48,14 +48,14 @@ initialState = {
   }
 
 router : Router Route State
-router = Router.router {
+router = Router.router <| RouterConfig {
     init      = initialState,
     useCache  = False,
     html5     = False,
     fallback  = (NotFound, Dict.empty),
     layout    = layout,
     routes    = routes,
-    config    = config,
+    routeConfig  = config,
     inits     = [],
     inputs    = []
   }

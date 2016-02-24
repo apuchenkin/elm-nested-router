@@ -40,7 +40,9 @@ getParams string = case fst <| parse paramsParser string of
   Err _     -> Debug.crash "getParams : String -> List String"
   Ok param  -> param
 
--- TODO: Perfomance?
+{-| @Private
+  Unwraps string that contains brackets to a list of strings without brackets
+-}
 unwrap : String -> List String
 unwrap raw =
   let

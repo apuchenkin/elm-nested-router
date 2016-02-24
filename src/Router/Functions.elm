@@ -38,7 +38,7 @@ prepareCache getSegment forest =
     urls = flip List.map routes <| \r -> (toString r, Matcher.composeRawUrl getSegment forest r)
     segments = List.map getSegment routes
     unwraps = flip List.map (segments ++ List.map snd urls) <| \url -> (url, Matcher.unwrap url)
-    traverses = flip List.map routes (\route -> (toString route, Matcher.getPath route forest))
+    traverses = flip List.map routes <| \route -> (toString route, Matcher.getPath route forest)
   in {
     rawUrl    = Dict.fromList urls
   , unwrap    = Dict.fromList unwraps
@@ -51,8 +51,8 @@ prepareCache getSegment forest =
 render : Router route (WithRouter route state) -> (WithRouter route state) -> Html
 render router state =
     let
-      (Router r)  = router
-      layout      = r.config.layout
+      (RouterConfig config) = router.config
+      layout      = config.layout
       route       = state.router.route
       handlers    = Maybe.withDefault []
          <| flip Maybe.map route
@@ -67,9 +67,10 @@ render router state =
   -}
 setUrl : Router route (WithRouter route state) -> RouterCache route -> String -> Action (WithRouter route state)
 setUrl router cache url =
-  let (Router r) = router
-  in case (matchRoute r.config cache url) of
-    Nothing               -> r.redirect r.config.fallback -- let _ = Debug.log "sd" "asd" in setRoute router
+  let
+    (RouterConfig config) = router.config
+  in case (matchRoute router.config cache url) of
+    Nothing               -> router.redirect config.fallback
     Just route            -> setRoute router route
 
 {-| @Private
@@ -102,7 +103,7 @@ transition router from to state =
 getHandlers : Router route state -> RouterCache route -> Maybe (Route route) -> Route route -> List (Handler state)
 getHandlers router cache from to =
   let
-    (Router r) = router
+    (RouterConfig config) = router.config
     fromRoute = Maybe.map fst from
     fromParams = Maybe.withDefault Dict.empty <| Maybe.map snd from
     toRoute = fst to
@@ -112,14 +113,15 @@ getHandlers router cache from to =
      <| flip Maybe.map fromRoute
      <| \f -> case Dict.get (toString f) cache.traverse of
       Just path -> path
-      Nothing   -> Matcher.getPath f r.config.routes
+      Nothing   -> Matcher.getPath f config.routes
+
     toPath = case Dict.get (toString toRoute) cache.traverse of
      Just path -> path
-     Nothing   -> Matcher.getPath toRoute r.config.routes
+     Nothing   -> Matcher.getPath toRoute config.routes
     path = List.map2 (,) fromPath toPath
 
-    fromPath' = Matcher.mapParams (.segment << r.config.config) fromPath fromParams
-    toPath'   = Matcher.mapParams (.segment << r.config.config) toPath    toParams
+    fromPath' = Matcher.mapParams (.segment << config.routeConfig) fromPath fromParams
+    toPath'   = Matcher.mapParams (.segment << config.routeConfig) toPath toParams
 
     commons = List.length
       <| List.Extra.takeWhile (uncurry (==))
@@ -127,16 +129,19 @@ getHandlers router cache from to =
 
     routes = List.drop commons toPath
 
-  in List.map ((\h -> h router) << .handler << r.config.config) <| routes
+  in List.map ((\h -> h router) << .handler << config.routeConfig) <| routes
 
 {-| @Private
   Preforms attempt to match provided url to a route by a given routes configuration
   -}
 matchRoute : RouterConfig route state -> RouterCache route -> String -> Maybe (Route route)
-matchRoute config cache url =
+matchRoute (RouterConfig config) cache url =
   let
-    rawRoute route = case Dict.get (.segment <| config.config route) cache.unwrap of
-      Just value -> (value, .constraints <| config.config route)
-      Nothing -> (Matcher.unwrap <| .segment <| config.config route, .constraints <| config.config route)
+    routeConfig = config.routeConfig
+    getSegment = .segment << routeConfig
+    getConstraints = .constraints << routeConfig
+    rawRoute route = case Dict.get (getSegment route) cache.unwrap of
+      Just value -> (value, getConstraints route)
+      Nothing -> (Matcher.unwrap <| getSegment route, getConstraints route)
   in
     Matcher.matchRaw rawRoute config.routes url

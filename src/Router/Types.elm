@@ -21,19 +21,27 @@ import MultiwayTree   exposing (Tree, Forest)
 -- Route mather related types
 -----------------------------------------
 
-{-| A valid URL -}
+{-| A valid URL:
+```
+"/home/post/1"
+```
+-}
 type alias URL = String
 
-{-| Raw URL template -}
+{-| Raw URL template:
+```
+"/home/post/:postId"
+```
+-}
 type alias RawURL = String
 
-{-| Single segment of URL template -}
+{-| A single segment of `RawURL` template -}
 type alias RawSegment = String
 
 {-| Dynamic route parameter name -}
 type alias Param = String
 
-{-| A set of route params and their values -}
+{-| A map of route param names and values -}
 type alias RouteParams  = Dict Param String
 
 {-| A constraint of route parameter type -}
@@ -46,10 +54,10 @@ type alias Route route = (route, RouteParams)
 -- Handler related types
 -----------------------------------------
 
-{-| An action result - a state combined with effects -}
+{-| An action result - a modified state combined with side effects -}
 type Response state = Response (state, ActionEffects state)
 
-{-| `Action` represents function that prforms something with application state, and might contain efects -}
+{-| `Action` represents function that prforms something with application state, and might contain side efects -}
 type alias Action state = state -> Response state
 
 {-| Helper to get rid of brackets -}
@@ -57,8 +65,7 @@ type alias ActionEffects state = Effects (Action state)
 
 {-|
   A `Handler` is a piece of functionality binded to specific route
-
-  * `view` &mdash; A function that describes how to render application state
+  * `view` &mdash; Function that describes how to render application state to map of named views
   * `actions` &mdash; A set of necessary to perform actions
 -}
 type alias Handler state = {
@@ -70,25 +77,35 @@ type alias Handler state = {
   `RouteConfig` is a route configuration
 
   * `segment` &mdash; URL segment
-  Expample: "/home", "/post/:postId", "/author[/:authorId]"
-  * `constraints` &mdash; A set of constraints applied to route params
-  Supported constraints is (String, Int, Enum, Regexp)
+
+  Expample:
+```
+"/home",
+"/post/:postId",
+"/author[/:authorId]"
+```
+  * `constraints` &mdash; A set of constraints applied to route params (`String`, `Int`, `Enum`, `Regexp`)
   * `handler` &mdash; A binding to handler. Router might be injected in handler
 
-  segment supports following notation:
-  - dynamic part of URL is a url param represented by ":" followed by parameter name
-  - a piece of URL in brackets represents optional string that might be in URL or might be ommitted
+  **Exapmle of route configuration**:
+```
+  config = {
+    -- "author" and "postId" is dynamic url parts
+    -- "postId" is marked as optional and might me ommited in URL
+    segment = "/page/:author[/:postId]"
+    -- constraints specify that `author` param must be a string,
+    -- and postId an integer
+  , constraints = Dict.fromList [("author", String),("postId", Int)]
+  , handler = always PostHandler
+  }
+```
 
-  Exapmle of route configuration:
-
-    config = {
-      segment = "/page/:author[/:postId]"
-    , constraints = Dict.fromList [("author", String),("postId", Int)]
-    , handler = always PostHandler
-    }
-
-    where `author` is a dynamic part of URL that matches any string
-    where `postId` is a dynamic part of URL that matches any integers and might be ommitted
+  A `config` above will match following URLs:
+```
+"/page/mark/1", "/page/mark", "/page/joe"
+```
+  "mark" and "joe" will be stored as `author` param, and "1" as `postId`
+  Everything enclosed by brackets considered as optional.
 -}
 type alias RouteConfig route state = {
     segment:      RawSegment
@@ -120,19 +137,19 @@ type alias WithRouter route state = { state | router : RouterState route}
   * `useCache` &mdash; A boolean flag that turns caching on or off. Using cache might slow down application at start-up but will give a perfomance boost in runtime.
   * `html5` &mdash; Use html5 pushState
   * `fallback` &mdash; A fallback route is used when url matching fails
-  * `fallbackHtml` &mdash; Default Html, udes when handlres has provided empty view
-  * `config` &mdash; A mapping between route and route configuration
+  * `layout` &mdash; Main rendered function that combines named views gathered from Handlers in a single HTML
+  * `routeConfig` &mdash; A mapping between route and route configuration
   * `routes` &mdash; A list of route trees, used for nested navigation
   * `inits` &mdash; A list of signals that should run for inititialisation of state
   * `inputs` &mdash; A list of signals utilized in application in runtime
 -}
-type alias RouterConfig route state = {
+type RouterConfig route state = RouterConfig {
     init:         state
   , useCache:     Bool
   , html5:        Bool
   , fallback:     Route route
   , layout:       Router route state -> state -> Dict String Html -> Html
-  , config:       route -> RouteConfig route state
+  , routeConfig:  route -> RouteConfig route state
   , routes:       Forest route
   , inits:        List (Signal.Signal (Action state))
   , inputs:       List (Signal.Signal (Action state))
@@ -140,14 +157,12 @@ type alias RouterConfig route state = {
 
 {-| A `Router` is a provider of following functions:
   * `bindForward` &mdash; Binds a `forward` action to a provided `Route` with a list of html attributes.
-    This is usefull to create links in application
-  * `buildUrl` &mdash; Buils an URL for provided `Route`
+    This is useful to create links in application
+  * `buildUrl` &mdash; Builds an URL for provided `Route`
   * `forward` &mdash; Preforms a transition to provided `Route`
   * `redirect` &mdash; Redirects to provided `Route`
-
-  `config` is a router configuration used on router construction
 -}
-type Router route state = Router {
+type alias Router route state = {
     config        : RouterConfig route state
   , bindForward   : Route route -> List Html.Attribute -> List Html.Attribute
   , buildUrl      : Route route -> URL
