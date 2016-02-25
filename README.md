@@ -106,6 +106,7 @@ router = Router.router <| RouterConfig {
   , html5 = True
   , fallback = (NotFound, Dict.empty)
   , layout = layout
+  , onTransition = \_ _ _ -> doNothing
   , routes = routes
   , routeConfig = routeConfig
   , inits = []

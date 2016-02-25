@@ -1,7 +1,7 @@
 module Router.Helpers where
 
 {-| A set of utility functions
-@docs singleton, noFx, combineParams, chainAction
+@docs singleton, noFx, combineParams, chainAction, doNothing
 -}
 
 import Effects
@@ -15,6 +15,10 @@ singleton action = [ action ]
 {-| An action without effects -}
 noFx : state -> (state, ActionEffects state)
 noFx state = (state, Effects.none)
+
+{-| An empty action -}
+doNothing : Action state
+doNothing state = Response <| noFx state
 
 {-| Combine route wit a provided params -}
 combineParams : RouteParams -> Route route -> Route route

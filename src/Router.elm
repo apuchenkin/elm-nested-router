@@ -69,7 +69,7 @@ forward routerConfig route state =
     (RouterConfig config) = routerConfig
     url   = buildUrl routerConfig state.router.cache route
     url'  = if config.html5 then url else String.cons hash url
-    task  = History.setPath url' |> Task.map (always (\s -> Response <| noFx s))
+    task  = History.setPath url' |> Task.map (always doNothing)
   in Response (state, Effects.task task)
 
 {-| Redirects to provided `Route`. Exposed by `Router` -}
@@ -79,7 +79,7 @@ redirect routerConfig route state =
     (RouterConfig config) = routerConfig
     url   = buildUrl routerConfig state.router.cache route
     url'  = if config.html5 then url else String.cons hash url
-    task  = History.replacePath url' |> Task.map (always (\s -> Response <| noFx s))
+    task  = History.replacePath url' |> Task.map (always doNothing)
   in Response (state, Effects.task task)
 
 {-| Router constructor -}

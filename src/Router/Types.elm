@@ -5,7 +5,7 @@ module Router.Types where
 @docs URL, RawURL, RawSegment, Param, Constraint, Route, RouteConfig, RouteParams
 
 # Actions and handlers
-@docs WithRouter, Handler, Action, ActionEffects, Response
+@docs WithRouter, Handler, Action, ActionEffects, Response, Transition
 
 # Router
 @docs Router, RouterConfig, RouterResult, RouterCache, RouterState
@@ -108,27 +108,30 @@ type alias Handler state = {
   Everything enclosed by brackets considered as optional.
 -}
 type alias RouteConfig route state = {
-    segment:      RawSegment
-  , constraints:  Dict Param Constraint
-  , handler:      Router route state -> Handler state
+    segment: RawSegment
+  , constraints: Dict Param Constraint
+  , handler: Router route state -> Handler state
   }
 
 {-| Router cache -}
 type alias RouterCache route = {
-    rawUrl:     Dict String RawURL
-  , unwrap:     Dict String (List String)
-  , traverse:   Dict String (List route)
+    rawUrl: Dict String RawURL
+  , unwrap: Dict String (List String)
+  , traverse: Dict String (List route)
   }
 
 {-| A state of router -}
 type alias RouterState route = {
-    route:  Maybe route
+    route: Maybe route
   , params: RouteParams
-  , cache:  RouterCache route
+  , cache: RouterCache route
   }
 
 {-| Type extension for the application state -}
 type alias WithRouter route state = { state | router : RouterState route}
+
+{-| A transition from route A to route B -}
+type alias Transition route state = Maybe (Route route) -> Route route -> Action state
 
 {-|
   `RouterConfig` is configuration for the router:
@@ -138,21 +141,23 @@ type alias WithRouter route state = { state | router : RouterState route}
   * `html5` &mdash; Use html5 pushState
   * `fallback` &mdash; A fallback route is used when url matching fails
   * `layout` &mdash; Main rendered function that combines named views gathered from Handlers in a single HTML
+  * `onTransition` &mdash; An action that should be executed on every router transition
   * `routeConfig` &mdash; A mapping between route and route configuration
   * `routes` &mdash; A list of route trees, used for nested navigation
   * `inits` &mdash; A list of signals that should run for inititialisation of state
   * `inputs` &mdash; A list of signals utilized in application in runtime
 -}
 type RouterConfig route state = RouterConfig {
-    init:         state
-  , useCache:     Bool
-  , html5:        Bool
-  , fallback:     Route route
-  , layout:       Router route state -> state -> Dict String Html -> Html
-  , routeConfig:  route -> RouteConfig route state
-  , routes:       Forest route
-  , inits:        List (Signal.Signal (Action state))
-  , inputs:       List (Signal.Signal (Action state))
+    init: state
+  , useCache: Bool
+  , html5: Bool
+  , fallback: Route route
+  , layout: Router route state -> state -> Dict String Html -> Html
+  , onTransition: Router route state -> Transition route state
+  , routeConfig: route -> RouteConfig route state
+  , routes: Forest route
+  , inits: List (Signal.Signal (Action state))
+  , inputs: List (Signal.Signal (Action state))
   }
 
 {-| A `Router` is a provider of following functions:
@@ -163,11 +168,11 @@ type RouterConfig route state = RouterConfig {
   * `redirect` &mdash; Redirects to provided `Route`
 -}
 type alias Router route state = {
-    config        : RouterConfig route state
-  , bindForward   : Route route -> List Html.Attribute -> List Html.Attribute
-  , buildUrl      : Route route -> URL
-  , forward       : Route route -> Action state
-  , redirect      : Route route -> Action state
+    config : RouterConfig route state
+  , bindForward : Route route -> List Html.Attribute -> List Html.Attribute
+  , buildUrl : Route route -> URL
+  , forward : Route route -> Action state
+  , redirect : Route route -> Action state
   }
 
 {-| A `RouterResult` is a combination of resulting signals:
@@ -179,7 +184,7 @@ type alias Router route state = {
     be hooked up to a `port` to ensure they get run.
 -}
 type alias RouterResult state =
-  { html  : Signal Html
+  { html : Signal Html
   , state : Signal state
   , tasks : Signal (Task Never ())
   }

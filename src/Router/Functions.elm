@@ -12,8 +12,6 @@ import Router.Types        exposing (..)
 import Router.Helpers      exposing (..)
 import Router.Mailbox      exposing (address)
 
-type alias Transition route state = Maybe (Route route) -> Route route -> Action state
-
 {-| @Private
   Runs the action for the specified state and initial effects
  -}
@@ -93,8 +91,12 @@ setRoute router route state =
 transition : Router route (WithRouter route state) -> Transition route (WithRouter route state)
 transition router from to state =
   let
+    (RouterConfig config) = router.config
     handlers = getHandlers router state.router.cache from to
-    actions  = List.map (combineActions << .actions) handlers
+    actions  =
+      (config.onTransition router from to)
+      :: List.map (combineActions << .actions) handlers
+
   in Response <| List.foldl runAction (noFx state) actions
 
 {-| @Private

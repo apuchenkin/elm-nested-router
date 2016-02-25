@@ -4,7 +4,7 @@ import Html exposing (Html)
 import Dict exposing (Dict)
 import MultiwayTree exposing (Tree (..), Forest)
 
-import Router.Helpers  exposing (noFx)
+import Router.Helpers  exposing (noFx, doNothing)
 import Router.Types    exposing (..)
 
 import Test.Mock.Router exposing (..)
@@ -70,15 +70,16 @@ layout _ _ parsed =
 
 routerConfig : RouterConfig Route State
 routerConfig = RouterConfig {
-    init      = init,
-    useCache  = True,
-    html5     = True,
-    fallback  = (NotFound, Dict.empty),
-    layout    = layout,
-    routes    = routeTree,
-    routeConfig = config,
-    inits  = [],
-    inputs = []
+    init = init
+  , useCache = True
+  , html5 = True
+  , fallback = (NotFound, Dict.empty)
+  , layout = layout
+  , onTransition = \_ _ _ -> doNothing
+  , routes = routeTree
+  , routeConfig = config
+  , inits = []
+  , inputs = []
   }
 ------------ actions ----------------------
 noAction : Action State
