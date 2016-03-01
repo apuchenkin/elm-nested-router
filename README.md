@@ -1,4 +1,4 @@
-# Elm nested router
+# Elm nested router [![Build Status](https://travis-ci.org/apuchenkin/elm-nested-router.svg?branch=master)](https://travis-ci.org/apuchenkin/elm-nested-router)
 
 A simple router for single page applications, written in Elm.
 Inspired by [angular-ui-router](https://github.com/angular-ui/ui-router) and [Rails router](http://guides.rubyonrails.org/routing.html)
