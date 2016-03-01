@@ -3,4 +3,4 @@ install:
   - npm install -g elm elm-test
   - elm-package install -y
   - cd test && elm-package install -y
-script: elm-test test/TestRunner.elm
+script: elm-test TestRunner.elm
