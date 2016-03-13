@@ -97,7 +97,7 @@ append string state = Response <| noFx {state | str = state.str ++ string}
 
 handlerA : Handler State
 handlerA = {
-    view = \address state parsed -> Dict.fromList [("handlerA", Html.text "handlerA")],
+    view = \state _ -> Dict.fromList [("handlerA", Html.text "handlerA")],
     actions = [
       noAction
     ]
@@ -105,7 +105,7 @@ handlerA = {
 
 handlerB : Handler State
 handlerB = {
-    view = \address state parsed -> Dict.fromList [("handlerB", Html.text <| toString state.sum)],
+    view = \state _ -> Dict.fromList [("handlerB", Html.text <| toString state.sum)],
     actions = [
       succ
     ]
@@ -113,7 +113,7 @@ handlerB = {
 
 handlerC : Handler State
 handlerC = {
-    view = \address state parsed -> Dict.fromList [("handlerC", Html.text state.str)],
+    view = \state _ -> Dict.fromList [("handlerC", Html.text state.str)],
     actions = [
       succ,
       append "foo"

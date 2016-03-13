@@ -10,7 +10,6 @@ import Html             exposing (Html)
 import Router.Matcher      as Matcher
 import Router.Types        exposing (..)
 import Router.Helpers      exposing (..)
-import Router.Mailbox      exposing (address)
 
 {-| @Private
   Runs the action for the specified state and initial effects
@@ -57,7 +56,7 @@ render router state =
          <| \r -> getHandlers router state.router.cache Nothing (r, Dict.empty)
 
       views     = List.map .view handlers
-      htmlParts = List.foldr (\view parsed -> Dict.union parsed <| view address state parsed) Dict.empty views
+      htmlParts = List.foldr (\view parsed -> Dict.union parsed <| view state parsed) Dict.empty views
     in layout router state htmlParts
 
 {-| @Private

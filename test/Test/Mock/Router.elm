@@ -6,6 +6,7 @@ import Html             exposing (Html)
 import Router.Matcher as Matcher
 import Router.Helpers      exposing (..)
 import Router.Types        exposing (..)
+import Router.Mailbox      exposing (address)
 
 -- import Response as R
 initialState : RouterState route
@@ -29,6 +30,7 @@ buildUrlMock routerConfig (route, params) =
 routerMock : RouterConfig route (WithRouter route state) -> Router route (WithRouter route state)
 routerMock config = {
     config        = config
+  , address       = address
   , bindForward   = bindForwardMock   config
   , buildUrl      = buildUrlMock      config
   , forward       = \route state -> Response <| noFx state

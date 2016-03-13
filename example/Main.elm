@@ -49,15 +49,15 @@ initialState = {
 
 router : Router Route State
 router = Router.router <| RouterConfig {
-    init      = initialState,
-    useCache  = False,
-    html5     = False,
-    fallback  = (NotFound, Dict.empty),
-    layout    = layout,
-    routes    = routes,
-    routeConfig  = config,
-    inits     = [],
-    inputs    = []
+    init      = initialState
+  , useCache  = False
+  , html5     = False
+  , fallback  = (NotFound, Dict.empty)
+  , layout    = layout
+  , routes    = routes
+  , routeConfig  = config
+  , inits     = []
+  , inputs    = []
   }
 
 result : RouterResult State

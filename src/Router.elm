@@ -95,6 +95,7 @@ router (RouterConfig config) =
 
   in {
     config        = config'
+  , address       = address
   , bindForward   = bindForward   config' state'.router.cache
   , buildUrl      = buildUrl      config' state'.router.cache
   , forward       = forward       config'
