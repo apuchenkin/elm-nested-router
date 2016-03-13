@@ -146,3 +146,11 @@ mapParams : (route -> RawSegment) -> List route -> RouteParams -> List (Route ro
 mapParams rawRoute routes params = flip List.map routes <| \route ->
     let p = getParams (rawRoute route)
     in (route, Dict.filter (\k _ -> List.member k p) params)
+
+hasTrailingSlash : URL -> Bool
+hasTrailingSlash url = case String.right 1 url of
+  "/" -> True
+  _ -> False
+
+removeTrailingSlash : URL -> URL
+removeTrailingSlash url = if hasTrailingSlash url then String.dropRight 1 url else url

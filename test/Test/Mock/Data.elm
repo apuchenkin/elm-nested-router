@@ -73,6 +73,7 @@ routerConfig = RouterConfig {
     init = init
   , useCache = True
   , html5 = True
+  , removeTrailingSlash = True
   , fallback = (NotFound, Dict.empty)
   , layout = layout
   , onTransition = \_ _ _ -> doNothing

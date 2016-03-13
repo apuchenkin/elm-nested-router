@@ -60,7 +60,11 @@ buildUrl routerConfig cache (route, params) =
       Just value -> value
       Nothing -> Matcher.unwrap raw
 
-  in Matcher.buildRawUrl raws (route, params)
+    url = Matcher.buildRawUrl raws (route, params)
+    url' = if config.html5 then url else String.cons hash url
+    url'' = if config.removeTrailingSlash then Matcher.removeTrailingSlash url else url
+  in url''
+
 
 {-| Preforms a transition to provided `Route`. Exposed by `Router` -}
 forward : RouterConfig route (WithRouter route state) -> Route route -> Action (WithRouter route state)
@@ -68,8 +72,7 @@ forward routerConfig route state =
   let
     (RouterConfig config) = routerConfig
     url   = buildUrl routerConfig state.router.cache route
-    url'  = if config.html5 then url else String.cons hash url
-    task  = History.setPath url' |> Task.map (always doNothing)
+    task  = History.setPath url |> Task.map (always doNothing)
   in Response (state, Effects.task task)
 
 {-| Redirects to provided `Route`. Exposed by `Router` -}
@@ -78,8 +81,7 @@ redirect routerConfig route state =
   let
     (RouterConfig config) = routerConfig
     url   = buildUrl routerConfig state.router.cache route
-    url'  = if config.html5 then url else String.cons hash url
-    task  = History.replacePath url' |> Task.map (always doNothing)
+    task  = History.replacePath url |> Task.map (always doNothing)
   in Response (state, Effects.task task)
 
 {-| Router constructor -}
@@ -112,7 +114,8 @@ runRouter router =
       then History.path
       else Signal.map (\hash -> Maybe.withDefault "/" <| Maybe.map snd <| String.uncons hash) History.hash
 
-    init = Signal.map (singleton << (,) True << setUrl router initialState.router.cache) pathSignal
+    init = Signal.map (singleton << (,) True << setUrl router initialState.router.cache)
+      <| if config.removeTrailingSlash then Signal.map Matcher.removeTrailingSlash pathSignal else pathSignal
 
     -- inputs : Signal (List (Bool, Action state))
     inputs =

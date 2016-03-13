@@ -13,7 +13,8 @@ testSuite = suite "Mather" [
     testBuildUrl,
     testReversible,
     testGetPath,
-    testMapParams
+    testMapParams,
+    testRemoveTrailingSlash
   ]
 
 {-| Private -}
@@ -185,4 +186,20 @@ testMapParams =
     test "mapParams"
       <| assertEqual [(Home, Dict.empty), (Page, Dict.fromList [("category","param"),("subcategory","param2")]), (Subpage, Dict.fromList [("item","4")])]
       <| mapParams (fst << routeMap) (getPath Subpage routeTree) params
+  ]
+
+testRemoveTrailingSlash : Test
+testRemoveTrailingSlash = suite "removeTrailingSlash" [
+    test "slash is removed"
+      <| assertEqual "/url/with/trailing/slash"
+      <| removeTrailingSlash "/url/with/trailing/slash/"
+  , test "no slash"
+      <| assertEqual "/url/without/trailing/slash"
+      <| removeTrailingSlash "/url/without/trailing/slash"
+  , test "empty"
+      <| assertEqual ""
+      <| removeTrailingSlash ""
+  , test "just slash"
+      <| assertEqual ""
+      <| removeTrailingSlash "/"
   ]

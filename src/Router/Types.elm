@@ -139,6 +139,7 @@ type alias Transition route state = Maybe (Route route) -> Route route -> Action
   * `init` &mdash; Initial application state
   * `useCache` &mdash; A boolean flag that turns caching on or off. Using cache might slow down application at start-up but will give a perfomance boost in runtime.
   * `html5` &mdash; Use html5 pushState
+  * `removeTrailingSlash` &mdash; Trailing slashes will be removed from matched and builded urls
   * `fallback` &mdash; A fallback route is used when url matching fails
   * `layout` &mdash; Main rendered function that combines named views gathered from Handlers in a single HTML
   * `onTransition` &mdash; An action that should be executed on every router transition
@@ -151,6 +152,7 @@ type RouterConfig route state = RouterConfig {
     init: state
   , useCache: Bool
   , html5: Bool
+  , removeTrailingSlash: Bool
   , fallback: Route route
   , layout: Router route state -> state -> Dict String Html -> Html
   , onTransition: Router route state -> Transition route state
