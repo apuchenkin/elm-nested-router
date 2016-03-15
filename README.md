@@ -138,9 +138,9 @@ see [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/exampl
 - [x] Named views
 
 ### Future thoughts
-- [ ] Improve perfomance
-- [ ] Better handling for trailing slashes
+- [ ] Improve perfomance on specific functions
+- [x] Better handling for trailing slashes
 - [ ] Greedy matcher config (matches first found route or latest one / bypass route config)
-- [ ] Check the possibility to replace router cache with Automaton
+- [x] Check the possibility to replace router cache with Automaton
 - [ ] Query string parameters support
 - [ ] Drop dependencies on libs

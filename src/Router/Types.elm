@@ -2,13 +2,13 @@ module Router.Types where
 {-| Router types
 
 # URL parts
-@docs URL, RawURL, RawSegment, Param, Constraint, Route, RouteConfig, RouteParams
+@docs URL, RawURL, RawSegment, Param, Constraint, Route, RouteConfig, RouteParams, Matcher
 
 # Actions and handlers
 @docs WithRouter, Handler, Action, ActionEffects, Response, Transition
 
 # Router
-@docs Router, RouterConfig, RouterResult, RouterCache, RouterState
+@docs Router, RouterConfig, RouterResult, RouterState
 -}
 
 import Dict           exposing (Dict)
@@ -113,18 +113,18 @@ type alias RouteConfig route state = {
   , handler: Router route state -> Handler state
   }
 
-{-| Router cache -}
-type alias RouterCache route = {
-    rawUrl: Dict String RawURL
-  , unwrap: Dict String (List String)
-  , traverse: Dict String (List route)
-  }
+-- {-| Router cache -}
+-- type alias RouterCache route = {
+--     rawUrl: Dict String RawURL
+--   , unwrap: Dict String (List String)
+--   , traverse: Dict String (List route)
+--   }
 
 {-| A state of router -}
 type alias RouterState route = {
     route: Maybe route
   , params: RouteParams
-  , cache: RouterCache route
+  -- , cache: RouterCache route
   }
 
 {-| Type extension for the application state -}
@@ -150,7 +150,7 @@ type alias Transition route state = Maybe (Route route) -> Route route -> Action
 -}
 type RouterConfig route state = RouterConfig {
     init: state
-  , useCache: Bool
+  -- , useCache: Bool
   , html5: Bool
   , removeTrailingSlash: Bool
   , fallback: Route route
@@ -160,6 +160,18 @@ type RouterConfig route state = RouterConfig {
   , routes: Forest route
   , inits: List (Signal.Signal (Action state))
   , inputs: List (Signal.Signal (Action state))
+  }
+
+{-| A `Matcher` is a provider of following functions:
+  * `unwrap` &mdash; TODO: write description
+    This is useful to create links in application
+  * `composeRawUrl` &mdash; TODO: write description
+  * `getPath` &mdash; TODO: write description
+-}
+type alias Matcher route = {
+    unwrap: String -> List String
+  , composeRawUrl: route -> RawURL
+  , getPath: route -> List route
   }
 
 {-| A `Router` is a provider of following functions:
@@ -172,6 +184,7 @@ type RouterConfig route state = RouterConfig {
 type alias Router route state = {
     config : RouterConfig route state
   , address: Signal.Address (Action state)
+  , matcher: Matcher route
   , bindForward : Route route -> List Html.Attribute -> List Html.Attribute
   , buildUrl : Route route -> URL
   , forward : Route route -> Action state

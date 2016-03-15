@@ -13,7 +13,6 @@ initialState : RouterState route
 initialState = {
     route = Nothing
   , params = Dict.empty
-  , cache = {unwrap = Dict.empty, rawUrl = Dict.empty, traverse = Dict.empty}
   }
 
 bindForwardMock : RouterConfig route (WithRouter route state) -> Route route -> List Html.Attribute -> List Html.Attribute
@@ -28,9 +27,14 @@ buildUrlMock routerConfig (route, params) =
   in Matcher.buildRawUrl raws (route, params)
 
 routerMock : RouterConfig route (WithRouter route state) -> Router route (WithRouter route state)
-routerMock config = {
+routerMock config =
+  let
+    (RouterConfig c) = config
+    matcher = Matcher.matcher (.segment << c.routeConfig) c.routes
+  in {
     config        = config
   , address       = address
+  , matcher       = matcher
   , bindForward   = bindForwardMock   config
   , buildUrl      = buildUrlMock      config
   , forward       = \route state -> Response <| noFx state

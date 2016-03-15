@@ -3,6 +3,7 @@ module Router.Matcher where
 import Regex
 import String
 import List.Extra
+import Memo
 import Dict               exposing (Dict)
 import MultiwayTreeUtil   exposing (treeLookup, forestLookup, traverse)
 import MultiwayTree       exposing (Tree (..), Forest, datum, children)
@@ -40,12 +41,20 @@ getParams string = case fst <| parse paramsParser string of
   Err _     -> Debug.crash "getParams : String -> List String"
   Ok param  -> param
 
+-- unwrapCache : Automaton String (List String)
+-- unwrapCache = Automaton.hiddenState Dict.empty <| \url state -> case Dict.get url state of
+--   Just value -> (value, state)
+--   Nothing ->
+--     let result = unwrap url
+--     in (result, Dict.insert url result state)
+
 {-| @Private
   Unwraps string that contains brackets to a list of strings without brackets
 -}
 unwrap : String -> List String
 unwrap raw =
   let
+    _ = Debug.log "unwrap" raw
     regex   = Regex.regex "^(.*)\\[([^\\]\\[]+)\\](.*)$"
     matches = Regex.find (Regex.AtMost 1) regex raw
     result = case matches of
@@ -60,6 +69,7 @@ unwrap raw =
 parseUrlParams : RawURL -> Dict String Constraint -> URL -> (Result (List String) RouteParams, String)
 parseUrlParams raw constraints url =
   let
+    _ = Debug.log "parseUrlParams" url
     params = getParams raw
     strings = case params of
       [] -> [raw]
@@ -125,9 +135,10 @@ buildRawUrl raws (route, params) =
 composeRawUrl : (route -> RawSegment) -> Forest route -> route -> RawURL
 composeRawUrl rawRoute forest route =
   let
-      zipper = forestLookup route forest
-      path   = Maybe.withDefault [] <| Maybe.map traverse zipper
-      segments = List.map rawRoute path
+    _ = Debug.log "composeRawUrl" route
+    zipper = forestLookup route forest
+    path   = Maybe.withDefault [] <| Maybe.map traverse zipper
+    segments = List.map rawRoute path
   in List.foldl (flip (++)) "" segments
 
 -- decompose Route to string
@@ -138,12 +149,19 @@ buildUrl rawRoute forest (route, params) =
 
 -- path from node a to node b in the forest
 getPath : a -> Forest a -> List a
-getPath route forest = Maybe.withDefault []
+getPath route forest =
+  let
+    _ = Debug.log "getPath" route
+  in Maybe.withDefault []
   <| flip Maybe.map (List.head <| List.filterMap (\tree -> treeLookup route tree) forest)
   <| \zipper -> traverse zipper
 
 mapParams : (route -> RawSegment) -> List route -> RouteParams -> List (Route route)
-mapParams rawRoute routes params = flip List.map routes <| \route ->
+mapParams rawRoute routes params =
+  let
+    _ = Debug.log "mapParams" params
+  in
+    flip List.map routes <| \route ->
     let p = getParams (rawRoute route)
     in (route, Dict.filter (\k _ -> List.member k p) params)
 
@@ -154,3 +172,34 @@ hasTrailingSlash url = case String.right 1 url of
 
 removeTrailingSlash : URL -> URL
 removeTrailingSlash url = if hasTrailingSlash url then String.dropRight 1 url else url
+
+memoFallback : (comparable  -> b) -> List comparable  -> comparable  -> b
+memoFallback fun args =
+  let
+    memoized = Memo.memo fun args
+  in
+    \arg -> case memoized arg of
+      Just val -> val
+      Nothing -> fun arg
+
+-- TODO: refactor for better readability
+matcher : (route -> RawSegment) -> Forest route -> Matcher route
+matcher getSegment forest =
+  let
+    routes = List.concat <| List.map MultiwayTreeUtil.flatten forest
+    urls = List.map composeRawUrl'' routes
+    sids = List.map toString routes
+    dict = Dict.fromList <| List.map2 (,) sids routes
+    stringToRoute sid = case Dict.get sid dict of
+      Just route -> route
+      Nothing -> Debug.crash <| "stringToRoute: " ++ sid
+    segments = List.map getSegment routes
+    composeRawUrl' = memoFallback (\sid -> composeRawUrl getSegment forest (stringToRoute sid)) sids
+    composeRawUrl'' route = composeRawUrl' (toString route)
+    getPath' = memoFallback (\sid -> getPath (stringToRoute sid) forest) sids
+  in
+    {
+      unwrap = memoFallback unwrap (segments ++ urls)
+    , composeRawUrl = composeRawUrl''
+    , getPath = (\route ->getPath' (toString route))
+    }

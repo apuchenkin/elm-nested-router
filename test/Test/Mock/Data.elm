@@ -71,7 +71,6 @@ layout _ _ parsed =
 routerConfig : RouterConfig Route State
 routerConfig = RouterConfig {
     init = init
-  , useCache = True
   , html5 = True
   , removeTrailingSlash = True
   , fallback = (NotFound, Dict.empty)

@@ -14,7 +14,6 @@ testSuite : Test
 testSuite = suite "Functions"
   [ testRunAction
   , testCombineActions
-  , testPrepareCache
   , testRender
   , testSetUrl
   , testSetRoute
@@ -56,17 +55,6 @@ testCombineActions = suite "combineActions"
       <| assert
       <| let (Response (result,_)) = (combineActions [succ, append "A", succ, append "B"]) init
       in result.str == "AB" && result.sum == 2
-  ]
-
--- prepareCache : (route -> RawSegment) -> Forest route -> RouterCache route
-testPrepareCache : Test
-testPrepareCache =
-  let cache = prepareCache (fst << routeMap) routeTree
-  in suite "prepareCache"
-  [
-    test "not empty" <| assertNotEqual Dict.empty cache.rawUrl
-  , test "not empty" <| assertNotEqual Dict.empty cache.unwrap
-  , test "not empty" <| assertNotEqual Dict.empty cache.traverse
   ]
 
 -- render : Router route (WithRouter route state) -> Html -> (WithRouter route state) ->  Html
@@ -126,22 +114,22 @@ testGetHandlers = suite "getHandlers"
   [
     test "length"
       <| assertEqual 1
-      <| List.length <| getHandlers router init.router.cache Nothing (Home, Dict.empty)
+      <| List.length <| getHandlers router Nothing (Home, Dict.empty)
   , test "length"
       <| assertEqual 3
-      <| List.length <| getHandlers router init.router.cache Nothing (Subpage, Dict.empty)
+      <| List.length <| getHandlers router Nothing (Subpage, Dict.empty)
   , test "no transition - no handlers"
       <| assertEqual 0
-      <| List.length <| getHandlers router init.router.cache (Just (Home, Dict.empty)) (Home, Dict.empty)
+      <| List.length <| getHandlers router (Just (Home, Dict.empty)) (Home, Dict.empty)
   , test "unmatched params has no effects"
       <| assertEqual 0
-      <| List.length <| getHandlers router init.router.cache (Just (Home, Dict.empty)) (Home, Dict.fromList [("param1", "value1")])
+      <| List.length <| getHandlers router (Just (Home, Dict.empty)) (Home, Dict.fromList [("param1", "value1")])
   , test "matched params does matter"
       <| assertEqual 1
-      <| List.length <| getHandlers router init.router.cache (Just (Page, Dict.fromList [("category", "bar")])) (Page, Dict.fromList [("category", "foo")])
+      <| List.length <| getHandlers router (Just (Page, Dict.fromList [("category", "bar")])) (Page, Dict.fromList [("category", "foo")])
   , test "matched params does matter"
       <| assertEqual 2
-      <| List.length <| getHandlers router init.router.cache (Just (Subpage, Dict.fromList [("category", "bar")])) (Subpage, Dict.fromList [("category", "foo")])
+      <| List.length <| getHandlers router (Just (Subpage, Dict.fromList [("category", "bar")])) (Subpage, Dict.fromList [("category", "foo")])
   ]
 
 -- setUrl : Router route (WithRouter route state) -> RouterCache route -> String -> Action (WithRouter route state)

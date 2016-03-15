@@ -2,8 +2,6 @@ module Router.Functions where
 
 import Dict
 import List.Extra
-import MultiwayTreeUtil
-import MultiwayTree     exposing (Forest)
 import Effects          exposing (Effects)
 import Html             exposing (Html)
 
@@ -26,23 +24,6 @@ combineActions : List (Action state) -> Action state
 combineActions actions = \state -> Response <| List.foldl runAction (noFx state) actions
 
 {-| @Private
-  Creates cache for a given router config
--}
-prepareCache : (route -> RawSegment) -> Forest route -> RouterCache route
-prepareCache getSegment forest =
-  let
-    routes = List.concat <| List.map MultiwayTreeUtil.flatten forest
-    urls = flip List.map routes <| \r -> (toString r, Matcher.composeRawUrl getSegment forest r)
-    segments = List.map getSegment routes
-    unwraps = flip List.map (segments ++ List.map snd urls) <| \url -> (url, Matcher.unwrap url)
-    traverses = flip List.map routes <| \route -> (toString route, Matcher.getPath route forest)
-  in {
-    rawUrl    = Dict.fromList urls
-  , unwrap    = Dict.fromList unwraps
-  , traverse  = Dict.fromList traverses
-  }
-
-{-| @Private
   Renders handlers for current route
  -}
 render : Router route (WithRouter route state) -> (WithRouter route state) -> Html
@@ -53,7 +34,7 @@ render router state =
       route       = state.router.route
       handlers    = Maybe.withDefault []
          <| flip Maybe.map route
-         <| \r -> getHandlers router state.router.cache Nothing (r, Dict.empty)
+         <| \r -> getHandlers router Nothing (r, Dict.empty)
 
       views     = List.map .view handlers
       htmlParts = List.foldr (\view parsed -> Dict.union parsed <| view state parsed) Dict.empty views
@@ -62,11 +43,11 @@ render router state =
 {-| @Private
   Performs attempt to match provided url, returns fallback action on fail
   -}
-setUrl : Router route (WithRouter route state) -> RouterCache route -> String -> Action (WithRouter route state)
-setUrl router cache url =
+setUrl : Router route (WithRouter route state) -> String -> Action (WithRouter route state)
+setUrl router url =
   let
     (RouterConfig config) = router.config
-  in case (matchRoute router.config cache url) of
+  in case (matchRoute router.config router.matcher.unwrap url) of
     Nothing               -> router.redirect config.fallback
     Just route            -> setRoute router route
 
@@ -91,7 +72,7 @@ transition : Router route (WithRouter route state) -> Transition route (WithRout
 transition router from to state =
   let
     (RouterConfig config) = router.config
-    handlers = getHandlers router state.router.cache from to
+    handlers = getHandlers router from to
     actions  =
       (config.onTransition router from to)
       :: List.map (combineActions << .actions) handlers
@@ -101,8 +82,8 @@ transition router from to state =
 {-| @Private
   Returns a set of handlers applicable to transtition between "from" and "to" routes.
 -}
-getHandlers : Router route state -> RouterCache route -> Maybe (Route route) -> Route route -> List (Handler state)
-getHandlers router cache from to =
+getHandlers : Router route state -> Maybe (Route route) -> Route route -> List (Handler state)
+getHandlers router from to =
   let
     (RouterConfig config) = router.config
     fromRoute = Maybe.map fst from
@@ -110,15 +91,8 @@ getHandlers router cache from to =
     toRoute = fst to
     toParams = snd to
 
-    fromPath = Maybe.withDefault []
-     <| flip Maybe.map fromRoute
-     <| \f -> case Dict.get (toString f) cache.traverse of
-      Just path -> path
-      Nothing   -> Matcher.getPath f config.routes
-
-    toPath = case Dict.get (toString toRoute) cache.traverse of
-     Just path -> path
-     Nothing   -> Matcher.getPath toRoute config.routes
+    fromPath = Maybe.withDefault [] <| Maybe.map (router.matcher.getPath) fromRoute
+    toPath = router.matcher.getPath toRoute
     path = List.map2 (,) fromPath toPath
 
     fromPath' = Matcher.mapParams (.segment << config.routeConfig) fromPath fromParams
@@ -135,14 +109,12 @@ getHandlers router cache from to =
 {-| @Private
   Preforms attempt to match provided url to a route by a given routes configuration
   -}
-matchRoute : RouterConfig route state -> RouterCache route -> String -> Maybe (Route route)
-matchRoute (RouterConfig config) cache url =
+matchRoute : RouterConfig route state -> (String -> List String) -> String -> Maybe (Route route)
+matchRoute (RouterConfig config) unwrap url =
   let
     routeConfig = config.routeConfig
     getSegment = .segment << routeConfig
     getConstraints = .constraints << routeConfig
-    rawRoute route = case Dict.get (getSegment route) cache.unwrap of
-      Just value -> (value, getConstraints route)
-      Nothing -> (Matcher.unwrap <| getSegment route, getConstraints route)
+    rawRoute route = (unwrap (getSegment route), getConstraints route)
   in
     Matcher.matchRaw rawRoute config.routes url
