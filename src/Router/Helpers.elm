@@ -1,11 +1,12 @@
 module Router.Helpers where
 
 {-| A set of utility functions
-@docs singleton, noFx, combineParams, chainAction, doNothing
+@docs singleton, noFx, combineParams, chainAction, doNothing, memoFallback
 -}
 
 import Effects
 import Dict
+import Memo
 import Router.Types exposing (ActionEffects, Response (..), Action, RouteParams, Route)
 
 {-| Wraps something in a list -}
@@ -31,3 +32,13 @@ chainAction action1 action2 state =
     (Response (state', effects)) = action1 state
     (Response (state'', effects')) = action2 state'
   in Response (state'', Effects.batch [effects, effects'])
+
+{-| Performs function memoization with a fallback -}
+memoFallback : (comparable  -> b) -> List comparable  -> comparable  -> b
+memoFallback fun args =
+  let
+    memoized = Memo.memo fun args
+  in
+    \arg -> case memoized arg of
+      Just val -> val
+      Nothing -> fun arg

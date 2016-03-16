@@ -107,10 +107,10 @@ type alias Handler state = {
   "mark" and "joe" will be stored as `author` param, and "1" as `postId`
   Everything enclosed by brackets considered as optional.
 -}
-type alias RouteConfig route state = {
+type alias RouteConfig state = {
     segment: RawSegment
   , constraints: Dict Param Constraint
-  , handler: Router route state -> Handler state
+  , handler: Handler state
   }
 
 -- {-| Router cache -}
@@ -124,7 +124,6 @@ type alias RouteConfig route state = {
 type alias RouterState route = {
     route: Maybe route
   , params: RouteParams
-  -- , cache: RouterCache route
   }
 
 {-| Type extension for the application state -}
@@ -156,7 +155,7 @@ type RouterConfig route state = RouterConfig {
   , fallback: Route route
   , layout: Router route state -> state -> Dict String Html -> Html
   , onTransition: Router route state -> Transition route state
-  , routeConfig: route -> RouteConfig route state
+  , routeConfig: route -> RouteConfig state
   , routes: Forest route
   , inits: List (Signal.Signal (Action state))
   , inputs: List (Signal.Signal (Action state))
@@ -168,10 +167,11 @@ type RouterConfig route state = RouterConfig {
   * `composeRawUrl` &mdash; TODO: write description
   * `getPath` &mdash; TODO: write description
 -}
-type alias Matcher route = {
+type alias Matcher route state = {
     unwrap: String -> List String
   , composeRawUrl: route -> RawURL
   , getPath: route -> List route
+  , getConfig: route -> RouteConfig state
   }
 
 {-| A `Router` is a provider of following functions:
@@ -184,7 +184,7 @@ type alias Matcher route = {
 type alias Router route state = {
     config : RouterConfig route state
   , address: Signal.Address (Action state)
-  , matcher: Matcher route
+  , matcher: Matcher route state
   , bindForward : Route route -> List Html.Attribute -> List Html.Attribute
   , buildUrl : Route route -> URL
   , forward : Route route -> Action state

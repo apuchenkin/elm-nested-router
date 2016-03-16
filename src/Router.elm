@@ -36,7 +36,7 @@ initialState = {
   }
 
 {-| binds forward action to existing HTML attributes. Exposed by `Router` -}
-bindForward : RouterConfig route (WithRouter route state) -> Matcher route -> Route route -> List Html.Attribute -> List Html.Attribute
+bindForward : RouterConfig route (WithRouter route state) -> Matcher route (WithRouter route state) -> Route route -> List Html.Attribute -> List Html.Attribute
 bindForward config matcher route attrs =
   let
     options = {stopPropagation = True, preventDefault = True}
@@ -47,7 +47,7 @@ bindForward config matcher route attrs =
     :: attrs
 
 {-| Decomposes Route to string. Exposed by `Router` -}
-buildUrl : RouterConfig route (WithRouter route state) -> Matcher route -> Route route -> String
+buildUrl : RouterConfig route (WithRouter route state) -> Matcher route (WithRouter route state) -> Route route -> String
 buildUrl routerConfig matcher (route, params) =
   let
     (RouterConfig config) = routerConfig
@@ -58,7 +58,7 @@ buildUrl routerConfig matcher (route, params) =
   in url''
 
 {-| Preforms a transition to provided `Route`. Exposed by `Router` -}
-forward : RouterConfig route (WithRouter route state) -> Matcher route -> Route route -> Action (WithRouter route state)
+forward : RouterConfig route (WithRouter route state) -> Matcher route (WithRouter route state) -> Route route -> Action (WithRouter route state)
 forward routerConfig matcher route state =
   let
     (RouterConfig config) = routerConfig
@@ -67,7 +67,7 @@ forward routerConfig matcher route state =
   in Response (state, Effects.task task)
 
 {-| Redirects to provided `Route`. Exposed by `Router` -}
-redirect : RouterConfig route (WithRouter route state) -> Matcher route -> Route route -> Action (WithRouter route state)
+redirect : RouterConfig route (WithRouter route state) -> Matcher route (WithRouter route state) -> Route route -> Action (WithRouter route state)
 redirect routerConfig matcher route state =
   let
     (RouterConfig config) = routerConfig
@@ -79,18 +79,15 @@ redirect routerConfig matcher route state =
 router : RouterConfig route (WithRouter route state) -> Router route (WithRouter route state)
 router config =
   let
-    (RouterConfig c) = config
-    matcher = Matcher.matcher (.segment << c.routeConfig) c.routes
-    _ = Debug.log "router" config
-  in
-    {
+    matcher' = matcher config
+  in {
     config        = config
   , address       = address
-  , matcher       = matcher
-  , bindForward   = bindForward   config matcher
-  , buildUrl      = buildUrl      config matcher
-  , forward       = forward       config matcher
-  , redirect      = redirect      config matcher
+  , matcher       = matcher'
+  , bindForward   = bindForward   config matcher'
+  , buildUrl      = buildUrl      config matcher'
+  , forward       = forward       config matcher'
+  , redirect      = redirect      config matcher'
   }
 
 {-| Launches the router -}
