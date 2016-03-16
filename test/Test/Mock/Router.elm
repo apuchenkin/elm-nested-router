@@ -30,13 +30,12 @@ routerMock : RouterConfig route (WithRouter route state) -> Router route (WithRo
 routerMock config =
   let
     (RouterConfig c) = config
-    matcher = Matcher.matcher (.segment << c.routeConfig) c.routes
   in {
     config        = config
   , address       = address
-  , matcher       = matcher
   , bindForward   = bindForwardMock   config
   , buildUrl      = buildUrlMock      config
   , forward       = \route state -> Response <| noFx state
   , redirect      = \route state -> Response <| noFx state
+  , match         = \_ -> Nothing
   }

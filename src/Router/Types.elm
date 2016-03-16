@@ -2,7 +2,7 @@ module Router.Types where
 {-| Router types
 
 # URL parts
-@docs URL, RawURL, RawSegment, Param, Constraint, Route, RouteConfig, RouteParams, Matcher
+@docs URL, RawURL, RawSegment, Param, Constraint, Route, RouteConfig, RouteParams
 
 # Actions and handlers
 @docs WithRouter, Handler, Action, ActionEffects, Response, Transition
@@ -113,13 +113,6 @@ type alias RouteConfig state = {
   , handler: Handler state
   }
 
--- {-| Router cache -}
--- type alias RouterCache route = {
---     rawUrl: Dict String RawURL
---   , unwrap: Dict String (List String)
---   , traverse: Dict String (List route)
---   }
-
 {-| A state of router -}
 type alias RouterState route = {
     route: Maybe route
@@ -161,18 +154,6 @@ type RouterConfig route state = RouterConfig {
   , inputs: List (Signal.Signal (Action state))
   }
 
-{-| A `Matcher` is a provider of following functions:
-  * `unwrap` &mdash; TODO: write description
-    This is useful to create links in application
-  * `composeRawUrl` &mdash; TODO: write description
-  * `getPath` &mdash; TODO: write description
--}
-type alias Matcher route state = {
-    unwrap: String -> List String
-  , composeRawUrl: route -> RawURL
-  , getPath: route -> List route
-  , getConfig: route -> RouteConfig state
-  }
 
 {-| A `Router` is a provider of following functions:
   * `bindForward` &mdash; Binds a `forward` action to a provided `Route` with a list of html attributes.
@@ -184,11 +165,11 @@ type alias Matcher route state = {
 type alias Router route state = {
     config : RouterConfig route state
   , address: Signal.Address (Action state)
-  , matcher: Matcher route state
   , bindForward : Route route -> List Html.Attribute -> List Html.Attribute
   , buildUrl : Route route -> URL
   , forward : Route route -> Action state
   , redirect : Route route -> Action state
+  , match : String -> Maybe (Route route)
   }
 
 {-| A `RouterResult` is a combination of resulting signals:

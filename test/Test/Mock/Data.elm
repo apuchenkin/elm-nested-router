@@ -27,27 +27,27 @@ type alias State = WithRouter Route
     sum: Int
   }
 
-config : Route -> RouteConfig Route State
+config : Route -> RouteConfig State
 config route = case route of
     Home -> {
       segment = "/"
     , constraints = Dict.empty
-    , handler = always handlerA
+    , handler = handlerA
     }
     NotFound -> {
       segment = "/404"
     , constraints = Dict.empty
-    , handler = always handlerA
+    , handler = handlerA
     }
     Page -> {
       segment = ":category[/:subcategory]"
     , constraints = Dict.fromList [("category", Enum ["A","B","C"])]
-    , handler = always handlerB
+    , handler = handlerB
     }
     Subpage -> {
       segment = "/item/:item"
     , constraints = Dict.fromList [("item", Int)]
-    , handler = always handlerC
+    , handler = handlerC
     }
 
 routeMap : Route -> (RawURL, Dict String Constraint)

@@ -112,7 +112,7 @@ matchRaw rawRoute forest url = List.head <| List.filterMap (\tree ->
     ) forest
 
 match : (route -> (RawURL, Dict String Constraint)) -> Forest route -> URL -> Maybe (Route route)
-match rawRoute forest url = let _ = Debug.log "match" rawRoute in matchRaw ((\(r,c) -> (unwrap r, c)) << rawRoute) forest url
+match rawRoute forest url = matchRaw ((\(r,c) -> (unwrap r, c)) << rawRoute) forest url
 
 buildRawUrl : List RawURL -> Route route -> URL
 buildRawUrl raws (route, params) =

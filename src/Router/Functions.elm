@@ -49,7 +49,7 @@ setUrl : Router route (WithRouter route state) -> String -> Action (WithRouter r
 setUrl router url =
   let
     (RouterConfig config) = router.config
-  in case (matchRoute config.routes router.matcher url) of
+  in case router.match url of
     Nothing               -> router.redirect config.fallback
     Just route            -> setRoute router route
 
@@ -87,14 +87,15 @@ transition router from to state =
 getHandlers : Router route state -> Maybe (Route route) -> Route route -> List (Handler state)
 getHandlers router from to =
   let
-    getConfig = router.matcher.getConfig
+    (RouterConfig config) = router.config
+    getConfig = config.routeConfig
     fromRoute = Maybe.map fst from
     fromParams = Maybe.withDefault Dict.empty <| Maybe.map snd from
     toRoute = fst to
     toParams = snd to
 
-    fromPath = Maybe.withDefault [] <| Maybe.map (router.matcher.getPath) fromRoute
-    toPath = router.matcher.getPath toRoute
+    fromPath = Maybe.withDefault [] <| Maybe.map (flip Matcher.getPath config.routes) fromRoute
+    toPath = Matcher.getPath toRoute config.routes
     path = List.map2 (,) fromPath toPath
 
     fromPath' = Matcher.mapParams (.segment << getConfig) fromPath fromParams
@@ -106,7 +107,9 @@ getHandlers router from to =
 
     routes = List.drop commons toPath
 
-  in List.map (.handler << router.matcher.getConfig) routes
+  in List.map (.handler << getConfig) routes
+
+-- getHandlers' router sids = memoFallback (\sid -> Matcher.getPath (stringToRoute sid) forest) sids
 
 {-| @Private
   Preforms attempt to match provided url to a route by a given routes configuration
@@ -120,6 +123,12 @@ matchRoute routes matcher url =
     rawRoute route = (matcher.unwrap (getSegment route), getConstraints route)
   in
     Matcher.matchRaw rawRoute routes url
+
+type alias Matcher route state = {
+    unwrap: String -> List String
+  , composeRawUrl: route -> RawURL
+  , getConfig: route -> RouteConfig state
+  }
 
 -- TODO: refactor for better readability
 matcher : RouterConfig route state -> Matcher route state
@@ -138,13 +147,11 @@ matcher config =
     segments = List.map getSegment routes
     composeRawUrl' = memoFallback (\sid -> Matcher.composeRawUrl getSegment forest (stringToRoute sid)) sids
     composeRawUrl'' route = composeRawUrl' (toString route)
-    getPath' = memoFallback (\sid -> Matcher.getPath (stringToRoute sid) forest) sids
     getConfig = memoFallback (\sid -> c.routeConfig (stringToRoute sid)) sids
     getConfig' route = getConfig (toString route)
   in
     {
       unwrap = memoFallback Matcher.unwrap (segments ++ urls)
     , composeRawUrl = composeRawUrl''
-    , getPath = (\route -> getPath' (toString route))
     , getConfig = getConfig'
     }

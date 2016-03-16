@@ -79,15 +79,17 @@ redirect routerConfig matcher route state =
 router : RouterConfig route (WithRouter route state) -> Router route (WithRouter route state)
 router config =
   let
+    (RouterConfig c) = config
     matcher' = matcher config
+    config' = RouterConfig <| { c | routeConfig = matcher'.getConfig}
   in {
-    config        = config
-  , address       = address
-  , matcher       = matcher'
-  , bindForward   = bindForward   config matcher'
-  , buildUrl      = buildUrl      config matcher'
-  , forward       = forward       config matcher'
-  , redirect      = redirect      config matcher'
+    config = config'
+  , address = address
+  , bindForward = bindForward config' matcher'
+  , buildUrl = buildUrl config' matcher'
+  , forward = forward config' matcher'
+  , redirect = redirect config' matcher'
+  , match = matchRoute c.routes matcher'
   }
 
 {-| Launches the router -}
