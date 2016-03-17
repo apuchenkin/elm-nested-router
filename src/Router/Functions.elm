@@ -1,11 +1,10 @@
 module Router.Functions where
 
 import Dict
-import List.Extra
 import Effects          exposing (Effects)
 import Html             exposing (Html)
 
-import Router.Matcher      as Matcher
+import Router.Matcher      as Matcher exposing (Matcher)
 import Router.Types        exposing (..)
 import Router.Helpers      exposing (..)
 
@@ -32,12 +31,9 @@ render router state =
       (RouterConfig config) = router.config
       layout      = config.layout
       route       = state.router.route
-      handlers    = Maybe.withDefault []
-         <| flip Maybe.map route
-         <| \r -> getHandlers router Nothing (r, Dict.empty)
-
-      views     = List.map .view handlers
-      htmlParts = List.foldr (\view parsed -> Dict.union parsed <| view state parsed) Dict.empty views
+      handlers    = Maybe.withDefault [] <| Maybe.map router.getHandlers route
+      views       = List.map .view handlers
+      htmlParts   = List.foldr (\view parsed -> Dict.union parsed <| view state parsed) Dict.empty views
     in layout router state htmlParts
 
 {-| @Private
@@ -72,7 +68,7 @@ transition : Router route (WithRouter route state) -> Transition route (WithRout
 transition router from to state =
   let
     (RouterConfig config) = router.config
-    handlers = getHandlers router from to
+    handlers = Matcher.getHandlers config.routeConfig from to
     actions  =
       (config.onTransition router from to)
       :: List.map (combineActions << .actions) handlers
@@ -80,71 +76,7 @@ transition router from to state =
   in Response <| List.foldl runAction (noFx state) actions
 
 {-| @Private
-  Returns a set of handlers applicable to transtition between "from" and "to" routes.
--}
-getHandlers : Router route state -> Maybe (Route route) -> Route route -> List (Handler state)
-getHandlers router from to =
-  let
-    (RouterConfig config) = router.config
-    getConfig = config.routeConfig
-    getParent = .parent << getConfig
-    fromRoute = Maybe.map fst from
-    fromParams = Maybe.withDefault Dict.empty <| Maybe.map snd from
-    toRoute = fst to
-    toParams = snd to
-
-    fromPath = Maybe.withDefault [] <| Maybe.map (Matcher.getPath getParent) fromRoute
-    toPath = Matcher.getPath getParent toRoute
-    path = List.map2 (,) fromPath toPath
-
-    fromPath' = Matcher.mapParams (.segment << getConfig) fromPath fromParams
-    toPath'   = Matcher.mapParams (.segment << getConfig) toPath toParams
-
-    commons = List.length
-      <| List.Extra.takeWhile (uncurry (==))
-      <| List.map2 (,) fromPath' toPath'
-
-    routes = List.drop commons toPath
-
-  in List.map (.handler << getConfig) routes
-
--- getHandlers' router sids = memoFallback (\sid -> Matcher.getPath (stringToRoute sid) forest) sids
-
-{-| @Private
   Preforms attempt to match provided url to a route by a given routes configuration
   -}
-matchRoute : List route -> Matcher route state -> String -> Maybe (Route route)
-matchRoute routes matcher url =
-  Matcher.match' matcher.unwrap matcher.getConfig routes url
-
-type alias Matcher route state = {
-    unwrap: String -> List String
-  , composeRawUrl: route -> RawURL
-  , getConfig: route -> RouteConfig route state
-  }
-
--- TODO: refactor for better readability
-matcher : RouterConfig route state -> Matcher route state
-matcher config =
-  let
-    (RouterConfig c) = config
-    getSegment = .segment << c.routeConfig
-    getParent = .parent << c.routeConfig
-    routes = c.routes
-    urls = List.map composeRawUrl'' routes
-    sids = List.map toString routes
-    dict = Dict.fromList <| List.map2 (,) sids routes
-    stringToRoute sid = case Dict.get sid dict of
-      Just route -> route
-      Nothing -> Debug.crash <| "stringToRoute: " ++ sid
-    segments = List.map getSegment routes
-    composeRawUrl' = memoFallback (\sid -> Matcher.composeRawUrl getSegment getParent(stringToRoute sid)) sids
-    composeRawUrl'' route = composeRawUrl' (toString route)
-    getConfig = memoFallback (\sid -> c.routeConfig (stringToRoute sid)) sids
-    getConfig' route = getConfig (toString route)
-  in
-    {
-      unwrap = memoFallback Matcher.unwrap (segments ++ urls)
-    , composeRawUrl = composeRawUrl''
-    , getConfig = getConfig'
-    }
+matchRoute : Matcher route state -> String -> Maybe (Route route)
+matchRoute matcher url = matcher.match url

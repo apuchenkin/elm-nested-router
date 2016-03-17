@@ -170,6 +170,7 @@ type alias Router route state = {
   , forward : Route route -> Action state
   , redirect : Route route -> Action state
   , match : String -> Maybe (Route route)
+  , getHandlers : route -> List (Handler state)
   }
 
 {-| A `RouterResult` is a combination of resulting signals:

@@ -26,6 +26,7 @@ routerMock : RouterConfig route (WithRouter route state) -> Router route (WithRo
 routerMock config =
   let
     (RouterConfig c) = config
+    matcher' = Matcher.matcher config
   in {
     config        = config
   , address       = address
@@ -34,4 +35,5 @@ routerMock config =
   , forward       = \route state -> Response <| noFx state
   , redirect      = \route state -> Response <| noFx state
   , match         = \_ -> Nothing
+  , getHandlers   = matcher'.getHandlers
   }

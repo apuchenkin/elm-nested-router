@@ -7,14 +7,15 @@ import Test.Mock.Data exposing (..)
 
 testSuite : Test
 testSuite = suite "Mather" [
-    testUnwrap,
-    testParseUrlParams,
-    testMatch,
-    testBuildUrl,
-    testReversible,
-    testGetPath,
-    testMapParams,
-    testRemoveTrailingSlash
+    testUnwrap
+  , testParseUrlParams
+  , testMatch
+  , testBuildUrl
+  , testReversible
+  , testGetPath
+  , testMapParams
+  , testRemoveTrailingSlash
+  , testGetHandlers
   ]
 
 {-| Private -}
@@ -208,4 +209,28 @@ testRemoveTrailingSlash = suite "removeTrailingSlash" [
   , test "just slash"
       <| assertEqual ""
       <| removeTrailingSlash "/"
+  ]
+
+-- getHandlers : Router route state -> RouterCache route -> Maybe (Route route) -> Route route -> List (Handler state)
+testGetHandlers : Test
+testGetHandlers = suite "getHandlers"
+  [
+    test "length"
+      <| assertEqual 1
+      <| List.length <| getHandlers config Nothing (Home, Dict.empty)
+  , test "length"
+      <| assertEqual 3
+      <| List.length <| getHandlers config Nothing (Subpage, Dict.empty)
+  , test "no transition - no handlers"
+      <| assertEqual 0
+      <| List.length <| getHandlers config (Just (Home, Dict.empty)) (Home, Dict.empty)
+  , test "unmatched params has no effects"
+      <| assertEqual 0
+      <| List.length <| getHandlers config (Just (Home, Dict.empty)) (Home, Dict.fromList [("param1", "value1")])
+  , test "matched params does matter"
+      <| assertEqual 1
+      <| List.length <| getHandlers config (Just (Page, Dict.fromList [("category", "bar")])) (Page, Dict.fromList [("category", "foo")])
+  , test "matched params does matter"
+      <| assertEqual 2
+      <| List.length <| getHandlers config (Just (Subpage, Dict.fromList [("category", "bar")])) (Subpage, Dict.fromList [("category", "foo")])
   ]

@@ -19,7 +19,7 @@ import Html.Events      exposing (onWithOptions)
 import Html.Attributes  as Attr
 import Json.Decode      as Json
 
-import Router.Matcher      as Matcher
+import Router.Matcher      as Matcher exposing (Matcher)
 import Router.Helpers      exposing (..)
 import Router.Types        exposing (..)
 import Router.Functions    exposing (..)
@@ -51,8 +51,7 @@ buildUrl : RouterConfig route (WithRouter route state) -> Matcher route (WithRou
 buildUrl routerConfig matcher (route, params) =
   let
     (RouterConfig config) = routerConfig
-    raws = matcher.unwrap <| matcher.composeRawUrl route
-    url = Matcher.buildRawUrl raws (route, params)
+    url = matcher.buildUrl (route, params)
     url' = if config.html5 then url else String.cons hash url
     url'' = if config.removeTrailingSlash then Matcher.removeTrailingSlash url else url
   in url''
@@ -81,7 +80,7 @@ router : RouterConfig route (WithRouter route state) -> Router route (WithRouter
 router config =
   let
     (RouterConfig c) = config
-    matcher' = matcher config
+    matcher' = Matcher.matcher config
     config' = RouterConfig <| { c | routeConfig = matcher'.getConfig}
   in {
     config = config'
@@ -90,7 +89,8 @@ router config =
   , buildUrl = buildUrl config' matcher'
   , forward = forward config' matcher'
   , redirect = redirect config' matcher'
-  , match = matchRoute c.routes matcher'
+  , match = matchRoute matcher'
+  , getHandlers = matcher'.getHandlers
   }
 
 {-| Launches the router -}

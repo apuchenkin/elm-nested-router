@@ -11,7 +11,7 @@ import Combine.Infix  exposing ((<$>), (*>), (<*), (<*>), (<|>))
 import Combine.Num
 
 import Router.Types    exposing (..)
-import Router.Helpers  exposing (singleton, combineParams)
+import Router.Helpers  exposing (singleton, combineParams, memoFallback)
 
 paramChar : Char
 paramChar = ':'
@@ -167,6 +167,7 @@ getPathInternal getParent route acc = case getParent route of
 getPath : (route -> Maybe route) -> route -> List route
 getPath getParent route = List.reverse <| getPathInternal getParent route []
 
+-- TODO: improve perfomance
 mapParams : (route -> RawSegment) -> List route -> RouteParams -> List (Route route)
 mapParams getSegment routes params = flip List.map routes <| \route ->
     let p = getParams (getSegment route)
@@ -179,3 +180,73 @@ hasTrailingSlash url = case String.right 1 url of
 
 removeTrailingSlash : URL -> URL
 removeTrailingSlash url = if hasTrailingSlash url then String.dropRight 1 url else url
+
+{-| @Private
+  Returns a set of handlers applicable to transtition between "from" and "to" routes.
+-}
+getHandlers : (route -> RouteConfig route state) -> Maybe (Route route) -> Route route -> List (Handler state)
+getHandlers getConfig from to =
+  let
+    getConfig = getConfig
+    getParent = .parent << getConfig
+    fromRoute = Maybe.map fst from
+    fromParams = Maybe.withDefault Dict.empty <| Maybe.map snd from
+    toRoute = fst to
+    toParams = snd to
+
+    fromPath = Maybe.withDefault [] <| Maybe.map (getPath getParent) fromRoute
+    toPath = getPath getParent toRoute
+    path = List.map2 (,) fromPath toPath
+
+    fromPath' = mapParams (.segment << getConfig) fromPath fromParams
+    toPath'   = mapParams (.segment << getConfig) toPath toParams
+
+    commons = List.length
+      <| List.Extra.takeWhile (uncurry (==))
+      <| List.map2 (,) fromPath' toPath'
+
+    routes = List.drop commons toPath
+
+  in List.map (.handler << getConfig) routes
+
+type alias Matcher route state = {
+    getConfig: route -> RouteConfig route state
+  , getHandlers: route -> List (Handler state)
+  , buildUrl: Route route -> URL
+  , match: URL -> Maybe (Route route)
+  }
+
+-- matcher creates an object that provides a memoized versions of Matcher functions
+matcher : RouterConfig route state -> Matcher route state
+matcher (RouterConfig config) =
+  let
+    routes = config.routes
+    getSegment = .segment << config.routeConfig
+    getParent = .parent << config.routeConfig
+    segments = List.map getSegment routes
+
+    urls = List.map composeUrl' routes
+    sids = List.map toString routes
+    dict = Dict.fromList <| List.map2 (,) sids routes
+    stringToRoute sid = case Dict.get sid dict of
+      Just route -> route
+      Nothing -> Debug.crash <| "stringToRoute: " ++ sid
+
+    composeUrl    = memoFallback (\sid -> composeRawUrl getSegment getParent(stringToRoute sid)) sids
+    getConfig     = memoFallback (\sid -> config.routeConfig (stringToRoute sid)) sids
+    unwrap'       = memoFallback unwrap (segments ++ urls)
+    handlers      = memoFallback (\sid -> getHandlers getConfig' Nothing (stringToRoute sid, Dict.empty)) sids
+
+    composeUrl' route = composeUrl (toString route)
+    getConfig' route = getConfig (toString route)
+    handlers' route = handlers (toString route)
+    buildUrl' route =
+      let raws = unwrap' <| composeUrl' (fst route)
+      in buildRawUrl raws route
+  in
+    {
+      getConfig = getConfig'
+    , getHandlers = handlers'
+    , buildUrl = buildUrl'
+    , match = match' unwrap' getConfig' routes
+    }

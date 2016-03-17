@@ -18,7 +18,6 @@ testSuite = suite "Functions"
   , testSetUrl
   , testSetRoute
   , testTransition
-  , testGetHandlers
   , testMatchRoute
   ]
 
@@ -106,30 +105,6 @@ testSetRoute =
   , test "route actions"
       <| assertEqual (0,"")
       <| let (Response (result,_)) = setRoute router (Subpage, Dict.empty) (state' Subpage) in (result.sum, result.str)
-  ]
-
--- getHandlers : Router route state -> RouterCache route -> Maybe (Route route) -> Route route -> List (Handler state)
-testGetHandlers : Test
-testGetHandlers = suite "getHandlers"
-  [
-    test "length"
-      <| assertEqual 1
-      <| List.length <| getHandlers router Nothing (Home, Dict.empty)
-  , test "length"
-      <| assertEqual 3
-      <| List.length <| getHandlers router Nothing (Subpage, Dict.empty)
-  , test "no transition - no handlers"
-      <| assertEqual 0
-      <| List.length <| getHandlers router (Just (Home, Dict.empty)) (Home, Dict.empty)
-  , test "unmatched params has no effects"
-      <| assertEqual 0
-      <| List.length <| getHandlers router (Just (Home, Dict.empty)) (Home, Dict.fromList [("param1", "value1")])
-  , test "matched params does matter"
-      <| assertEqual 1
-      <| List.length <| getHandlers router (Just (Page, Dict.fromList [("category", "bar")])) (Page, Dict.fromList [("category", "foo")])
-  , test "matched params does matter"
-      <| assertEqual 2
-      <| List.length <| getHandlers router (Just (Subpage, Dict.fromList [("category", "bar")])) (Subpage, Dict.fromList [("category", "foo")])
   ]
 
 -- setUrl : Router route (WithRouter route state) -> RouterCache route -> String -> Action (WithRouter route state)
