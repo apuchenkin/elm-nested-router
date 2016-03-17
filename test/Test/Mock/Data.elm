@@ -2,7 +2,6 @@ module Test.Mock.Data where
 
 import Html exposing (Html)
 import Dict exposing (Dict)
-import MultiwayTree exposing (Tree (..), Forest)
 
 import Router.Helpers  exposing (noFx, doNothing)
 import Router.Types    exposing (..)
@@ -11,15 +10,8 @@ import Test.Mock.Router exposing (..)
 
 type Route = Home | Page | Subpage | NotFound
 
-routeTree : Forest Route
-routeTree = [
-    Tree NotFound [],
-    Tree Home [
-      Tree Page [
-        Tree Subpage []
-      ]
-    ]
-  ]
+routes : List Route
+routes = [NotFound, Home, Page, Subpage]
 
 type alias State = WithRouter Route
   {
@@ -27,31 +19,36 @@ type alias State = WithRouter Route
     sum: Int
   }
 
-config : Route -> RouteConfig State
+config : Route -> RouteConfig Route State
 config route = case route of
     Home -> {
       segment = "/"
+    , bypass = False
+    , parent = Nothing
     , constraints = Dict.empty
     , handler = handlerA
     }
     NotFound -> {
       segment = "/404"
+    , bypass = False
+    , parent = Nothing
     , constraints = Dict.empty
     , handler = handlerA
     }
     Page -> {
       segment = ":category[/:subcategory]"
+    , bypass = False
+    , parent = Just Home
     , constraints = Dict.fromList [("category", Enum ["A","B","C"])]
     , handler = handlerB
     }
     Subpage -> {
       segment = "/item/:item"
+    , bypass = False
+    , parent = Just Page
     , constraints = Dict.fromList [("item", Int)]
     , handler = handlerC
     }
-
-routeMap : Route -> (RawURL, Dict String Constraint)
-routeMap route = (.segment <| config route, .constraints <| config route)
 
 init : State
 init = {
@@ -76,7 +73,7 @@ routerConfig = RouterConfig {
   , fallback = (NotFound, Dict.empty)
   , layout = layout
   , onTransition = \_ _ _ -> doNothing
-  , routes = routeTree
+  , routes = routes
   , routeConfig = config
   , inits = []
   , inputs = []

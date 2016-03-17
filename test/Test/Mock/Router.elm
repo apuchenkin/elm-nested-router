@@ -19,12 +19,8 @@ bindForwardMock : RouterConfig route (WithRouter route state) -> Route route -> 
 bindForwardMock config route attrs = attrs
 
 buildUrlMock : RouterConfig route (WithRouter route state) -> Route route -> String
-buildUrlMock routerConfig (route, params) =
-  let
-    (RouterConfig config) = routerConfig
-    raw =  Matcher.composeRawUrl (.segment << config.routeConfig) config.routes route
-    raws = Matcher.unwrap raw
-  in Matcher.buildRawUrl raws (route, params)
+buildUrlMock (RouterConfig config) route =
+  Matcher.buildUrl (.segment << config.routeConfig) (.parent << config.routeConfig) route
 
 routerMock : RouterConfig route (WithRouter route state) -> Router route (WithRouter route state)
 routerMock config =

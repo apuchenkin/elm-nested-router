@@ -140,7 +140,7 @@ see [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/exampl
 ### Future thoughts
 - [ ] Improve perfomance on specific functions
 - [x] Better handling for trailing slashes
-- [ ] Greedy matcher config (matches first found route or latest one / bypass route config)
+- [x] Greedy matcher config (matches first found route or latest one / bypass route config)
 - [x] Check the possibility to replace router cache with Automaton
 - [ ] Query string parameters support
-- [ ] Drop dependencies on libs
+- [x] Drop dependencies on libs

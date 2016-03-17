@@ -15,7 +15,6 @@ import Dict           exposing (Dict)
 import Html           exposing (Html)
 import Task           exposing (Task)
 import Effects        exposing (Effects, Never)
-import MultiwayTree   exposing (Tree, Forest)
 
 -----------------------------------------
 -- Route mather related types
@@ -107,8 +106,10 @@ type alias Handler state = {
   "mark" and "joe" will be stored as `author` param, and "1" as `postId`
   Everything enclosed by brackets considered as optional.
 -}
-type alias RouteConfig state = {
+type alias RouteConfig route state = {
     segment: RawSegment
+  , parent: Maybe route
+  , bypass: Bool
   , constraints: Dict Param Constraint
   , handler: Handler state
   }
@@ -142,14 +143,13 @@ type alias Transition route state = Maybe (Route route) -> Route route -> Action
 -}
 type RouterConfig route state = RouterConfig {
     init: state
-  -- , useCache: Bool
   , html5: Bool
   , removeTrailingSlash: Bool
   , fallback: Route route
   , layout: Router route state -> state -> Dict String Html -> Html
   , onTransition: Router route state -> Transition route state
-  , routeConfig: route -> RouteConfig state
-  , routes: Forest route
+  , routeConfig: route -> RouteConfig route state
+  , routes: List route
   , inits: List (Signal.Signal (Action state))
   , inputs: List (Signal.Signal (Action state))
   }

@@ -4,8 +4,6 @@ import Dict
 import List.Extra
 import Effects          exposing (Effects)
 import Html             exposing (Html)
-import MultiwayTreeUtil   exposing (flatten)
-import MultiwayTree exposing (Forest)
 
 import Router.Matcher      as Matcher
 import Router.Types        exposing (..)
@@ -89,13 +87,14 @@ getHandlers router from to =
   let
     (RouterConfig config) = router.config
     getConfig = config.routeConfig
+    getParent = .parent << getConfig
     fromRoute = Maybe.map fst from
     fromParams = Maybe.withDefault Dict.empty <| Maybe.map snd from
     toRoute = fst to
     toParams = snd to
 
-    fromPath = Maybe.withDefault [] <| Maybe.map (flip Matcher.getPath config.routes) fromRoute
-    toPath = Matcher.getPath toRoute config.routes
+    fromPath = Maybe.withDefault [] <| Maybe.map (Matcher.getPath getParent) fromRoute
+    toPath = Matcher.getPath getParent toRoute
     path = List.map2 (,) fromPath toPath
 
     fromPath' = Matcher.mapParams (.segment << getConfig) fromPath fromParams
@@ -114,20 +113,14 @@ getHandlers router from to =
 {-| @Private
   Preforms attempt to match provided url to a route by a given routes configuration
   -}
-matchRoute : Forest route -> Matcher route state -> String -> Maybe (Route route)
+matchRoute : List route -> Matcher route state -> String -> Maybe (Route route)
 matchRoute routes matcher url =
-  let
-    routeConfig = matcher.getConfig
-    getSegment = .segment << routeConfig
-    getConstraints = .constraints << routeConfig
-    rawRoute route = (matcher.unwrap (getSegment route), getConstraints route)
-  in
-    Matcher.matchRaw rawRoute routes url
+  Matcher.match' matcher.unwrap matcher.getConfig routes url
 
 type alias Matcher route state = {
     unwrap: String -> List String
   , composeRawUrl: route -> RawURL
-  , getConfig: route -> RouteConfig state
+  , getConfig: route -> RouteConfig route state
   }
 
 -- TODO: refactor for better readability
@@ -136,8 +129,8 @@ matcher config =
   let
     (RouterConfig c) = config
     getSegment = .segment << c.routeConfig
-    forest = c.routes
-    routes = List.concat <| List.map flatten forest
+    getParent = .parent << c.routeConfig
+    routes = c.routes
     urls = List.map composeRawUrl'' routes
     sids = List.map toString routes
     dict = Dict.fromList <| List.map2 (,) sids routes
@@ -145,7 +138,7 @@ matcher config =
       Just route -> route
       Nothing -> Debug.crash <| "stringToRoute: " ++ sid
     segments = List.map getSegment routes
-    composeRawUrl' = memoFallback (\sid -> Matcher.composeRawUrl getSegment forest (stringToRoute sid)) sids
+    composeRawUrl' = memoFallback (\sid -> Matcher.composeRawUrl getSegment getParent(stringToRoute sid)) sids
     composeRawUrl'' route = composeRawUrl' (toString route)
     getConfig = memoFallback (\sid -> c.routeConfig (stringToRoute sid)) sids
     getConfig' route = getConfig (toString route)

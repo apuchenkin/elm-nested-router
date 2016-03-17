@@ -3,10 +3,7 @@ module Router.Matcher where
 import Regex
 import String
 import List.Extra
-
 import Dict               exposing (Dict)
-import MultiwayTreeUtil   exposing (treeLookup, forestLookup, traverse)
-import MultiwayTree       exposing (Tree (..), Forest, datum, children)
 
 import Combine        exposing (Parser, many1, parse, many, while, between, end, rec, manyTill)
 import Combine.Char   exposing (char, noneOf, anyChar)
@@ -40,13 +37,6 @@ getParams : String -> List String
 getParams string = case fst <| parse paramsParser string of
   Err _     -> Debug.crash "getParams : String -> List String"
   Ok param  -> param
-
--- unwrapCache : Automaton String (List String)
--- unwrapCache = Automaton.hiddenState Dict.empty <| \url state -> case Dict.get url state of
---   Just value -> (value, state)
---   Nothing ->
---     let result = unwrap url
---     in (result, Dict.insert url result state)
 
 {-| @Private
   Unwraps string that contains brackets to a list of strings without brackets
@@ -95,24 +85,38 @@ parseUrlParams raw constraints url =
     zipValues values = Dict.fromList <| List.map2 (,) params values
   in (Result.map zipValues result, context.input)
 
-matchRaw : (route -> (List RawURL, Dict String Constraint)) -> Forest route -> URL -> Maybe (Route route)
-matchRaw rawRoute forest url = List.head <| List.filterMap (\tree ->
-    let (raws, constraints) = rawRoute <| datum tree
-    in List.head <| List.filterMap (\pattern -> let (result, url') = parseUrlParams pattern constraints url
+matchInternal : (String -> List String) -> (route -> RouteConfig route state) -> List route -> List route -> URL -> Maybe (Route route)
+matchInternal unwrap getConfig routes pool url = List.head <| List.filterMap (\route ->
+    let
+      config = getConfig route
+      raws = unwrap config.segment
+    in List.head <| List.filterMap (\pattern -> let (result, url') = parseUrlParams pattern config.constraints url
        in case result of
         Err _       -> Nothing
-        Ok  dict    ->
-          let
-            child = matchRaw rawRoute (children tree) url'
-            childRoute = Maybe.map (combineParams dict) child
-          in case String.isEmpty url' of
-              True  -> Just <| Maybe.withDefault (datum tree, dict) childRoute
+        Ok  dict    -> case String.isEmpty url' && not config.bypass of
+          True -> if String.isEmpty url' then Just (route, dict) else Nothing
+          False -> let
+              (childrens, pool') = filterParent (.parent << getConfig) (Just route) pool
+              child = matchInternal unwrap getConfig childrens pool' url'
+              childRoute = Maybe.map (combineParams dict) child
+            in case String.isEmpty url' of
+              True  -> Just <| Maybe.withDefault (route, dict) childRoute
               False -> childRoute
       ) raws
-    ) forest
+    ) routes
 
-match : (route -> (RawURL, Dict String Constraint)) -> Forest route -> URL -> Maybe (Route route)
-match rawRoute forest url = matchRaw ((\(r,c) -> (unwrap r, c)) << rawRoute) forest url
+filterParent : (route -> Maybe route) -> Maybe route -> List route -> (List route, List route)
+filterParent getParent route routes =
+  List.foldl (\r (a,b) -> if getParent r == route then (r :: a,b) else (a, r :: b)) ([],[]) routes
+
+match' : (String -> List String) -> (route -> RouteConfig route state) -> List route -> URL -> Maybe (Route route)
+match' unwrap getConfig routes url =
+  let
+    (roots, pool) = filterParent (.parent << getConfig) Nothing routes
+  in matchInternal unwrap getConfig roots pool url
+
+match : (route -> RouteConfig route state) -> List route -> URL -> Maybe (Route route)
+match getConfig routes url = match' unwrap getConfig routes url
 
 buildRawUrl : List RawURL -> Route route -> URL
 buildRawUrl raws (route, params) =
@@ -130,29 +134,31 @@ buildRawUrl raws (route, params) =
     Nothing -> Debug.crash <| "not enough params to build URL: " ++ toString route
     Just url -> url
 
-composeRawUrl : (route -> RawSegment) -> Forest route -> route -> RawURL
-composeRawUrl rawRoute forest route =
+composeRawUrl : (route -> RawSegment) -> (route -> Maybe route) -> route -> RawURL
+composeRawUrl getSegment getParent route =
   let
-    zipper = forestLookup route forest
-    path   = Maybe.withDefault [] <| Maybe.map traverse zipper
-    segments = List.map rawRoute path
-  in List.foldl (flip (++)) "" segments
+    segments = List.map getSegment <| getPath getParent route
+  in
+    List.foldl (flip (++)) "" segments
 
 -- decompose Route to string
-buildUrl : (route -> RawSegment) -> Forest route -> Route route -> URL
-buildUrl rawRoute forest (route, params) =
-  let raws = unwrap <| composeRawUrl rawRoute forest route
+buildUrl : (route -> RawSegment) -> (route -> Maybe route) -> Route route -> URL
+buildUrl getSegment getParent (route, params) =
+  let raws = unwrap <| composeRawUrl getSegment getParent route
   in buildRawUrl raws (route, params)
 
--- path from node a to node b in the forest
-getPath : a -> Forest a -> List a
-getPath route forest = Maybe.withDefault []
-  <| flip Maybe.map (List.head <| List.filterMap (\tree -> treeLookup route tree) forest)
-  <| \zipper -> traverse zipper
+getPathInternal : (route -> Maybe route) -> route -> List route -> List route
+getPathInternal getParent route acc = case getParent route of
+  Nothing -> route :: acc
+  Just parent -> route :: getPathInternal getParent parent acc
+
+-- traverses route up to top parent
+getPath : (route -> Maybe route) -> route -> List route
+getPath getParent route = List.reverse <| getPathInternal getParent route []
 
 mapParams : (route -> RawSegment) -> List route -> RouteParams -> List (Route route)
-mapParams rawRoute routes params = flip List.map routes <| \route ->
-    let p = getParams (rawRoute route)
+mapParams getSegment routes params = flip List.map routes <| \route ->
+    let p = getParams (getSegment route)
     in (route, Dict.filter (\k _ -> List.member k p) params)
 
 hasTrailingSlash : URL -> Bool
