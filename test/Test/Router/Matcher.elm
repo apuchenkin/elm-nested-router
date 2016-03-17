@@ -68,6 +68,12 @@ testParseUrlParams = suite "parseUrlParams"
     test "plain"
       <| assertEqual (Ok Dict.empty, "")
       <| parseUrlParams "/url" Dict.empty "/url"
+  , test "empty"
+      <| assertEqual (Ok Dict.empty, "")
+      <| parseUrlParams "" Dict.empty ""
+  , test "empty2"
+      <| assertEqual (Ok Dict.empty, "/url")
+      <| parseUrlParams "" Dict.empty "/url"
   , test "param"
       <| assertEqual (Ok (Dict.fromList [("param","value")]), "")
       <| parseUrlParams "/:param" Dict.empty "/value"

@@ -70,6 +70,7 @@ forward routerConfig matcher route state =
 redirect : RouterConfig route (WithRouter route state) -> Matcher route (WithRouter route state) -> Route route -> Action (WithRouter route state)
 redirect routerConfig matcher route state =
   let
+    _ = Debug.log "redirect" route
     (RouterConfig config) = routerConfig
     url   = buildUrl routerConfig matcher route
     task  = History.replacePath url |> Task.map (always doNothing)

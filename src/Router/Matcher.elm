@@ -86,28 +86,39 @@ parseUrlParams raw constraints url =
   in (Result.map zipValues result, context.input)
 
 matchInternal : (String -> List String) -> (route -> RouteConfig route state) -> List route -> List route -> URL -> Maybe (Route route)
-matchInternal unwrap getConfig routes pool url = List.head <| List.filterMap (\route ->
-    let
-      config = getConfig route
-      raws = unwrap config.segment
-    in List.head <| List.filterMap (\pattern -> let (result, url') = parseUrlParams pattern config.constraints url
-       in case result of
-        Err _       -> Nothing
-        Ok  dict    -> case String.isEmpty url' && not config.bypass of
-          True -> if String.isEmpty url' then Just (route, dict) else Nothing
-          False -> let
-              (childrens, pool') = filterParent (.parent << getConfig) (Just route) pool
-              child = matchInternal unwrap getConfig childrens pool' url'
-              childRoute = Maybe.map (combineParams dict) child
-            in case String.isEmpty url' of
-              True  -> Just <| Maybe.withDefault (route, dict) childRoute
-              False -> childRoute
-      ) raws
-    ) routes
+matchInternal unwrap getConfig routes pool url = List.foldl (\route match ->
+  case match of
+    Just _ -> match
+    Nothing ->
+      let
+        config = getConfig route
+        raws = unwrap config.segment
+      in List.foldl (\raw match' ->
+        case match' of
+          Just _ -> match'
+          Nothing -> let
+              (result, url') = parseUrlParams raw config.constraints url
+            in
+              case result of
+              Err _       -> Nothing
+              Ok  dict    ->
+                let matchChildren route =
+                  let
+                    (childrens, pool') = filterParent (.parent << getConfig) (Just route) pool
+                    child = matchInternal unwrap getConfig childrens pool' url'
+                    childRoute = Maybe.map (combineParams dict) child
+                  in childRoute
+                in case config.bypass of
+                True -> matchChildren route
+                False -> case String.isEmpty url' of
+                  True  -> Just (route, dict)
+                  False -> matchChildren route
+      ) Nothing raws
+  ) Nothing routes
 
 filterParent : (route -> Maybe route) -> Maybe route -> List route -> (List route, List route)
 filterParent getParent route routes =
-  List.foldl (\r (a,b) -> if getParent r == route then (r :: a,b) else (a, r :: b)) ([],[]) routes
+  List.foldl (\r (a,b) -> if getParent r == route then (a ++ [r], b) else (a, b ++ [r])) ([],[]) routes
 
 match' : (String -> List String) -> (route -> RouteConfig route state) -> List route -> URL -> Maybe (Route route)
 match' unwrap getConfig routes url =
