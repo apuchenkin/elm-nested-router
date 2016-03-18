@@ -184,11 +184,11 @@ removeTrailingSlash url = if hasTrailingSlash url then String.dropRight 1 url el
 {-| @Private
   Returns a set of handlers applicable to transtition between "from" and "to" routes.
 -}
-getHandlers : (route -> RouteConfig route state) -> Maybe (Route route) -> Route route -> List (Handler state)
-getHandlers getConfig from to =
+routeDiff : (route -> RouteConfig route state) -> Maybe (Route route) -> Route route -> List route
+routeDiff getConfig from to =
   let
-    getConfig = getConfig
     getParent = .parent << getConfig
+
     fromRoute = Maybe.map fst from
     fromParams = Maybe.withDefault Dict.empty <| Maybe.map snd from
     toRoute = fst to
@@ -205,15 +205,15 @@ getHandlers getConfig from to =
       <| List.Extra.takeWhile (uncurry (==))
       <| List.map2 (,) fromPath' toPath'
 
-    routes = List.drop commons toPath
-
-  in List.map (.handler << getConfig) routes
+  in List.drop commons toPath
 
 type alias Matcher route state = {
     getConfig: route -> RouteConfig route state
-  , getHandlers: route -> List (Handler state)
   , buildUrl: Route route -> URL
   , match: URL -> Maybe (Route route)
+  , traverse: route -> List route
+  , stringToRoute: String -> route
+  , sids: List String
   }
 
 -- matcher creates an object that provides a memoized versions of Matcher functions
@@ -232,21 +232,23 @@ matcher (RouterConfig config) =
       Just route -> route
       Nothing -> Debug.crash <| "stringToRoute: " ++ sid
 
-    composeUrl    = memoFallback (\sid -> composeRawUrl getSegment getParent(stringToRoute sid)) sids
+    composeUrl    = memoFallback (\sid -> composeRawUrl getSegment getParent (stringToRoute sid)) sids
     getConfig     = memoFallback (\sid -> config.routeConfig (stringToRoute sid)) sids
-    unwrap'       = memoFallback unwrap (segments ++ urls)
-    handlers      = memoFallback (\sid -> getHandlers getConfig' Nothing (stringToRoute sid, Dict.empty)) sids
+    traverse      = memoFallback (\sid -> getPath getParent (stringToRoute sid)) sids
+    unwrap'       = memoFallback unwrap (urls)
 
-    composeUrl' route = composeUrl (toString route)
-    getConfig' route = getConfig (toString route)
-    handlers' route = handlers (toString route)
+    composeUrl' = composeUrl << toString
+    getConfig' = getConfig << toString
+    traverse' = traverse << toString
     buildUrl' route =
       let raws = unwrap' <| composeUrl' (fst route)
       in buildRawUrl raws route
   in
     {
       getConfig = getConfig'
-    , getHandlers = handlers'
     , buildUrl = buildUrl'
     , match = match' unwrap' getConfig' routes
+    , traverse = traverse'
+    , stringToRoute = stringToRoute
+    , sids = sids
     }

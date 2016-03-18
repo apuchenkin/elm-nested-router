@@ -1,11 +1,11 @@
-module Router (router, runRouter, initialState) where
+module Router (runRouter, initialState) where
 {-| A simple nested router for single page applications.
 
 See [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/example)
 and [Tests](https://github.com/apuchenkin/elm-nested-router/tree/master/test/Test) for more details
 ([Live demo](http://apuchenkin.github.io/elm-nested-router/example))
 
-@docs router, runRouter, initialState
+@docs runRouter, initialState
 -}
 
 import Dict
@@ -75,44 +75,53 @@ redirect routerConfig matcher route state =
     task  = History.replacePath url |> Task.map (always doNothing)
   in Response (state, Effects.task task)
 
+{-| @Private
+  Preforms attempt to match provided url to a route by a given routes configuration
+  -}
+matchRoute : Matcher route state -> String -> Maybe (Route route)
+matchRoute matcher url = matcher.match url
+
 {-| Router constructor -}
-router : RouterConfig route (WithRouter route state) -> Router route (WithRouter route state)
-router config =
+constructor : RouterConfig route (WithRouter route state) -> Matcher route (WithRouter route state) -> Router route (WithRouter route state)
+constructor config matcher =
   let
     (RouterConfig c) = config
-    matcher' = Matcher.matcher config
-    config' = RouterConfig <| { c | routeConfig = matcher'.getConfig}
+    config' = RouterConfig <| { c | routeConfig = matcher.getConfig}
   in {
     config = config'
   , address = address
-  , bindForward = bindForward config' matcher'
-  , buildUrl = buildUrl config' matcher'
-  , forward = forward config' matcher'
-  , redirect = redirect config' matcher'
-  , match = matchRoute matcher'
-  , getHandlers = matcher'.getHandlers
+  , bindForward = bindForward config' matcher
+  , buildUrl = buildUrl config' matcher
+  , forward = forward config' matcher
+  , redirect = redirect config' matcher
+  , match = matchRoute matcher
   }
 
 {-| Launches the router -}
-runRouter : Router route (WithRouter route state) -> RouterResult (WithRouter route state)
-runRouter router =
+runRouter : RouterConfig route (WithRouter route state) -> RouterResult (WithRouter route state)
+runRouter config =
   let
-    (RouterConfig config) = router.config
-    initial = config.init
-    pathSignal = if config.html5
+    (RouterConfig c) = config
+    matcher = Matcher.matcher config
+    router = constructor config matcher
+    getHandler = memoFallback (\sid -> ((\h -> h router) << .handler << matcher.getConfig) (matcher.stringToRoute sid)) matcher.sids
+    getHandler' = getHandler << toString
+
+    initial = c.init
+    pathSignal = if c.html5
       then History.path
       else Signal.map (\hash -> Maybe.withDefault "/" <| Maybe.map snd <| String.uncons hash) History.hash
 
-    init = Signal.map (singleton << (,) True << setUrl router)
-      <| if config.removeTrailingSlash then Signal.map Matcher.removeTrailingSlash pathSignal else pathSignal
+    init = Signal.map (singleton << (,) True << setUrl router getHandler')
+      <| if c.removeTrailingSlash then Signal.map Matcher.removeTrailingSlash pathSignal else pathSignal
 
     -- inputs : Signal (List (Bool, Action state))
     inputs =
       List.foldl (Signal.Extra.fairMerge List.append)
       init <|
       (Signal.map (List.map ((,) False)) mailbox.signal) -- actions from events
-      :: List.map (Signal.map (singleton << (,) True))  config.inits
-      ++ List.map (Signal.map (singleton << (,) False)) config.inputs
+      :: List.map (Signal.map (singleton << (,) True))  c.inits
+      ++ List.map (Signal.map (singleton << (,) False)) c.inputs
 
     -- update : List (Bool, Action state) -> (state, ActionEffects state) -> (state, ActionEffects state)
     update  actions (state,_) = List.foldl runAction (noFx state)
@@ -125,9 +134,10 @@ runRouter router =
 
     result = Signal.Extra.foldp' update update' inputs
     state = Signal.map fst result
+    render' = \state -> render router (List.map getHandler' << matcher.traverse) state
   in
     {
-      html  = Signal.map (render router) state
+      html  = Signal.map render' state
     , state = state
     , tasks = Signal.map (Effects.toTask mailbox.address << snd) result
     }

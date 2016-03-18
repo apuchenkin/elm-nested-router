@@ -110,10 +110,11 @@ layout router _ views =
   ]
 ```
 
-Now we have everything needed to create a router:
+Finally we launch Router and feed its output to application ports:
+
 ```elm
-router : Router Route State
-router = Router.router <| RouterConfig {
+result : RouterResult State
+result = Router.runRouter <| RouterConfig {
     init = initialState
   , html5 = True
   , removeTrailingSlash = True
@@ -125,13 +126,6 @@ router = Router.router <| RouterConfig {
   , inits = []
   , inputs = []
   }
-```
-
-Finally we launch Router and feed its output to application ports:
-
-```elm
-result : RouterResult State
-result = Router.runRouter router
 
 main : Signal Html
 main = result.html

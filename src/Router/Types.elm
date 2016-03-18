@@ -116,7 +116,7 @@ type alias RouteConfig route state = {
   , parent: Maybe route
   , bypass: Bool
   , constraints: Dict Param Constraint
-  , handler: Handler state
+  , handler: Router route state -> Handler state
   }
 
 {-| A state of router -}
@@ -179,7 +179,6 @@ type alias Router route state = {
   , forward : Route route -> Action state
   , redirect : Route route -> Action state
   , match : String -> Maybe (Route route)
-  , getHandlers : route -> List (Handler state)
   }
 
 {-|

@@ -26,28 +26,28 @@ config route = case route of
     , bypass = False
     , parent = Nothing
     , constraints = Dict.empty
-    , handler = handlerA
+    , handler = always handlerA
     }
     NotFound -> {
       segment = "/404"
     , bypass = False
     , parent = Nothing
     , constraints = Dict.empty
-    , handler = handlerA
+    , handler = always handlerA
     }
     Page -> {
       segment = ":category[/:subcategory]"
     , bypass = False
     , parent = Just Home
     , constraints = Dict.fromList [("category", Enum ["A","B","C"])]
-    , handler = handlerB
+    , handler = always handlerB
     }
     Subpage -> {
       segment = "/item/:item"
     , bypass = False
     , parent = Just Page
     , constraints = Dict.fromList [("item", Int)]
-    , handler = handlerC
+    , handler = always handlerC
     }
 
 init : State
