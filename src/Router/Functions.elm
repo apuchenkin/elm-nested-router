@@ -13,8 +13,10 @@ import Router.Helpers      exposing (..)
  -}
 runAction : Action state -> (state, ActionEffects state) -> (state, ActionEffects state)
 runAction action (state, effects) =
-    let (Response (state', effects')) = action state
-    in (state', Effects.batch [effects, effects'])
+    let
+      (Response (state', effects')) = action state
+    in
+      (state', Effects.batch [effects, effects'])
 
 {-| @Private
   Folds actions for a handlers into a single action
@@ -38,39 +40,57 @@ render router getHandlers state =
 {-| @Private
   Performs attempt to match provided url, returns fallback action on fail
   -}
-setUrl : Router route (WithRouter route state) -> (route -> Handler (WithRouter route state)) -> String -> Action (WithRouter route state)
-setUrl router getHandler url =
+setUrl : Dependencies route (WithRouter route state) -> String -> Action (WithRouter route state)
+setUrl deps url =
   let
-    (RouterConfig config) = router.config
-  in case router.match url of
-    Nothing               -> router.redirect config.fallback
-    Just route            -> setRoute router getHandler route
+    (RouterConfig config) = deps.router.config
+  in case deps.router.match url of
+    Nothing               -> deps.router.redirect config.fallback
+    Just route            -> setRoute deps route
 
 {-| @Private
   Sets provided route ro the state and return state transition from previous route to new one
 -}
-setRoute : Router route (WithRouter route state) -> (route -> Handler (WithRouter route state)) -> Route route -> Action (WithRouter route state)
-setRoute router getHandler route state =
+setRoute : Dependencies route (WithRouter route state) -> Route route -> Action (WithRouter route state)
+setRoute deps route state =
   let
     rs = state.router
     (toRoute, toParams) = route
     from  = Maybe.map (\r -> (r, rs.params)) rs.route
     state' = { state | router = { rs | route = Just toRoute, params = toParams }}
   in
-    transition router getHandler from route state'
+    transition deps from route state'
 
 {-| @Private
   A composite transition action between "from" and "to" routes
   Resulting action is composed from handlers, applicable for transistion
 -}
-transition : Router route (WithRouter route state) -> (route -> Handler (WithRouter route state)) -> Transition route (WithRouter route state)
-transition router getHandler from to state =
+transition : Dependencies route (WithRouter route state) -> Transition route (WithRouter route state)
+transition deps from to state =
   let
-    (RouterConfig config) = router.config
-    diff = Matcher.routeDiff config.routeConfig from to
-    handlers = List.map getHandler diff
+    (RouterConfig config) = deps.router.config
+    diff = Matcher.routeDiff deps.matcher from to
+    handlers = List.map deps.getHandlers diff
     actions  =
-      (config.onTransition router from to)
+      (config.onTransition deps.router from to)
       :: List.map (combineActions << .actions) handlers
 
   in Response <| List.foldl runAction (noFx state) actions
+
+-- An ulitity record. Required mostly for caching of common fucntions output
+type alias Dependencies route state = {
+    router: Router route state
+  , matcher: Matcher route state
+  , getHandlers: (route -> Handler state)
+  }
+
+dependencies : Router route state -> Matcher route state -> Dependencies route state
+dependencies router matcher =
+  let
+    getHandler = memoFallback (\sid -> ((\h -> h router) << .handler << matcher.getConfig) (matcher.stringToRoute sid)) matcher.sids
+    getHandler' = getHandler << toString
+  in {
+    router = router,
+    matcher = matcher,
+    getHandlers = getHandler'
+  }

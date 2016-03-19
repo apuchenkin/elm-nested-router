@@ -192,7 +192,7 @@ testMapParams =
   in suite "mapParams" [
     test "mapParams"
       <| assertEqual [(Home, Dict.empty), (Page, Dict.fromList [("category","param"),("subcategory","param2")]), (Subpage, Dict.fromList [("item","4")])]
-      <| mapParams (.segment << config) (getPath (.parent << config) Subpage) params
+      <| mapParams Test.Mock.Data.matcher [Home, Page, Subpage] params
   ]
 
 testRemoveTrailingSlash : Test
@@ -213,24 +213,27 @@ testRemoveTrailingSlash = suite "removeTrailingSlash" [
 
 -- routeDiff : (route -> RouteConfig route state) -> Maybe (Route route) -> Route route -> List route
 testRouteDiff : Test
-testRouteDiff = suite "routeDiff"
+testRouteDiff =
+  let
+    routeDiff' = routeDiff Test.Mock.Data.matcher
+  in suite "routeDiff"
   [
     test "length"
       <| assertEqual 1
-      <| List.length <| routeDiff config Nothing (Home, Dict.empty)
+      <| List.length <| routeDiff' Nothing (Home, Dict.empty)
   , test "length"
       <| assertEqual 3
-      <| List.length <| routeDiff config Nothing (Subpage, Dict.empty)
+      <| List.length <| routeDiff' Nothing (Subpage, Dict.empty)
   , test "no transition - no handlers"
       <| assertEqual 0
-      <| List.length <| routeDiff config (Just (Home, Dict.empty)) (Home, Dict.empty)
+      <| List.length <| routeDiff' (Just (Home, Dict.empty)) (Home, Dict.empty)
   , test "unmatched params has no effects"
       <| assertEqual 0
-      <| List.length <| routeDiff config (Just (Home, Dict.empty)) (Home, Dict.fromList [("param1", "value1")])
+      <| List.length <| routeDiff' (Just (Home, Dict.empty)) (Home, Dict.fromList [("param1", "value1")])
   , test "matched params does matter"
       <| assertEqual 1
-      <| List.length <| routeDiff config (Just (Page, Dict.fromList [("category", "bar")])) (Page, Dict.fromList [("category", "foo")])
+      <| List.length <| routeDiff' (Just (Page, Dict.fromList [("category", "bar")])) (Page, Dict.fromList [("category", "foo")])
   , test "matched params does matter"
       <| assertEqual 2
-      <| List.length <| routeDiff config (Just (Subpage, Dict.fromList [("category", "bar")])) (Subpage, Dict.fromList [("category", "foo")])
+      <| List.length <| routeDiff' (Just (Subpage, Dict.fromList [("category", "bar")])) (Subpage, Dict.fromList [("category", "foo")])
   ]

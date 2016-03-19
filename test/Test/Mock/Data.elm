@@ -5,6 +5,8 @@ import Dict exposing (Dict)
 
 import Router.Helpers  exposing (noFx, doNothing)
 import Router.Types    exposing (..)
+import Router.Matcher as Matcher exposing (Matcher)
+import Router.Functions exposing (dependencies)
 
 import Test.Mock.Router exposing (..)
 
@@ -119,3 +121,9 @@ handlerC = {
 
 router : Router Route State
 router = routerMock routerConfig
+
+matcher : Matcher Route State
+matcher = Matcher.matcher routerConfig
+
+deps : Router.Functions.Dependencies Route State
+deps = dependencies router matcher

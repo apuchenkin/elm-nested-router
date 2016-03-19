@@ -69,7 +69,6 @@ forward routerConfig matcher route state =
 redirect : RouterConfig route (WithRouter route state) -> Matcher route (WithRouter route state) -> Route route -> Action (WithRouter route state)
 redirect routerConfig matcher route state =
   let
-    _ = Debug.log "redirect" route
     (RouterConfig config) = routerConfig
     url   = buildUrl routerConfig matcher route
     task  = History.replacePath url |> Task.map (always doNothing)
@@ -104,15 +103,14 @@ runRouter config =
     (RouterConfig c) = config
     matcher = Matcher.matcher config
     router = constructor config matcher
-    getHandler = memoFallback (\sid -> ((\h -> h router) << .handler << matcher.getConfig) (matcher.stringToRoute sid)) matcher.sids
-    getHandler' = getHandler << toString
+    deps = dependencies router matcher
 
     initial = c.init
     pathSignal = if c.html5
       then History.path
       else Signal.map (\hash -> Maybe.withDefault "/" <| Maybe.map snd <| String.uncons hash) History.hash
 
-    init = Signal.map (singleton << (,) True << setUrl router getHandler')
+    init = Signal.map (singleton << (,) True << setUrl deps)
       <| if c.removeTrailingSlash then Signal.map Matcher.removeTrailingSlash pathSignal else pathSignal
 
     -- inputs : Signal (List (Bool, Action state))
@@ -134,7 +132,7 @@ runRouter config =
 
     result = Signal.Extra.foldp' update update' inputs
     state = Signal.map fst result
-    render' = \state -> render router (List.map getHandler' << matcher.traverse) state
+    render' = \state -> render router (List.map deps.getHandlers << matcher.traverse) state
   in
     {
       html  = Signal.map render' state

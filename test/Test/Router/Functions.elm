@@ -84,7 +84,7 @@ testSetRoute : Test
 testSetRoute =
   let
    state' route = let rs = init.router in {init | router = {rs | route = Just route}}
-   setRoute' = setRoute router <| (\h -> h router) << .handler << config
+   setRoute' = setRoute deps
   in suite "setRoute"
   [
     test "route setted"

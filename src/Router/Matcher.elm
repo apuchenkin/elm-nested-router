@@ -33,13 +33,14 @@ paramParser = char paramChar *> stringParser
 paramsParser : Parser (List String)
 paramsParser = many <| while ((/=) paramChar) *> paramParser <* while ((/=) paramChar)
 
-getParams : String -> List String
+getParams : String -> List Param
 getParams string = case fst <| parse paramsParser string of
   Err _     -> Debug.crash "getParams : String -> List String"
   Ok param  -> param
 
 {-| @Private
   Unwraps string that contains brackets to a list of strings without brackets
+  TODO: check perfomance without regexp
 -}
 unwrap : String -> List String
 unwrap raw =
@@ -55,6 +56,7 @@ unwrap raw =
 
   in List.reverse <| List.sortBy String.length <| List.Extra.dropDuplicates <| result
 
+-- TODO: check perfomance without regexp
 parseUrlParams : RawURL -> Dict String Constraint -> URL -> (Result (List String) RouteParams, String)
 parseUrlParams raw constraints url =
   let
@@ -129,6 +131,7 @@ match' unwrap getConfig routes url =
 match : (route -> RouteConfig route state) -> List route -> URL -> Maybe (Route route)
 match getConfig routes url = match' unwrap getConfig routes url
 
+-- TODO: check perfomance without regexp
 buildRawUrl : List RawURL -> Route route -> URL
 buildRawUrl raws (route, params) =
   let
@@ -155,8 +158,10 @@ composeRawUrl getSegment getParent route =
 -- decompose Route to string
 buildUrl : (route -> RawSegment) -> (route -> Maybe route) -> Route route -> URL
 buildUrl getSegment getParent (route, params) =
-  let raws = unwrap <| composeRawUrl getSegment getParent route
-  in buildRawUrl raws (route, params)
+  let
+    raws = unwrap <| composeRawUrl getSegment getParent route
+  in
+    buildRawUrl raws (route, params)
 
 getPathInternal : (route -> Maybe route) -> route -> List route -> List route
 getPathInternal getParent route acc = case getParent route of
@@ -167,11 +172,10 @@ getPathInternal getParent route acc = case getParent route of
 getPath : (route -> Maybe route) -> route -> List route
 getPath getParent route = List.reverse <| getPathInternal getParent route []
 
--- TODO: improve perfomance
-mapParams : (route -> RawSegment) -> List route -> RouteParams -> List (Route route)
-mapParams getSegment routes params = flip List.map routes <| \route ->
-    let p = getParams (getSegment route)
-    in (route, Dict.filter (\k _ -> List.member k p) params)
+-- Maps a list of route params over list of routes
+mapParams : Matcher route state -> List route -> RouteParams -> List (Route route)
+mapParams matcher routes params = flip List.map routes <| \route ->
+  (route, Dict.filter (\param _ -> List.member param (matcher.routeParams route)) params)
 
 hasTrailingSlash : URL -> Bool
 hasTrailingSlash url = case String.right 1 url of
@@ -184,9 +188,10 @@ removeTrailingSlash url = if hasTrailingSlash url then String.dropRight 1 url el
 {-| @Private
   Returns a set of handlers applicable to transtition between "from" and "to" routes.
 -}
-routeDiff : (route -> RouteConfig route state) -> Maybe (Route route) -> Route route -> List route
-routeDiff getConfig from to =
+routeDiff : Matcher route state -> Maybe (Route route) -> Route route -> List route
+routeDiff matcher from to =
   let
+    getConfig = matcher.getConfig
     getParent = .parent << getConfig
 
     fromRoute = Maybe.map fst from
@@ -194,12 +199,12 @@ routeDiff getConfig from to =
     toRoute = fst to
     toParams = snd to
 
-    fromPath = Maybe.withDefault [] <| Maybe.map (getPath getParent) fromRoute
-    toPath = getPath getParent toRoute
+    fromPath = Maybe.withDefault [] <| Maybe.map matcher.traverse fromRoute
+    toPath = matcher.traverse toRoute
     path = List.map2 (,) fromPath toPath
 
-    fromPath' = mapParams (.segment << getConfig) fromPath fromParams
-    toPath'   = mapParams (.segment << getConfig) toPath toParams
+    fromPath' = mapParams matcher fromPath fromParams
+    toPath'   = mapParams matcher toPath toParams
 
     commons = List.length
       <| List.Extra.takeWhile (uncurry (==))
@@ -212,6 +217,7 @@ type alias Matcher route state = {
   , buildUrl: Route route -> URL
   , match: URL -> Maybe (Route route)
   , traverse: route -> List route
+  , routeParams: route -> List Param
   , stringToRoute: String -> route
   , sids: List String
   }
@@ -235,11 +241,13 @@ matcher (RouterConfig config) =
     composeUrl    = memoFallback (\sid -> composeRawUrl getSegment getParent (stringToRoute sid)) sids
     getConfig     = memoFallback (\sid -> config.routeConfig (stringToRoute sid)) sids
     traverse      = memoFallback (\sid -> getPath getParent (stringToRoute sid)) sids
-    unwrap'       = memoFallback unwrap (urls)
+    unwrap'       = memoFallback unwrap (urls ++ segments)
+    routeParams   = memoFallback (getParams << getSegment << stringToRoute) sids
 
     composeUrl' = composeUrl << toString
     getConfig' = getConfig << toString
     traverse' = traverse << toString
+    routeParams' = routeParams << toString
     buildUrl' route =
       let raws = unwrap' <| composeUrl' (fst route)
       in buildRawUrl raws route
@@ -249,6 +257,7 @@ matcher (RouterConfig config) =
     , buildUrl = buildUrl'
     , match = match' unwrap' getConfig' routes
     , traverse = traverse'
+    , routeParams = routeParams'
     , stringToRoute = stringToRoute
     , sids = sids
     }
