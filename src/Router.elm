@@ -131,7 +131,7 @@ runRouter config =
       <| List.filter fst actions
 
     result = Signal.Extra.foldp' update update' inputs
-    state = Signal.map fst result
+    state = Signal.dropRepeats <| Signal.map fst result
     render' = \state -> render router (List.map deps.getHandlers << matcher.traverse) state
   in
     {
