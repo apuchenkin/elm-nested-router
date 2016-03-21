@@ -52,8 +52,8 @@ buildUrl routerConfig matcher (route, params) =
   let
     (RouterConfig config) = routerConfig
     url = matcher.buildUrl (route, params)
-    url' = if config.html5 then url else String.cons hash url
-    url'' = if config.removeTrailingSlash then Matcher.removeTrailingSlash url else url
+    url' = if config.removeTrailingSlash then Matcher.removeTrailingSlash url else url
+    url'' = if config.html5 then url' else String.cons hash url'
   in url''
 
 {-| Preforms a transition to provided `Route`. Exposed by `Router` -}

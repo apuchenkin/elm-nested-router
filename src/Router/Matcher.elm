@@ -178,9 +178,11 @@ mapParams matcher routes params = flip List.map routes <| \route ->
   (route, Dict.filter (\param _ -> List.member param (matcher.routeParams route)) params)
 
 hasTrailingSlash : URL -> Bool
-hasTrailingSlash url = case String.right 1 url of
-  "/" -> True
-  _ -> False
+hasTrailingSlash url = case url of
+  "/" -> False
+  _ -> case String.right 1 url of
+    "/" -> True
+    _ -> False
 
 removeTrailingSlash : URL -> URL
 removeTrailingSlash url = if hasTrailingSlash url then String.dropRight 1 url else url

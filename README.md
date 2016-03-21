@@ -115,16 +115,16 @@ Finally we launch Router and feed its output to application ports:
 ```elm
 result : RouterResult State
 result = Router.runRouter <| RouterConfig {
-    init = initialState
-  , html5 = True
+    init      = initialState
+  , html5     = True
   , removeTrailingSlash = True
-  , fallback = (NotFound, Dict.empty)
-  , layout = layout
   , onTransition = \_ _ _ -> doNothing
-  , routes = routes
-  , routeConfig = routeConfig
-  , inits = []
-  , inputs = []
+  , fallback  = (NotFound, Dict.empty)
+  , layout    = layout
+  , routes    = routes
+  , routeConfig  = routeConfig
+  , inits     = []
+  , inputs    = []
   }
 
 main : Signal Html
@@ -134,7 +134,9 @@ port tasks : Signal (Task Never ())
 port tasks = result.tasks
 ```
 
-see [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/example) and [Tests](https://github.com/apuchenkin/elm-nested-router/tree/master/test/Test) for more details ([Live demo](http://apuchenkin.github.io/elm-nested-router/example))
+see [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/example) ([Live demo](http://apuchenkin.github.io/elm-nested-router/example)) and [Tests](https://github.com/apuchenkin/elm-nested-router/tree/master/test/Test) for more details.
+
+[Advanced example](https://github.com/apuchenkin/aws.photo.service/tree/master/client)
 
 ### Currently supports
 - [x] HTML5 push state
