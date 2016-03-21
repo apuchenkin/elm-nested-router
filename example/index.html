@@ -7283,7 +7283,7 @@ Elm.Combine.make = function (_elm) {
             } else {
                return {ctor: "_Tuple2"
                       ,_0: $Result.Err(ferr(_p3._0._0))
-                      ,_1: cx};
+                      ,_1: _p3._1};
             }
       });
    });
@@ -7303,6 +7303,36 @@ Elm.Combine.make = function (_elm) {
             }
       });
    });
+   var sequence = function (ps) {
+      var accumulate = F3(function (acc,ps,cx) {
+         accumulate: while (true) {
+            var _p5 = ps;
+            if (_p5.ctor === "[]") {
+                  return {ctor: "_Tuple2"
+                         ,_0: $Result.Ok($List.reverse(acc))
+                         ,_1: cx};
+               } else {
+                  var _p6 = A2(app,_p5._0,cx);
+                  if (_p6._0.ctor === "Ok") {
+                        var _v6 = A2($List._op["::"],_p6._0._0,acc),
+                        _v7 = _p5._1,
+                        _v8 = _p6._1;
+                        acc = _v6;
+                        ps = _v7;
+                        cx = _v8;
+                        continue accumulate;
+                     } else {
+                        return {ctor: "_Tuple2"
+                               ,_0: $Result.Err(_p6._0._0)
+                               ,_1: _p6._1};
+                     }
+               }
+         }
+      });
+      return Parser(function (cx) {
+         return A3(accumulate,_U.list([]),ps,cx);
+      });
+   };
    var fail = function (ms) {
       return Parser(function (cx) {
          return {ctor: "_Tuple2",_0: $Result.Err(ms),_1: cx};
@@ -7328,8 +7358,8 @@ Elm.Combine.make = function (_elm) {
       return A2(andMap,
       A2(andMap,
       A2(map,
-      $Basics.flip(function (_p5) {
-         return $Basics.always($Basics.always(_p5));
+      $Basics.flip(function (_p7) {
+         return $Basics.always($Basics.always(_p7));
       }),
       lp),
       p),
@@ -7375,17 +7405,17 @@ Elm.Combine.make = function (_elm) {
       "^",
       pattern) ? pattern : A2($Basics._op["++"],"^",pattern);
       return Parser(function (cx) {
-         var _p6 = A3($Regex.find,
+         var _p8 = A3($Regex.find,
          $Regex.AtMost(1),
          $Regex.regex(pattern$),
          cx.input);
-         if (_p6.ctor === "::" && _p6._1.ctor === "[]") {
-               var _p7 = _p6._0;
-               var len = $String.length(_p7.match);
+         if (_p8.ctor === "::" && _p8._1.ctor === "[]") {
+               var _p9 = _p8._0;
+               var len = $String.length(_p9.match);
                var rem = A2($String.dropLeft,len,cx.input);
                var pos = cx.position + len;
                return {ctor: "_Tuple2"
-                      ,_0: $Result.Ok(_p7.match)
+                      ,_0: $Result.Ok(_p9.match)
                       ,_1: _U.update(cx,{input: rem,position: pos})};
             } else {
                return {ctor: "_Tuple2"
@@ -7399,16 +7429,16 @@ Elm.Combine.make = function (_elm) {
    var $while = function (pred) {
       var accumulate = F2(function (acc,cx) {
          accumulate: while (true) {
-            var _p8 = $String.uncons(cx.input);
-            if (_p8.ctor === "Just") {
-                  var _p9 = _p8._0._0;
-                  if (pred(_p9)) {
+            var _p10 = $String.uncons(cx.input);
+            if (_p10.ctor === "Just") {
+                  var _p11 = _p10._0._0;
+                  if (pred(_p11)) {
                         var pos = cx.position + 1;
-                        var c = A2($String.cons,_p9,"");
-                        var _v6 = A2($Basics._op["++"],acc,c),
-                        _v7 = _U.update(cx,{input: _p8._0._1,position: pos});
-                        acc = _v6;
-                        cx = _v7;
+                        var c = A2($String.cons,_p11,"");
+                        var _v11 = A2($Basics._op["++"],acc,c),
+                        _v12 = _U.update(cx,{input: _p10._0._1,position: pos});
+                        acc = _v11;
+                        cx = _v12;
                         continue accumulate;
                      } else return {ctor: "_Tuple2",_0: acc,_1: cx};
                } else {
@@ -7417,9 +7447,9 @@ Elm.Combine.make = function (_elm) {
          }
       });
       return Parser(function (cx) {
-         var _p10 = A2(accumulate,"",cx);
-         var res = _p10._0;
-         var cx$ = _p10._1;
+         var _p12 = A2(accumulate,"",cx);
+         var res = _p12._0;
+         var cx$ = _p12._1;
          return {ctor: "_Tuple2",_0: $Result.Ok(res),_1: cx$};
       });
    };
@@ -7433,17 +7463,17 @@ Elm.Combine.make = function (_elm) {
    var or = F2(function (lp,rp) {
       return Parser(function (cx) {
          var res = A2(app,lp,cx);
-         var _p11 = res;
-         if (_p11._0.ctor === "Ok") {
+         var _p13 = res;
+         if (_p13._0.ctor === "Ok") {
                return res;
             } else {
                var res$ = A2(app,rp,cx);
-               var _p12 = res$;
-               if (_p12._0.ctor === "Ok") {
+               var _p14 = res$;
+               if (_p14._0.ctor === "Ok") {
                      return res$;
                   } else {
                      return {ctor: "_Tuple2"
-                            ,_0: $Result.Err(A2($Basics._op["++"],_p11._0._0,_p12._0._0))
+                            ,_0: $Result.Err(A2($Basics._op["++"],_p13._0._0,_p14._0._0))
                             ,_1: cx};
                   }
             }
@@ -7489,11 +7519,11 @@ Elm.Combine.make = function (_elm) {
    });
    var maybe = function (p) {
       return Parser(function (cx) {
-         var _p13 = A2(app,p,cx);
-         if (_p13.ctor === "_Tuple2" && _p13._0.ctor === "Ok") {
+         var _p15 = A2(app,p,cx);
+         if (_p15.ctor === "_Tuple2" && _p15._0.ctor === "Ok") {
                return {ctor: "_Tuple2"
-                      ,_0: $Result.Ok($Maybe.Just(_p13._0._0))
-                      ,_1: _p13._1};
+                      ,_0: $Result.Ok($Maybe.Just(_p15._0._0))
+                      ,_1: _p15._1};
             } else {
                return {ctor: "_Tuple2"
                       ,_0: $Result.Ok($Maybe.Nothing)
@@ -7504,15 +7534,15 @@ Elm.Combine.make = function (_elm) {
    var many = function (p) {
       var accumulate = F2(function (acc,cx) {
          accumulate: while (true) {
-            var _p14 = A2(app,p,cx);
-            if (_p14.ctor === "_Tuple2" && _p14._0.ctor === "Ok") {
-                  var _p15 = _p14._1;
-                  if (_U.eq(cx,_p15)) return {ctor: "_Tuple2"
+            var _p16 = A2(app,p,cx);
+            if (_p16.ctor === "_Tuple2" && _p16._0.ctor === "Ok") {
+                  var _p17 = _p16._1;
+                  if (_U.eq(cx,_p17)) return {ctor: "_Tuple2"
                                              ,_0: $List.reverse(acc)
                                              ,_1: cx}; else {
-                        var _v12 = A2($List._op["::"],_p14._0._0,acc),_v13 = _p15;
-                        acc = _v12;
-                        cx = _v13;
+                        var _v17 = A2($List._op["::"],_p16._0._0,acc),_v18 = _p17;
+                        acc = _v17;
+                        cx = _v18;
                         continue accumulate;
                      }
                } else {
@@ -7521,9 +7551,9 @@ Elm.Combine.make = function (_elm) {
          }
       });
       return Parser(function (cx) {
-         var _p16 = A2(accumulate,_U.list([]),cx);
-         var res = _p16._0;
-         var cx$ = _p16._1;
+         var _p18 = A2(accumulate,_U.list([]),cx);
+         var res = _p18._0;
+         var cx$ = _p18._1;
          return {ctor: "_Tuple2",_0: $Result.Ok(res),_1: cx$};
       });
    };
@@ -7549,6 +7579,14 @@ Elm.Combine.make = function (_elm) {
    var sepBy = F2(function (sep,p) {
       return A2(or,A2(sepBy1,sep,p),succeed(_U.list([])));
    });
+   var sepEndBy1 = F2(function (sep,p) {
+      return A2(andMap,
+      A2(map,$Basics.always,A2(sepBy1,sep,p)),
+      maybe(sep));
+   });
+   var sepEndBy = F2(function (sep,p) {
+      return A2(or,A2(sepEndBy1,sep,p),succeed(_U.list([])));
+   });
    var skipMany = function (p) {
       return A2(andThen,
       many(skip(p)),
@@ -7557,24 +7595,23 @@ Elm.Combine.make = function (_elm) {
    var manyTill = F2(function (p,end) {
       var accumulate = F2(function (acc,cx) {
          accumulate: while (true) {
-            var _p17 = A2(app,end,cx);
-            if (_p17._0.ctor === "Err") {
-                  var _p19 = _p17._1;
-                  var _p18 = A2(app,p,_p19);
-                  if (_p18.ctor === "_Tuple2" && _p18._0.ctor === "Ok") {
-                        var _v16 = A2($List._op["::"],_p18._0._0,acc),_v17 = _p18._1;
-                        acc = _v16;
-                        cx = _v17;
+            var _p19 = A2(app,end,cx);
+            if (_p19._0.ctor === "Ok") {
+                  return {ctor: "_Tuple2"
+                         ,_0: $Result.Ok($List.reverse(acc))
+                         ,_1: _p19._1};
+               } else {
+                  var _p20 = A2(app,p,cx);
+                  if (_p20.ctor === "_Tuple2" && _p20._0.ctor === "Ok") {
+                        var _v21 = A2($List._op["::"],_p20._0._0,acc),_v22 = _p20._1;
+                        acc = _v21;
+                        cx = _v22;
                         continue accumulate;
                      } else {
                         return {ctor: "_Tuple2"
-                               ,_0: $Result.Err(_p17._0._0)
-                               ,_1: _p19};
+                               ,_0: $Result.Err(_p19._0._0)
+                               ,_1: _p19._1};
                      }
-               } else {
-                  return {ctor: "_Tuple2"
-                         ,_0: $Result.Ok($List.reverse(acc))
-                         ,_1: _p17._1};
                }
          }
       });
@@ -7593,6 +7630,7 @@ Elm.Combine.make = function (_elm) {
                                 ,mapError: mapError
                                 ,andThen: andThen
                                 ,andMap: andMap
+                                ,sequence: sequence
                                 ,fail: fail
                                 ,succeed: succeed
                                 ,string: string
@@ -7608,6 +7646,8 @@ Elm.Combine.make = function (_elm) {
                                 ,manyTill: manyTill
                                 ,sepBy: sepBy
                                 ,sepBy1: sepBy1
+                                ,sepEndBy: sepEndBy
+                                ,sepEndBy1: sepEndBy1
                                 ,skip: skip
                                 ,skipMany: skipMany
                                 ,skipMany1: skipMany1
@@ -7843,282 +7883,6 @@ Elm.Combine.Num.make = function (_elm) {
                                     ,digit: digit
                                     ,$int: $int
                                     ,$float: $float};
-};Elm.MultiwayTree = Elm.MultiwayTree || {};
-Elm.MultiwayTree.make = function (_elm) {
-   "use strict";
-   _elm.MultiwayTree = _elm.MultiwayTree || {};
-   if (_elm.MultiwayTree.values) return _elm.MultiwayTree.values;
-   var _U = Elm.Native.Utils.make(_elm),
-   $Basics = Elm.Basics.make(_elm),
-   $Debug = Elm.Debug.make(_elm),
-   $List = Elm.List.make(_elm),
-   $Maybe = Elm.Maybe.make(_elm),
-   $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
-   var _op = {};
-   var children = function (_p0) {
-      var _p1 = _p0;
-      return _p1._1;
-   };
-   var datum = function (_p2) {    var _p3 = _p2;return _p3._0;};
-   var Tree = F2(function (a,b) {
-      return {ctor: "Tree",_0: a,_1: b};
-   });
-   var map = F2(function (fn,_p4) {
-      var _p5 = _p4;
-      var mappedChildren = A2($List.map,
-      function (child) {
-         return A2(map,fn,child);
-      },
-      _p5._1);
-      var mappedDatum = fn(_p5._0);
-      return A2(Tree,mappedDatum,mappedChildren);
-   });
-   return _elm.MultiwayTree.values = {_op: _op
-                                     ,datum: datum
-                                     ,children: children
-                                     ,map: map
-                                     ,Tree: Tree};
-};Elm.MultiwayTreeZipper = Elm.MultiwayTreeZipper || {};
-Elm.MultiwayTreeZipper.make = function (_elm) {
-   "use strict";
-   _elm.MultiwayTreeZipper = _elm.MultiwayTreeZipper || {};
-   if (_elm.MultiwayTreeZipper.values)
-   return _elm.MultiwayTreeZipper.values;
-   var _U = Elm.Native.Utils.make(_elm),
-   $Basics = Elm.Basics.make(_elm),
-   $Debug = Elm.Debug.make(_elm),
-   $List = Elm.List.make(_elm),
-   $Maybe = Elm.Maybe.make(_elm),
-   $MultiwayTree = Elm.MultiwayTree.make(_elm),
-   $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
-   var _op = {};
-   var datum = function (_p0) {
-      var _p1 = _p0;
-      return $MultiwayTree.datum(_p1._0);
-   };
-   var maybeDatum = function (zipper) {
-      return $Maybe.Just(datum(zipper));
-   };
-   var updateChildren = F2(function (newChildren,_p2) {
-      var _p3 = _p2;
-      return {ctor: "_Tuple2"
-             ,_0: A2($MultiwayTree.Tree,_p3._0._0,newChildren)
-             ,_1: _p3._1};
-   });
-   var updateDatum = F2(function (fn,_p4) {
-      var _p5 = _p4;
-      return $Maybe.Just({ctor: "_Tuple2"
-                         ,_0: A2($MultiwayTree.Tree,fn(_p5._0._0),_p5._0._1)
-                         ,_1: _p5._1});
-   });
-   var replaceDatum = function (newDatum) {
-      return updateDatum(function (_p6) {    return newDatum;});
-   };
-   var goUp = function (_p7) {
-      var _p8 = _p7;
-      var _p9 = _p8._1;
-      if (_p9.ctor === "::") {
-            return $Maybe.Just({ctor: "_Tuple2"
-                               ,_0: A2($MultiwayTree.Tree,
-                               _p9._0._0,
-                               A2($Basics._op["++"],
-                               _p9._0._1,
-                               A2($Basics._op["++"],_U.list([_p8._0]),_p9._0._2)))
-                               ,_1: _p9._1});
-         } else {
-            return $Maybe.Nothing;
-         }
-   };
-   var goToRoot = function (_p10) {
-      var _p11 = _p10;
-      var _p14 = _p11._0;
-      var _p13 = _p11._1;
-      var _p12 = _p13;
-      if (_p12.ctor === "[]") {
-            return $Maybe.Just({ctor: "_Tuple2",_0: _p14,_1: _p13});
-         } else {
-            return A2($Maybe.andThen,
-            goUp({ctor: "_Tuple2",_0: _p14,_1: _p13}),
-            goToRoot);
-         }
-   };
-   var splitOnIndex = F2(function (n,xs) {
-      var after = A2($List.drop,n + 1,xs);
-      var focus = $List.head(A2($List.drop,n,xs));
-      var before = A2($List.take,n,xs);
-      var _p15 = focus;
-      if (_p15.ctor === "Nothing") {
-            return $Maybe.Nothing;
-         } else {
-            return $Maybe.Just({ctor: "_Tuple3"
-                               ,_0: before
-                               ,_1: _p15._0
-                               ,_2: after});
-         }
-   });
-   var Context = F3(function (a,b,c) {
-      return {ctor: "Context",_0: a,_1: b,_2: c};
-   });
-   var goToChild = F2(function (n,_p16) {
-      var _p17 = _p16;
-      var maybeSplit = A2(splitOnIndex,n,_p17._0._1);
-      var _p18 = maybeSplit;
-      if (_p18.ctor === "Nothing") {
-            return $Maybe.Nothing;
-         } else {
-            return $Maybe.Just({ctor: "_Tuple2"
-                               ,_0: _p18._0._1
-                               ,_1: A2($List._op["::"],
-                               A3(Context,_p17._0._0,_p18._0._0,_p18._0._2),
-                               _p17._1)});
-         }
-   });
-   return _elm.MultiwayTreeZipper.values = {_op: _op
-                                           ,goToChild: goToChild
-                                           ,goUp: goUp
-                                           ,goToRoot: goToRoot
-                                           ,updateDatum: updateDatum
-                                           ,replaceDatum: replaceDatum
-                                           ,datum: datum
-                                           ,maybeDatum: maybeDatum
-                                           ,Context: Context};
-};Elm.MultiwayTreeUtil = Elm.MultiwayTreeUtil || {};
-Elm.MultiwayTreeUtil.make = function (_elm) {
-   "use strict";
-   _elm.MultiwayTreeUtil = _elm.MultiwayTreeUtil || {};
-   if (_elm.MultiwayTreeUtil.values)
-   return _elm.MultiwayTreeUtil.values;
-   var _U = Elm.Native.Utils.make(_elm),
-   $Basics = Elm.Basics.make(_elm),
-   $Debug = Elm.Debug.make(_elm),
-   $List = Elm.List.make(_elm),
-   $Maybe = Elm.Maybe.make(_elm),
-   $MultiwayTree = Elm.MultiwayTree.make(_elm),
-   $MultiwayTreeZipper = Elm.MultiwayTreeZipper.make(_elm),
-   $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
-   var _op = {};
-   var traverseFrom = F2(function (value,zipper) {
-      var value$ = $MultiwayTreeZipper.datum(zipper);
-      var _p0 = _U.eq(value,$Maybe.Just(value$));
-      if (_p0 === true) {
-            return _U.list([]);
-         } else {
-            var _p1 = $MultiwayTreeZipper.goUp(zipper);
-            if (_p1.ctor === "Nothing") {
-                  return _U.list([value$]);
-               } else {
-                  return A2($Basics._op["++"],
-                  A2(traverseFrom,value,_p1._0),
-                  _U.list([value$]));
-               }
-         }
-   });
-   var traverse = function (zipper) {
-      return A2(traverseFrom,$Maybe.Nothing,zipper);
-   };
-   var flatten = function (tree) {
-      var tail = A2($List.concatMap,
-      flatten,
-      $MultiwayTree.children(tree));
-      return A2($List._op["::"],$MultiwayTree.datum(tree),tail);
-   };
-   var unsafeFromJust = function (mb) {
-      var _p2 = mb;
-      if (_p2.ctor === "Just") {
-            return _p2._0;
-         } else {
-            return _U.crashCase("MultiwayTreeUtil",
-            {start: {line: 22,column: 21},end: {line: 24,column: 42}},
-            _p2)("unsafeFromJust");
-         }
-   };
-   var createZipper = function (tree) {
-      return {ctor: "_Tuple2",_0: tree,_1: _U.list([])};
-   };
-   var treeLookup = F2(function (value,tree) {
-      var zipperLookup = F2(function (node,z) {
-         var _p4 = _U.eq($MultiwayTreeZipper.datum(z),node);
-         if (_p4 === true) {
-               return $Maybe.Just(z);
-            } else {
-               var _p5 = $MultiwayTree.children($Basics.fst(z));
-               if (_p5.ctor === "[]") {
-                     return $Maybe.Nothing;
-                  } else {
-                     return $List.head(A3($Basics.flip,
-                     $List.filterMap,
-                     _U.range(0,$List.length(_p5) - 1),
-                     function (idx) {
-                        return A2(zipperLookup,
-                        node,
-                        unsafeFromJust(A3($Basics.flip,
-                        $MultiwayTreeZipper.goToChild,
-                        z,
-                        idx)));
-                     }));
-                  }
-            }
-      });
-      return A2(zipperLookup,value,createZipper(tree));
-   });
-   var forestLookup = F2(function (value,forest) {
-      return $List.head(A3($Basics.flip,
-      $List.filterMap,
-      forest,
-      function (tree) {
-         return A2(treeLookup,value,tree);
-      }));
-   });
-   var lca = F3(function (a,b,forest) {
-      var zipperB = $List.head(A2($List.filterMap,
-      treeLookup(b),
-      forest));
-      var traverseB = A2($Maybe.withDefault,
-      _U.list([]),
-      A2($Maybe.map,traverse,zipperB));
-      var zipperA = $List.head(A2($List.filterMap,
-      treeLookup(a),
-      forest));
-      var traverseA = A2($Maybe.withDefault,
-      _U.list([]),
-      A2($Maybe.map,traverse,zipperA));
-      var result = function () {
-         var _p6 = traverseA;
-         if (_p6.ctor === "[]") {
-               return $Maybe.Nothing;
-            } else {
-               var _p7 = _U.eq($List.head(traverseA),$List.head(traverseB));
-               if (_p7 === false) {
-                     return $Maybe.Nothing;
-                  } else {
-                     return A3($List.foldl,
-                     F2(function (_p8,acc) {
-                        var _p9 = _p8;
-                        var _p10 = _p9._0;
-                        return _U.eq(_p10,_p9._1) ? $Maybe.Just(_p10) : acc;
-                     }),
-                     $Maybe.Nothing,
-                     A3($List.map2,
-                     F2(function (v0,v1) {
-                        return {ctor: "_Tuple2",_0: v0,_1: v1};
-                     }),
-                     traverseA,
-                     traverseB));
-                  }
-            }
-      }();
-      return result;
-   });
-   return _elm.MultiwayTreeUtil.values = {_op: _op
-                                         ,flatten: flatten
-                                         ,traverse: traverse
-                                         ,traverseFrom: traverseFrom
-                                         ,forestLookup: forestLookup
-                                         ,treeLookup: treeLookup
-                                         ,lca: lca};
 };Elm.Dict = Elm.Dict || {};
 Elm.Dict.make = function (_elm) {
    "use strict";
@@ -13029,7 +12793,6 @@ Elm.Router.Types.make = function (_elm) {
    $Html = Elm.Html.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
-   $MultiwayTree = Elm.MultiwayTree.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
    $Task = Elm.Task.make(_elm);
@@ -13037,24 +12800,27 @@ Elm.Router.Types.make = function (_elm) {
    var RouterResult = F3(function (a,b,c) {
       return {html: a,state: b,tasks: c};
    });
-   var Router = F5(function (a,b,c,d,e) {
+   var Router = F7(function (a,b,c,d,e,f,g) {
       return {config: a
-             ,bindForward: b
-             ,buildUrl: c
-             ,forward: d
-             ,redirect: e};
+             ,address: b
+             ,bindForward: c
+             ,buildUrl: d
+             ,forward: e
+             ,redirect: f
+             ,match: g};
    });
    var RouterConfig = function (a) {
       return {ctor: "RouterConfig",_0: a};
    };
-   var RouterState = F3(function (a,b,c) {
-      return {route: a,params: b,cache: c};
+   var RouterState = F2(function (a,b) {
+      return {route: a,params: b};
    });
-   var RouterCache = F3(function (a,b,c) {
-      return {rawUrl: a,unwrap: b,traverse: c};
-   });
-   var RouteConfig = F3(function (a,b,c) {
-      return {segment: a,constraints: b,handler: c};
+   var RouteConfig = F5(function (a,b,c,d,e) {
+      return {segment: a
+             ,parent: b
+             ,bypass: c
+             ,constraints: d
+             ,handler: e};
    });
    var Handler = F2(function (a,b) {
       return {view: a,actions: b};
@@ -13074,11 +12840,41 @@ Elm.Router.Types.make = function (_elm) {
                                      ,Response: Response
                                      ,Handler: Handler
                                      ,RouteConfig: RouteConfig
-                                     ,RouterCache: RouterCache
                                      ,RouterState: RouterState
                                      ,RouterConfig: RouterConfig
                                      ,Router: Router
                                      ,RouterResult: RouterResult};
+};Elm.Memo = Elm.Memo || {};
+Elm.Memo.make = function (_elm) {
+   "use strict";
+   _elm.Memo = _elm.Memo || {};
+   if (_elm.Memo.values) return _elm.Memo.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Dict = Elm.Dict.make(_elm),
+   $Lazy = Elm.Lazy.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var apply = F2(function (dict,arg) {
+      return A2($Maybe.map,$Lazy.force,A2($Dict.get,arg,dict));
+   });
+   var memo = F2(function (fun,args) {
+      return apply($Dict.fromList(A2($List.map,
+      function (arg) {
+         return {ctor: "_Tuple2"
+                ,_0: arg
+                ,_1: $Lazy.lazy(function (_p0) {
+                   var _p1 = _p0;
+                   return fun(arg);
+                })};
+      },
+      args)));
+   });
+   return _elm.Memo.values = {_op: _op,memo: memo};
 };Elm.Router = Elm.Router || {};
 Elm.Router.Helpers = Elm.Router.Helpers || {};
 Elm.Router.Helpers.make = function (_elm) {
@@ -13094,29 +12890,44 @@ Elm.Router.Helpers.make = function (_elm) {
    $Effects = Elm.Effects.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $Memo = Elm.Memo.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Router$Types = Elm.Router.Types.make(_elm),
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
+   var memoFallback = F2(function (fun,args) {
+      var memoized = A2($Memo.memo,fun,args);
+      return function (arg) {
+         var _p0 = memoized(arg);
+         if (_p0.ctor === "Just") {
+               return _p0._0;
+            } else {
+               return fun(arg);
+            }
+      };
+   });
    var chainAction = F3(function (action1,action2,state) {
-      var _p0 = action1(state);
-      var state$ = _p0._0._0;
-      var effects = _p0._0._1;
-      var _p1 = action2(state$);
-      var state$$ = _p1._0._0;
-      var effects$ = _p1._0._1;
+      var _p1 = action1(state);
+      var state$ = _p1._0._0;
+      var effects = _p1._0._1;
+      var _p2 = action2(state$);
+      var state$$ = _p2._0._0;
+      var effects$ = _p2._0._1;
       return $Router$Types.Response({ctor: "_Tuple2"
                                     ,_0: state$$
                                     ,_1: $Effects.batch(_U.list([effects,effects$]))});
    });
-   var combineParams = F2(function (dict,_p2) {
-      var _p3 = _p2;
+   var combineParams = F2(function (dict,_p3) {
+      var _p4 = _p3;
       return {ctor: "_Tuple2"
-             ,_0: _p3._0
-             ,_1: A2($Dict.union,_p3._1,dict)};
+             ,_0: _p4._0
+             ,_1: A2($Dict.union,_p4._1,dict)};
    });
    var noFx = function (state) {
       return {ctor: "_Tuple2",_0: state,_1: $Effects.none};
+   };
+   var doNothing = function (state) {
+      return $Router$Types.Response(noFx(state));
    };
    var singleton = function (action) {
       return _U.list([action]);
@@ -13124,8 +12935,10 @@ Elm.Router.Helpers.make = function (_elm) {
    return _elm.Router.Helpers.values = {_op: _op
                                        ,singleton: singleton
                                        ,noFx: noFx
+                                       ,doNothing: doNothing
                                        ,combineParams: combineParams
-                                       ,chainAction: chainAction};
+                                       ,chainAction: chainAction
+                                       ,memoFallback: memoFallback};
 };Elm.App = Elm.App || {};
 Elm.App.Routes = Elm.App.Routes || {};
 Elm.App.Routes.make = function (_elm) {
@@ -13138,7 +12951,6 @@ Elm.App.Routes.make = function (_elm) {
    $Debug = Elm.Debug.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
-   $MultiwayTree = Elm.MultiwayTree.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
@@ -13147,16 +12959,12 @@ Elm.App.Routes.make = function (_elm) {
    var Static = function (a) {    return {ctor: "Static",_0: a};};
    var NotFound = {ctor: "NotFound"};
    var Home = {ctor: "Home"};
-   var routes = _U.list([A2($MultiwayTree.Tree,
-                        NotFound,
-                        _U.list([]))
-                        ,A2($MultiwayTree.Tree,Static("about"),_U.list([]))
-                        ,A2($MultiwayTree.Tree,Static("contacts"),_U.list([]))
-                        ,A2($MultiwayTree.Tree,
-                        Home,
-                        _U.list([A2($MultiwayTree.Tree,
-                        Category,
-                        _U.list([A2($MultiwayTree.Tree,Post,_U.list([]))]))]))]);
+   var routes = _U.list([NotFound
+                        ,Static("about")
+                        ,Static("contacts")
+                        ,Home
+                        ,Category
+                        ,Post]);
    return _elm.App.Routes.values = {_op: _op
                                    ,Home: Home
                                    ,NotFound: NotFound
@@ -13824,7 +13632,7 @@ Elm.App.Handlers.make = function (_elm) {
               categories))]));
    });
    var homeHandler = function (router) {
-      var view = F3(function (address,state,_p0) {
+      var view = F2(function (state,_p0) {
          return $Dict.fromList(_U.list([{ctor: "_Tuple2"
                                         ,_0: "body"
                                         ,_1: A2(renderCategories,router,state.categories)}]));
@@ -13840,7 +13648,7 @@ Elm.App.Handlers.make = function (_elm) {
       _U.list([$Html.text("Home")]));
    };
    var categoryHandler = function (router) {
-      var view = F3(function (address,state,parsed) {
+      var view = F2(function (state,parsed) {
          var body = A3(renderPosts,router,state,state.posts);
          return $Dict.fromList(_U.list([{ctor: "_Tuple2"
                                         ,_0: "header"
@@ -13863,7 +13671,7 @@ Elm.App.Handlers.make = function (_elm) {
              ,actions: _U.list([$App$Actions.loadPosts(router)])};
    };
    var postHandler = function (router) {
-      var view = F3(function (address,state,_p1) {
+      var view = F2(function (state,_p1) {
          var text = A2($Maybe.withDefault,
          "",
          A2($App$Actions._op["&>"],
@@ -13895,7 +13703,7 @@ Elm.App.Handlers.make = function (_elm) {
    };
    var notFoundHandler = function (router) {
       var body = $Html.text("404");
-      var view = F3(function (address,state,_p2) {
+      var view = F2(function (state,_p2) {
          return $Dict.fromList(_U.list([{ctor: "_Tuple2"
                                         ,_0: "header"
                                         ,_1: A2($Html.header,_U.list([]),_U.list([homeLink(router)]))}
@@ -13905,7 +13713,7 @@ Elm.App.Handlers.make = function (_elm) {
    };
    var staticHandler = F2(function (page,router) {
       var body = $Html.text(page);
-      var view = F3(function (address,state,parsed) {
+      var view = F2(function (state,parsed) {
          return $Dict.fromList(_U.list([{ctor: "_Tuple2"
                                         ,_0: "header"
                                         ,_1: A2($Html.header,
@@ -14578,71 +14386,93 @@ Elm.List.Extra.make = function (_elm) {
       });
       return A3($List.foldl,mf,$Maybe.Nothing,xs);
    });
+   var uniqueHelp = F2(function (existing,remaining) {
+      uniqueHelp: while (true) {
+         var _p29 = remaining;
+         if (_p29.ctor === "[]") {
+               return _U.list([]);
+            } else {
+               var _p31 = _p29._1;
+               var _p30 = _p29._0;
+               if (A2($Set.member,_p30,existing)) {
+                     var _v18 = existing,_v19 = _p31;
+                     existing = _v18;
+                     remaining = _v19;
+                     continue uniqueHelp;
+                  } else return A2($List._op["::"],
+                  _p30,
+                  A2(uniqueHelp,A2($Set.insert,_p30,existing),_p31));
+            }
+      }
+   });
+   var unique = function (list) {
+      return A2(uniqueHelp,$Set.empty,list);
+   };
    var interweaveHelp = F3(function (l1,l2,acc) {
       interweaveHelp: while (true) {
-         var _p29 = {ctor: "_Tuple2",_0: l1,_1: l2};
-         _v17_1: do {
-            if (_p29._0.ctor === "::") {
-                  if (_p29._1.ctor === "::") {
-                        var _v18 = _p29._0._1,
-                        _v19 = _p29._1._1,
-                        _v20 = A2($Basics._op["++"],
+         var _p32 = {ctor: "_Tuple2",_0: l1,_1: l2};
+         _v20_1: do {
+            if (_p32._0.ctor === "::") {
+                  if (_p32._1.ctor === "::") {
+                        var _v21 = _p32._0._1,
+                        _v22 = _p32._1._1,
+                        _v23 = A2($Basics._op["++"],
                         acc,
-                        _U.list([_p29._0._0,_p29._1._0]));
-                        l1 = _v18;
-                        l2 = _v19;
-                        acc = _v20;
+                        _U.list([_p32._0._0,_p32._1._0]));
+                        l1 = _v21;
+                        l2 = _v22;
+                        acc = _v23;
                         continue interweaveHelp;
                      } else {
-                        break _v17_1;
+                        break _v20_1;
                      }
                } else {
-                  if (_p29._1.ctor === "[]") {
-                        break _v17_1;
+                  if (_p32._1.ctor === "[]") {
+                        break _v20_1;
                      } else {
-                        return A2($Basics._op["++"],acc,_p29._1);
+                        return A2($Basics._op["++"],acc,_p32._1);
                      }
                }
          } while (false);
-         return A2($Basics._op["++"],acc,_p29._0);
+         return A2($Basics._op["++"],acc,_p32._0);
       }
    });
    var interweave = F2(function (l1,l2) {
       return A3(interweaveHelp,l1,l2,_U.list([]));
    });
    var permutations = function (xs$) {
-      var _p30 = xs$;
-      if (_p30.ctor === "[]") {
+      var _p33 = xs$;
+      if (_p33.ctor === "[]") {
             return _U.list([_U.list([])]);
          } else {
-            var f = function (_p31) {
-               var _p32 = _p31;
+            var f = function (_p34) {
+               var _p35 = _p34;
                return A2($List.map,
                F2(function (x,y) {
                   return A2($List._op["::"],x,y);
-               })(_p32._0),
-               permutations(_p32._1));
+               })(_p35._0),
+               permutations(_p35._1));
             };
-            return A2($List.concatMap,f,select(_p30));
+            return A2($List.concatMap,f,select(_p33));
          }
    };
    var isPermutationOf = F2(function (permut,xs) {
       return A2($List.member,permut,permutations(xs));
    });
    var subsequencesNonEmpty = function (xs) {
-      var _p33 = xs;
-      if (_p33.ctor === "[]") {
+      var _p36 = xs;
+      if (_p36.ctor === "[]") {
             return _U.list([]);
          } else {
-            var _p34 = _p33._0;
+            var _p37 = _p36._0;
             var f = F2(function (ys,r) {
                return A2($List._op["::"],
                ys,
-               A2($List._op["::"],A2($List._op["::"],_p34,ys),r));
+               A2($List._op["::"],A2($List._op["::"],_p37,ys),r));
             });
             return A2($List._op["::"],
-            _U.list([_p34]),
-            A3($List.foldr,f,_U.list([]),subsequencesNonEmpty(_p33._1)));
+            _U.list([_p37]),
+            A3($List.foldr,f,_U.list([]),subsequencesNonEmpty(_p36._1)));
          }
    };
    var subsequences = function (xs) {
@@ -14655,34 +14485,34 @@ Elm.List.Extra.make = function (_elm) {
    });
    var transpose = function (ll) {
       transpose: while (true) {
-         var _p35 = ll;
-         if (_p35.ctor === "[]") {
+         var _p38 = ll;
+         if (_p38.ctor === "[]") {
                return _U.list([]);
             } else {
-               if (_p35._0.ctor === "[]") {
-                     var _v25 = _p35._1;
-                     ll = _v25;
+               if (_p38._0.ctor === "[]") {
+                     var _v28 = _p38._1;
+                     ll = _v28;
                      continue transpose;
                   } else {
-                     var _p36 = _p35._1;
-                     var tails = A2($List.filterMap,$List.tail,_p36);
-                     var heads = A2($List.filterMap,$List.head,_p36);
+                     var _p39 = _p38._1;
+                     var tails = A2($List.filterMap,$List.tail,_p39);
+                     var heads = A2($List.filterMap,$List.head,_p39);
                      return A2($List._op["::"],
-                     A2($List._op["::"],_p35._0._0,heads),
-                     transpose(A2($List._op["::"],_p35._0._1,tails)));
+                     A2($List._op["::"],_p38._0._0,heads),
+                     transpose(A2($List._op["::"],_p38._0._1,tails)));
                   }
             }
       }
    };
    var intercalate = function (xs) {
-      return function (_p37) {
-         return $List.concat(A2($List.intersperse,xs,_p37));
+      return function (_p40) {
+         return $List.concat(A2($List.intersperse,xs,_p40));
       };
    };
    var removeWhen = F2(function (pred,list) {
       return A2($List.filter,
-      function (_p38) {
-         return $Basics.not(pred(_p38));
+      function (_p41) {
+         return $Basics.not(pred(_p41));
       },
       list);
    });
@@ -14695,24 +14525,24 @@ Elm.List.Extra.make = function (_elm) {
       list);
    });
    var findIndices = function (p) {
-      return function (_p39) {
+      return function (_p42) {
          return A2($List.map,
          $Basics.fst,
          A2($List.filter,
-         function (_p40) {
-            var _p41 = _p40;
-            return p(_p41._1);
+         function (_p43) {
+            var _p44 = _p43;
+            return p(_p44._1);
          },
          A2($List.indexedMap,
          F2(function (v0,v1) {
             return {ctor: "_Tuple2",_0: v0,_1: v1};
          }),
-         _p39)));
+         _p42)));
       };
    };
    var findIndex = function (p) {
-      return function (_p42) {
-         return $List.head(A2(findIndices,p,_p42));
+      return function (_p45) {
+         return $List.head(A2(findIndices,p,_p45));
       };
    };
    var elemIndices = function (x) {
@@ -14727,23 +14557,23 @@ Elm.List.Extra.make = function (_elm) {
    };
    var find = F2(function (predicate,list) {
       find: while (true) {
-         var _p43 = list;
-         if (_p43.ctor === "[]") {
+         var _p46 = list;
+         if (_p46.ctor === "[]") {
                return $Maybe.Nothing;
             } else {
-               var _p44 = _p43._0;
-               if (predicate(_p44)) return $Maybe.Just(_p44); else {
-                     var _v28 = predicate,_v29 = _p43._1;
-                     predicate = _v28;
-                     list = _v29;
+               var _p47 = _p46._0;
+               if (predicate(_p47)) return $Maybe.Just(_p47); else {
+                     var _v31 = predicate,_v32 = _p46._1;
+                     predicate = _v31;
+                     list = _v32;
                      continue find;
                   }
             }
       }
    });
    var notMember = function (x) {
-      return function (_p45) {
-         return $Basics.not(A2($List.member,x,_p45));
+      return function (_p48) {
+         return $Basics.not(A2($List.member,x,_p48));
       };
    };
    var andThen = $Basics.flip($List.concatMap);
@@ -14799,15 +14629,15 @@ Elm.List.Extra.make = function (_elm) {
       l);
    });
    var dropDuplicates = function (list) {
-      var step = F2(function (next,_p46) {
-         var _p47 = _p46;
-         var _p49 = _p47._0;
-         var _p48 = _p47._1;
-         return A2($Set.member,next,_p49) ? {ctor: "_Tuple2"
-                                            ,_0: _p49
-                                            ,_1: _p48} : {ctor: "_Tuple2"
-                                                         ,_0: A2($Set.insert,next,_p49)
-                                                         ,_1: A2($List._op["::"],next,_p48)};
+      var step = F2(function (next,_p49) {
+         var _p50 = _p49;
+         var _p52 = _p50._0;
+         var _p51 = _p50._1;
+         return A2($Set.member,next,_p52) ? {ctor: "_Tuple2"
+                                            ,_0: _p52
+                                            ,_1: _p51} : {ctor: "_Tuple2"
+                                                         ,_0: A2($Set.insert,next,_p52)
+                                                         ,_1: A2($List._op["::"],next,_p51)};
       });
       return $List.reverse($Basics.snd(A3($List.foldl,
       step,
@@ -14816,28 +14646,28 @@ Elm.List.Extra.make = function (_elm) {
    };
    var dropWhile = F2(function (predicate,list) {
       dropWhile: while (true) {
-         var _p50 = list;
-         if (_p50.ctor === "[]") {
+         var _p53 = list;
+         if (_p53.ctor === "[]") {
                return _U.list([]);
             } else {
-               if (predicate(_p50._0)) {
-                     var _v32 = predicate,_v33 = _p50._1;
-                     predicate = _v32;
-                     list = _v33;
+               if (predicate(_p53._0)) {
+                     var _v35 = predicate,_v36 = _p53._1;
+                     predicate = _v35;
+                     list = _v36;
                      continue dropWhile;
                   } else return list;
             }
       }
    });
    var takeWhile = F2(function (predicate,list) {
-      var _p51 = list;
-      if (_p51.ctor === "[]") {
+      var _p54 = list;
+      if (_p54.ctor === "[]") {
             return _U.list([]);
          } else {
-            var _p52 = _p51._0;
-            return predicate(_p52) ? A2($List._op["::"],
-            _p52,
-            A2(takeWhile,predicate,_p51._1)) : _U.list([]);
+            var _p55 = _p54._0;
+            return predicate(_p55) ? A2($List._op["::"],
+            _p55,
+            A2(takeWhile,predicate,_p54._1)) : _U.list([]);
          }
    });
    var span = F2(function (p,xs) {
@@ -14846,21 +14676,21 @@ Elm.List.Extra.make = function (_elm) {
              ,_1: A2(dropWhile,p,xs)};
    });
    var $break = function (p) {
-      return span(function (_p53) {
-         return $Basics.not(p(_p53));
+      return span(function (_p56) {
+         return $Basics.not(p(_p56));
       });
    };
    var groupBy = F2(function (eq,xs$) {
-      var _p54 = xs$;
-      if (_p54.ctor === "[]") {
+      var _p57 = xs$;
+      if (_p57.ctor === "[]") {
             return _U.list([]);
          } else {
-            var _p56 = _p54._0;
-            var _p55 = A2(span,eq(_p56),_p54._1);
-            var ys = _p55._0;
-            var zs = _p55._1;
+            var _p59 = _p57._0;
+            var _p58 = A2(span,eq(_p59),_p57._1);
+            var ys = _p58._0;
+            var zs = _p58._1;
             return A2($List._op["::"],
-            A2($List._op["::"],_p56,ys),
+            A2($List._op["::"],_p59,ys),
             A2(groupBy,eq,zs));
          }
    });
@@ -14868,67 +14698,67 @@ Elm.List.Extra.make = function (_elm) {
       return _U.eq(x,y);
    }));
    var minimumBy = F2(function (f,ls) {
-      var minBy = F2(function (x,_p57) {
-         var _p58 = _p57;
-         var _p59 = _p58._1;
+      var minBy = F2(function (x,_p60) {
+         var _p61 = _p60;
+         var _p62 = _p61._1;
          var fx = f(x);
-         return _U.cmp(fx,_p59) < 0 ? {ctor: "_Tuple2"
+         return _U.cmp(fx,_p62) < 0 ? {ctor: "_Tuple2"
                                       ,_0: x
-                                      ,_1: fx} : {ctor: "_Tuple2",_0: _p58._0,_1: _p59};
+                                      ,_1: fx} : {ctor: "_Tuple2",_0: _p61._0,_1: _p62};
       });
-      var _p60 = ls;
-      if (_p60.ctor === "::") {
-            if (_p60._1.ctor === "[]") {
-                  return $Maybe.Just(_p60._0);
+      var _p63 = ls;
+      if (_p63.ctor === "::") {
+            if (_p63._1.ctor === "[]") {
+                  return $Maybe.Just(_p63._0);
                } else {
-                  var _p61 = _p60._0;
+                  var _p64 = _p63._0;
                   return $Maybe.Just($Basics.fst(A3($List.foldl,
                   minBy,
-                  {ctor: "_Tuple2",_0: _p61,_1: f(_p61)},
-                  _p60._1)));
+                  {ctor: "_Tuple2",_0: _p64,_1: f(_p64)},
+                  _p63._1)));
                }
          } else {
             return $Maybe.Nothing;
          }
    });
    var maximumBy = F2(function (f,ls) {
-      var maxBy = F2(function (x,_p62) {
-         var _p63 = _p62;
-         var _p64 = _p63._1;
+      var maxBy = F2(function (x,_p65) {
+         var _p66 = _p65;
+         var _p67 = _p66._1;
          var fx = f(x);
-         return _U.cmp(fx,_p64) > 0 ? {ctor: "_Tuple2"
+         return _U.cmp(fx,_p67) > 0 ? {ctor: "_Tuple2"
                                       ,_0: x
-                                      ,_1: fx} : {ctor: "_Tuple2",_0: _p63._0,_1: _p64};
+                                      ,_1: fx} : {ctor: "_Tuple2",_0: _p66._0,_1: _p67};
       });
-      var _p65 = ls;
-      if (_p65.ctor === "::") {
-            if (_p65._1.ctor === "[]") {
-                  return $Maybe.Just(_p65._0);
+      var _p68 = ls;
+      if (_p68.ctor === "::") {
+            if (_p68._1.ctor === "[]") {
+                  return $Maybe.Just(_p68._0);
                } else {
-                  var _p66 = _p65._0;
+                  var _p69 = _p68._0;
                   return $Maybe.Just($Basics.fst(A3($List.foldl,
                   maxBy,
-                  {ctor: "_Tuple2",_0: _p66,_1: f(_p66)},
-                  _p65._1)));
+                  {ctor: "_Tuple2",_0: _p69,_1: f(_p69)},
+                  _p68._1)));
                }
          } else {
             return $Maybe.Nothing;
          }
    });
    var uncons = function (xs) {
-      var _p67 = xs;
-      if (_p67.ctor === "[]") {
+      var _p70 = xs;
+      if (_p70.ctor === "[]") {
             return $Maybe.Nothing;
          } else {
             return $Maybe.Just({ctor: "_Tuple2"
-                               ,_0: _p67._0
-                               ,_1: _p67._1});
+                               ,_0: _p70._0
+                               ,_1: _p70._1});
          }
    };
    var iterate = F2(function (f,x) {
-      var _p68 = f(x);
-      if (_p68.ctor === "Just") {
-            return A2($List._op["::"],x,A2(iterate,f,_p68._0));
+      var _p71 = f(x);
+      if (_p71.ctor === "Just") {
+            return A2($List._op["::"],x,A2(iterate,f,_p71._0));
          } else {
             return _U.list([x]);
          }
@@ -14939,15 +14769,15 @@ Elm.List.Extra.make = function (_elm) {
    _op["!!"] = getAt;
    var init = function () {
       var maybe = F2(function (d,f) {
-         return function (_p69) {
-            return A2($Maybe.withDefault,d,A2($Maybe.map,f,_p69));
+         return function (_p72) {
+            return A2($Maybe.withDefault,d,A2($Maybe.map,f,_p72));
          };
       });
       return A2($List.foldr,
-      function (_p70) {
+      function (_p73) {
          return A2(F2(function (x,y) {
-            return function (_p71) {
-               return x(y(_p71));
+            return function (_p74) {
+               return x(y(_p74));
             };
          }),
          $Maybe.Just,
@@ -14955,7 +14785,7 @@ Elm.List.Extra.make = function (_elm) {
          _U.list([]),
          F2(function (x,y) {
             return A2($List._op["::"],x,y);
-         })(_p70)));
+         })(_p73)));
       },
       $Maybe.Nothing);
    }();
@@ -14981,6 +14811,7 @@ Elm.List.Extra.make = function (_elm) {
                                    ,subsequences: subsequences
                                    ,permutations: permutations
                                    ,interweave: interweave
+                                   ,unique: unique
                                    ,foldl1: foldl1
                                    ,foldr1: foldr1
                                    ,scanl1: scanl1
@@ -15037,8 +14868,6 @@ Elm.Router.Matcher.make = function (_elm) {
    $List = Elm.List.make(_elm),
    $List$Extra = Elm.List.Extra.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
-   $MultiwayTree = Elm.MultiwayTree.make(_elm),
-   $MultiwayTreeUtil = Elm.MultiwayTreeUtil.make(_elm),
    $Regex = Elm.Regex.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Router$Helpers = Elm.Router.Helpers.make(_elm),
@@ -15046,26 +14875,102 @@ Elm.Router.Matcher.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm),
    $String = Elm.String.make(_elm);
    var _op = {};
-   var getPath = F2(function (route,forest) {
-      return A2($Maybe.withDefault,
-      _U.list([]),
-      A3($Basics.flip,
-      $Maybe.map,
-      $List.head(A2($List.filterMap,
-      function (tree) {
-         return A2($MultiwayTreeUtil.treeLookup,route,tree);
-      },
-      forest)),
-      function (zipper) {
-         return $MultiwayTreeUtil.traverse(zipper);
-      }));
+   var Matcher = F7(function (a,b,c,d,e,f,g) {
+      return {getConfig: a
+             ,buildUrl: b
+             ,match: c
+             ,traverse: d
+             ,routeParams: e
+             ,stringToRoute: f
+             ,sids: g};
    });
-   var composeRawUrl = F3(function (rawRoute,forest,route) {
-      var zipper = A2($MultiwayTreeUtil.forestLookup,route,forest);
-      var path = A2($Maybe.withDefault,
+   var hasTrailingSlash = function (url) {
+      var _p0 = url;
+      if (_p0 === "/") {
+            return false;
+         } else {
+            var _p1 = A2($String.right,1,url);
+            if (_p1 === "/") {
+                  return true;
+               } else {
+                  return false;
+               }
+         }
+   };
+   var removeTrailingSlash = function (url) {
+      return hasTrailingSlash(url) ? A2($String.dropRight,
+      1,
+      url) : url;
+   };
+   var mapParams = F3(function (matcher,routes,params) {
+      return A3($Basics.flip,
+      $List.map,
+      routes,
+      function (route) {
+         return {ctor: "_Tuple2"
+                ,_0: route
+                ,_1: A2($Dict.filter,
+                F2(function (param,_p2) {
+                   return A2($List.member,param,matcher.routeParams(route));
+                }),
+                params)};
+      });
+   });
+   var routeDiff = F3(function (matcher,from,to) {
+      var toParams = $Basics.snd(to);
+      var toRoute = $Basics.fst(to);
+      var toPath = matcher.traverse(toRoute);
+      var toPath$ = A3(mapParams,matcher,toPath,toParams);
+      var fromParams = A2($Maybe.withDefault,
+      $Dict.empty,
+      A2($Maybe.map,$Basics.snd,from));
+      var fromRoute = A2($Maybe.map,$Basics.fst,from);
+      var fromPath = A2($Maybe.withDefault,
       _U.list([]),
-      A2($Maybe.map,$MultiwayTreeUtil.traverse,zipper));
-      var segments = A2($List.map,rawRoute,path);
+      A2($Maybe.map,matcher.traverse,fromRoute));
+      var path = A3($List.map2,
+      F2(function (v0,v1) {
+         return {ctor: "_Tuple2",_0: v0,_1: v1};
+      }),
+      fromPath,
+      toPath);
+      var fromPath$ = A3(mapParams,matcher,fromPath,fromParams);
+      var commons = $List.length(A2($List$Extra.takeWhile,
+      $Basics.uncurry(F2(function (x,y) {    return _U.eq(x,y);})),
+      A3($List.map2,
+      F2(function (v0,v1) {
+         return {ctor: "_Tuple2",_0: v0,_1: v1};
+      }),
+      fromPath$,
+      toPath$)));
+      var getConfig = matcher.getConfig;
+      var getParent = function (_p3) {
+         return function (_) {
+            return _.parent;
+         }(getConfig(_p3));
+      };
+      return A2($List.drop,commons,toPath);
+   });
+   var getPathInternal = F3(function (getParent,route,acc) {
+      var _p4 = getParent(route);
+      if (_p4.ctor === "Nothing") {
+            return A2($List._op["::"],route,acc);
+         } else {
+            return A2($List._op["::"],
+            route,
+            A3(getPathInternal,getParent,_p4._0,acc));
+         }
+   });
+   var getPath = F2(function (getParent,route) {
+      return $List.reverse(A3(getPathInternal,
+      getParent,
+      route,
+      _U.list([])));
+   });
+   var composeRawUrl = F3(function (getSegment,getParent,route) {
+      var segments = A2($List.map,
+      getSegment,
+      A2(getPath,getParent,route));
       return A3($List.foldl,
       $Basics.flip(F2(function (x,y) {
          return A2($Basics._op["++"],x,y);
@@ -15073,33 +14978,48 @@ Elm.Router.Matcher.make = function (_elm) {
       "",
       segments);
    });
+   var filterParent = F3(function (getParent,route,routes) {
+      return A3($List.foldl,
+      F2(function (r,_p5) {
+         var _p6 = _p5;
+         var _p8 = _p6._1;
+         var _p7 = _p6._0;
+         return _U.eq(getParent(r),route) ? {ctor: "_Tuple2"
+                                            ,_0: A2($Basics._op["++"],_p7,_U.list([r]))
+                                            ,_1: _p8} : {ctor: "_Tuple2"
+                                                        ,_0: _p7
+                                                        ,_1: A2($Basics._op["++"],_p8,_U.list([r]))};
+      }),
+      {ctor: "_Tuple2",_0: _U.list([]),_1: _U.list([])},
+      routes);
+   });
    var unwrap = function (raw) {
       var regex = $Regex.regex("^(.*)\\[([^\\]\\[]+)\\](.*)$");
       var matches = A3($Regex.find,$Regex.AtMost(1),regex,raw);
       var result = function () {
-         var _p0 = matches;
-         if (_p0.ctor === "[]") {
+         var _p9 = matches;
+         if (_p9.ctor === "[]") {
                return _U.list([raw]);
             } else {
-               if (_p0._1.ctor === "[]") {
-                     var _p1 = _p0._0.submatches;
-                     if (_p1.ctor === "::" && _p1._0.ctor === "Just" && _p1._1.ctor === "::" && _p1._1._0.ctor === "Just" && _p1._1._1.ctor === "::" && _p1._1._1._0.ctor === "Just" && _p1._1._1._1.ctor === "[]")
+               if (_p9._1.ctor === "[]") {
+                     var _p10 = _p9._0.submatches;
+                     if (_p10.ctor === "::" && _p10._0.ctor === "Just" && _p10._1.ctor === "::" && _p10._1._0.ctor === "Just" && _p10._1._1.ctor === "::" && _p10._1._1._0.ctor === "Just" && _p10._1._1._1.ctor === "[]")
                      {
-                           var _p3 = _p1._1._1._0._0;
-                           var _p2 = _p1._0._0;
+                           var _p12 = _p10._1._1._0._0;
+                           var _p11 = _p10._0._0;
                            return $List.concat(A2($List.map,
                            unwrap,
                            _U.list([A2($Basics._op["++"],
-                                   _p2,
-                                   A2($Basics._op["++"],_p1._1._0._0,_p3))
-                                   ,A2($Basics._op["++"],_p2,_p3)])));
+                                   _p11,
+                                   A2($Basics._op["++"],_p10._1._0._0,_p12))
+                                   ,A2($Basics._op["++"],_p11,_p12)])));
                         } else {
                            return _U.list([raw]);
                         }
                   } else {
                      return _U.crashCase("Router.Matcher",
-                     {start: {line: 51,column: 14},end: {line: 56,column: 52}},
-                     _p0)("result = case matches of _");
+                     {start: {line: 50,column: 14},end: {line: 55,column: 52}},
+                     _p9)("result = case matches of _");
                   }
             }
       }();
@@ -15131,54 +15051,41 @@ Elm.Router.Matcher.make = function (_elm) {
       return !_U.eq(x,y);
    })(paramChar))));
    var getParams = function (string) {
-      var _p5 = $Basics.fst(A2($Combine.parse,
+      var _p14 = $Basics.fst(A2($Combine.parse,
       paramsParser,
       string));
-      if (_p5.ctor === "Err") {
+      if (_p14.ctor === "Err") {
             return _U.crashCase("Router.Matcher",
-            {start: {line: 39,column: 20},end: {line: 41,column: 21}},
-            _p5)("getParams : String -> List String");
+            {start: {line: 37,column: 20},end: {line: 39,column: 21}},
+            _p14)("getParams : String -> List String");
          } else {
-            return _p5._0;
+            return _p14._0;
          }
    };
-   var mapParams = F3(function (rawRoute,routes,params) {
-      return A3($Basics.flip,
-      $List.map,
-      routes,
-      function (route) {
-         var p = getParams(rawRoute(route));
-         return {ctor: "_Tuple2"
-                ,_0: route
-                ,_1: A2($Dict.filter,
-                F2(function (k,_p7) {    return A2($List.member,k,p);}),
-                params)};
-      });
-   });
    var parseUrlParams = F3(function (raw,constraints,url) {
       var params = getParams(raw);
       var strings = function () {
-         var _p8 = params;
-         if (_p8.ctor === "[]") {
+         var _p16 = params;
+         if (_p16.ctor === "[]") {
                return _U.list([raw]);
             } else {
                return A3($Regex.split,
                $Regex.All,
                $Regex.regex(A2($String.join,
                "|",
-               A2($List.map,$String.cons(paramChar),_p8))),
+               A2($List.map,$String.cons(paramChar),_p16))),
                raw);
             }
       }();
       var sringParsers = A2($List.map,$Combine.string,strings);
       var last = function () {
-         var _p9 = $List$Extra.last(sringParsers);
-         if (_p9.ctor === "Nothing") {
+         var _p17 = $List$Extra.last(sringParsers);
+         if (_p17.ctor === "Nothing") {
                return _U.crashCase("Router.Matcher",
                {start: {line: 76,column: 12},end: {line: 78,column: 19}},
-               _p9)("List.Extra.last sringParsers");
+               _p17)("List.Extra.last sringParsers");
             } else {
-               return _p9._0;
+               return _p17._0;
             }
       }();
       var paramParsers = A2($List.map,
@@ -15187,15 +15094,15 @@ Elm.Router.Matcher.make = function (_elm) {
          stringParser,
          A2($Maybe.map,
          function (c) {
-            var _p11 = c;
-            switch (_p11.ctor)
+            var _p19 = c;
+            switch (_p19.ctor)
             {case "Int": return A2($Combine$Infix._op["<$>"],
                  $Basics.toString,
                  $Combine$Num.$int);
                case "Enum": return $Combine.choice(A2($List.map,
                  $Combine.string,
-                 _p11._0));
-               case "Regex": return $Combine.regex(_p11._0);
+                 _p19._0));
+               case "Regex": return $Combine.regex(_p19._0);
                default: return stringParser;}
          },
          A2($Dict.get,param,constraints)));
@@ -15219,9 +15126,9 @@ Elm.Router.Matcher.make = function (_elm) {
       }),
       A2($Combine$Infix._op["<$>"],$Router$Helpers.singleton,last),
       A2($List.map,$Combine.map($Router$Helpers.singleton),parsers));
-      var _p12 = A2($Combine.parse,parser,url);
-      var result = _p12._0;
-      var context = _p12._1;
+      var _p20 = A2($Combine.parse,parser,url);
+      var result = _p20._0;
+      var context = _p20._1;
       var zipValues = function (values) {
          return $Dict.fromList(A3($List.map2,
          F2(function (v0,v1) {
@@ -15234,56 +15141,94 @@ Elm.Router.Matcher.make = function (_elm) {
              ,_0: A2($Result.map,zipValues,result)
              ,_1: context.input};
    });
-   var matchRaw = F3(function (rawRoute,forest,url) {
-      return $List.head(A2($List.filterMap,
-      function (tree) {
-         var _p13 = rawRoute($MultiwayTree.datum(tree));
-         var raws = _p13._0;
-         var constraints = _p13._1;
-         return $List.head(A2($List.filterMap,
-         function (pattern) {
-            var _p14 = A3(parseUrlParams,pattern,constraints,url);
-            var result = _p14._0;
-            var url$ = _p14._1;
-            var _p15 = result;
-            if (_p15.ctor === "Err") {
-                  return $Maybe.Nothing;
-               } else {
-                  var _p17 = _p15._0;
-                  var child = A3(matchRaw,
-                  rawRoute,
-                  $MultiwayTree.children(tree),
-                  url$);
-                  var childRoute = A2($Maybe.map,
-                  $Router$Helpers.combineParams(_p17),
-                  child);
-                  var _p16 = $String.isEmpty(url$);
-                  if (_p16 === true) {
-                        return $Maybe.Just(A2($Maybe.withDefault,
-                        {ctor: "_Tuple2",_0: $MultiwayTree.datum(tree),_1: _p17},
-                        childRoute));
+   var matchInternal = F5(function (unwrap,
+   getConfig,
+   routes,
+   pool,
+   url) {
+      return A3($List.foldl,
+      F2(function (route,match) {
+         var _p21 = match;
+         if (_p21.ctor === "Just") {
+               return match;
+            } else {
+               var config = getConfig(route);
+               var raws = unwrap(config.segment);
+               return A3($List.foldl,
+               F2(function (raw,match$) {
+                  var _p22 = match$;
+                  if (_p22.ctor === "Just") {
+                        return match$;
                      } else {
-                        return childRoute;
+                        var _p23 = A3(parseUrlParams,raw,config.constraints,url);
+                        var result = _p23._0;
+                        var url$ = _p23._1;
+                        var _p24 = result;
+                        if (_p24.ctor === "Err") {
+                              return $Maybe.Nothing;
+                           } else {
+                              var _p29 = _p24._0;
+                              var matchChildren = function (route) {
+                                 var _p25 = A3(filterParent,
+                                 function (_p26) {
+                                    return function (_) {
+                                       return _.parent;
+                                    }(getConfig(_p26));
+                                 },
+                                 $Maybe.Just(route),
+                                 pool);
+                                 var childrens = _p25._0;
+                                 var pool$ = _p25._1;
+                                 var child = A5(matchInternal,
+                                 unwrap,
+                                 getConfig,
+                                 childrens,
+                                 pool$,
+                                 url$);
+                                 var childRoute = A2($Maybe.map,
+                                 $Router$Helpers.combineParams(_p29),
+                                 child);
+                                 return childRoute;
+                              };
+                              var _p27 = config.bypass;
+                              if (_p27 === true) {
+                                    return matchChildren(route);
+                                 } else {
+                                    var _p28 = $String.isEmpty(url$);
+                                    if (_p28 === true) {
+                                          return $Maybe.Just({ctor: "_Tuple2",_0: route,_1: _p29});
+                                       } else {
+                                          return matchChildren(route);
+                                       }
+                                 }
+                           }
                      }
-               }
-         },
-         raws));
-      },
-      forest));
+               }),
+               $Maybe.Nothing,
+               raws);
+            }
+      }),
+      $Maybe.Nothing,
+      routes);
    });
-   var match = F3(function (rawRoute,forest,url) {
-      return A3(matchRaw,
-      function (_p18) {
-         return function (_p19) {
-            var _p20 = _p19;
-            return {ctor: "_Tuple2",_0: unwrap(_p20._0),_1: _p20._1};
-         }(rawRoute(_p18));
+   var match$ = F4(function (unwrap,getConfig,routes,url) {
+      var _p30 = A3(filterParent,
+      function (_p31) {
+         return function (_) {
+            return _.parent;
+         }(getConfig(_p31));
       },
-      forest,
-      url);
+      $Maybe.Nothing,
+      routes);
+      var roots = _p30._0;
+      var pool = _p30._1;
+      return A5(matchInternal,unwrap,getConfig,roots,pool,url);
    });
-   var buildRawUrl = F2(function (raws,_p21) {
-      var _p22 = _p21;
+   var match = F3(function (getConfig,routes,url) {
+      return A4(match$,unwrap,getConfig,routes,url);
+   });
+   var buildRawUrl = F2(function (raws,_p32) {
+      var _p33 = _p32;
       var urls = A2($List.map,
       function (raw) {
          return A3($Dict.foldl,
@@ -15295,35 +15240,118 @@ Elm.Router.Matcher.make = function (_elm) {
             string);
          }),
          raw,
-         _p22._1);
+         _p33._1);
       },
       raws);
       var urls$ = A2($List.filter,
-      function (_p23) {
+      function (_p34) {
          return $Basics.not(A2($String.contains,
          $String.fromChar(paramChar),
-         _p23));
+         _p34));
       },
       urls);
-      var _p24 = $List.head(urls$);
-      if (_p24.ctor === "Nothing") {
+      var _p35 = $List.head(urls$);
+      if (_p35.ctor === "Nothing") {
             return _U.crashCase("Router.Matcher",
-            {start: {line: 121,column: 6},end: {line: 123,column: 20}},
-            _p24)(A2($Basics._op["++"],
+            {start: {line: 147,column: 6},end: {line: 149,column: 20}},
+            _p35)(A2($Basics._op["++"],
             "not enough params to build URL: ",
-            $Basics.toString(_p22._0)));
+            $Basics.toString(_p33._0)));
          } else {
-            return _p24._0;
+            return _p35._0;
          }
    });
-   var buildUrl = F3(function (rawRoute,forest,_p26) {
-      var _p27 = _p26;
-      var _p28 = _p27._0;
-      var raws = unwrap(A3(composeRawUrl,rawRoute,forest,_p28));
+   var buildUrl = F3(function (getSegment,getParent,_p37) {
+      var _p38 = _p37;
+      var _p39 = _p38._0;
+      var raws = unwrap(A3(composeRawUrl,getSegment,getParent,_p39));
       return A2(buildRawUrl,
       raws,
-      {ctor: "_Tuple2",_0: _p28,_1: _p27._1});
+      {ctor: "_Tuple2",_0: _p39,_1: _p38._1});
    });
+   var matcher = function (_p40) {
+      var _p41 = _p40;
+      var _p51 = _p41._0;
+      var getParent = function (_p42) {
+         return function (_) {
+            return _.parent;
+         }(_p51.routeConfig(_p42));
+      };
+      var getSegment = function (_p43) {
+         return function (_) {
+            return _.segment;
+         }(_p51.routeConfig(_p43));
+      };
+      var routes = _p51.routes;
+      var segments = A2($List.map,getSegment,routes);
+      var sids = A2($List.map,$Basics.toString,routes);
+      var dict = $Dict.fromList(A3($List.map2,
+      F2(function (v0,v1) {
+         return {ctor: "_Tuple2",_0: v0,_1: v1};
+      }),
+      sids,
+      routes));
+      var stringToRoute = function (sid) {
+         var _p44 = A2($Dict.get,sid,dict);
+         if (_p44.ctor === "Just") {
+               return _p44._0;
+            } else {
+               return _U.crashCase("Router.Matcher",
+               {start: {line: 239,column: 25},end: {line: 241,column: 57}},
+               _p44)(A2($Basics._op["++"],"stringToRoute: ",sid));
+            }
+      };
+      var composeUrl = A2($Router$Helpers.memoFallback,
+      function (sid) {
+         return A3(composeRawUrl,
+         getSegment,
+         getParent,
+         stringToRoute(sid));
+      },
+      sids);
+      var composeUrl$ = function (_p46) {
+         return composeUrl($Basics.toString(_p46));
+      };
+      var urls = A2($List.map,composeUrl$,routes);
+      var unwrap$ = A2($Router$Helpers.memoFallback,
+      unwrap,
+      A2($Basics._op["++"],urls,segments));
+      var buildUrl$ = function (route) {
+         var raws = unwrap$(composeUrl$($Basics.fst(route)));
+         return A2(buildRawUrl,raws,route);
+      };
+      var getConfig = A2($Router$Helpers.memoFallback,
+      function (sid) {
+         return _p51.routeConfig(stringToRoute(sid));
+      },
+      sids);
+      var getConfig$ = function (_p47) {
+         return getConfig($Basics.toString(_p47));
+      };
+      var traverse = A2($Router$Helpers.memoFallback,
+      function (sid) {
+         return A2(getPath,getParent,stringToRoute(sid));
+      },
+      sids);
+      var traverse$ = function (_p48) {
+         return traverse($Basics.toString(_p48));
+      };
+      var routeParams = A2($Router$Helpers.memoFallback,
+      function (_p49) {
+         return getParams(getSegment(stringToRoute(_p49)));
+      },
+      sids);
+      var routeParams$ = function (_p50) {
+         return routeParams($Basics.toString(_p50));
+      };
+      return {getConfig: getConfig$
+             ,buildUrl: buildUrl$
+             ,match: A3(match$,unwrap$,getConfig$,routes)
+             ,traverse: traverse$
+             ,routeParams: routeParams$
+             ,stringToRoute: stringToRoute
+             ,sids: sids};
+   };
    return _elm.Router.Matcher.values = {_op: _op
                                        ,paramChar: paramChar
                                        ,ld: ld
@@ -15334,13 +15362,154 @@ Elm.Router.Matcher.make = function (_elm) {
                                        ,getParams: getParams
                                        ,unwrap: unwrap
                                        ,parseUrlParams: parseUrlParams
-                                       ,matchRaw: matchRaw
+                                       ,matchInternal: matchInternal
+                                       ,filterParent: filterParent
+                                       ,match$: match$
                                        ,match: match
                                        ,buildRawUrl: buildRawUrl
                                        ,composeRawUrl: composeRawUrl
                                        ,buildUrl: buildUrl
+                                       ,getPathInternal: getPathInternal
                                        ,getPath: getPath
-                                       ,mapParams: mapParams};
+                                       ,mapParams: mapParams
+                                       ,hasTrailingSlash: hasTrailingSlash
+                                       ,removeTrailingSlash: removeTrailingSlash
+                                       ,routeDiff: routeDiff
+                                       ,Matcher: Matcher
+                                       ,matcher: matcher};
+};Elm.Router = Elm.Router || {};
+Elm.Router.Functions = Elm.Router.Functions || {};
+Elm.Router.Functions.make = function (_elm) {
+   "use strict";
+   _elm.Router = _elm.Router || {};
+   _elm.Router.Functions = _elm.Router.Functions || {};
+   if (_elm.Router.Functions.values)
+   return _elm.Router.Functions.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Dict = Elm.Dict.make(_elm),
+   $Effects = Elm.Effects.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Router$Helpers = Elm.Router.Helpers.make(_elm),
+   $Router$Matcher = Elm.Router.Matcher.make(_elm),
+   $Router$Types = Elm.Router.Types.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var dependencies = F2(function (router,matcher) {
+      var getHandler = A2($Router$Helpers.memoFallback,
+      function (sid) {
+         return function (_p0) {
+            return function (h) {
+               return h(router);
+            }(function (_) {    return _.handler;}(matcher.getConfig(_p0)));
+         }(matcher.stringToRoute(sid));
+      },
+      matcher.sids);
+      var getHandler$ = function (_p1) {
+         return getHandler($Basics.toString(_p1));
+      };
+      return {router: router
+             ,matcher: matcher
+             ,getHandlers: getHandler$};
+   });
+   var Dependencies = F3(function (a,b,c) {
+      return {router: a,matcher: b,getHandlers: c};
+   });
+   var render = F3(function (router,getHandlers,state) {
+      var route = state.router.route;
+      var handlers = A2($Maybe.withDefault,
+      _U.list([]),
+      A2($Maybe.map,getHandlers,route));
+      var views = A2($List.map,
+      function (_) {
+         return _.view;
+      },
+      handlers);
+      var htmlParts = A3($List.foldr,
+      F2(function (view,parsed) {
+         return A2($Dict.union,parsed,A2(view,state,parsed));
+      }),
+      $Dict.empty,
+      views);
+      var _p2 = router.config;
+      var config = _p2._0;
+      return A3(config.layout,router,state,htmlParts);
+   });
+   var runAction = F2(function (action,_p3) {
+      var _p4 = _p3;
+      var _p5 = action(_p4._0);
+      var state$ = _p5._0._0;
+      var effects$ = _p5._0._1;
+      return {ctor: "_Tuple2"
+             ,_0: state$
+             ,_1: $Effects.batch(_U.list([_p4._1,effects$]))};
+   });
+   var combineActions = F2(function (actions,state) {
+      return $Router$Types.Response(A3($List.foldl,
+      runAction,
+      $Router$Helpers.noFx(state),
+      actions));
+   });
+   var transition = F4(function (deps,from,to,state) {
+      var diff = A3($Router$Matcher.routeDiff,
+      deps.matcher,
+      from,
+      to);
+      var handlers = A2($List.map,deps.getHandlers,diff);
+      var _p6 = deps.router.config;
+      var config = _p6._0;
+      var actions = A2($List._op["::"],
+      A3(config.onTransition,deps.router,from,to),
+      A2($List.map,
+      function (_p7) {
+         return combineActions(function (_) {
+            return _.actions;
+         }(_p7));
+      },
+      handlers));
+      return $Router$Types.Response(A3($List.foldl,
+      runAction,
+      $Router$Helpers.noFx(state),
+      actions));
+   });
+   var setRoute = F3(function (deps,route,state) {
+      var _p8 = route;
+      var toRoute = _p8._0;
+      var toParams = _p8._1;
+      var rs = state.router;
+      var from = A2($Maybe.map,
+      function (r) {
+         return {ctor: "_Tuple2",_0: r,_1: rs.params};
+      },
+      rs.route);
+      var state$ = _U.update(state,
+      {router: _U.update(rs,
+      {route: $Maybe.Just(toRoute),params: toParams})});
+      return A4(transition,deps,from,route,state$);
+   });
+   var setUrl = F2(function (deps,url) {
+      var _p9 = deps.router.config;
+      var config = _p9._0;
+      var _p10 = deps.router.match(url);
+      if (_p10.ctor === "Nothing") {
+            return deps.router.redirect(config.fallback);
+         } else {
+            return A2(setRoute,deps,_p10._0);
+         }
+   });
+   return _elm.Router.Functions.values = {_op: _op
+                                         ,runAction: runAction
+                                         ,combineActions: combineActions
+                                         ,render: render
+                                         ,setUrl: setUrl
+                                         ,setRoute: setRoute
+                                         ,transition: transition
+                                         ,Dependencies: Dependencies
+                                         ,dependencies: dependencies};
 };Elm.Router = Elm.Router || {};
 Elm.Router.Mailbox = Elm.Router.Mailbox || {};
 Elm.Router.Mailbox.make = function (_elm) {
@@ -15366,266 +15535,6 @@ Elm.Router.Mailbox.make = function (_elm) {
    return _elm.Router.Mailbox.values = {_op: _op
                                        ,mailbox: mailbox
                                        ,address: address};
-};Elm.Router = Elm.Router || {};
-Elm.Router.Functions = Elm.Router.Functions || {};
-Elm.Router.Functions.make = function (_elm) {
-   "use strict";
-   _elm.Router = _elm.Router || {};
-   _elm.Router.Functions = _elm.Router.Functions || {};
-   if (_elm.Router.Functions.values)
-   return _elm.Router.Functions.values;
-   var _U = Elm.Native.Utils.make(_elm),
-   $Basics = Elm.Basics.make(_elm),
-   $Debug = Elm.Debug.make(_elm),
-   $Dict = Elm.Dict.make(_elm),
-   $Effects = Elm.Effects.make(_elm),
-   $Html = Elm.Html.make(_elm),
-   $List = Elm.List.make(_elm),
-   $List$Extra = Elm.List.Extra.make(_elm),
-   $Maybe = Elm.Maybe.make(_elm),
-   $MultiwayTree = Elm.MultiwayTree.make(_elm),
-   $MultiwayTreeUtil = Elm.MultiwayTreeUtil.make(_elm),
-   $Result = Elm.Result.make(_elm),
-   $Router$Helpers = Elm.Router.Helpers.make(_elm),
-   $Router$Mailbox = Elm.Router.Mailbox.make(_elm),
-   $Router$Matcher = Elm.Router.Matcher.make(_elm),
-   $Router$Types = Elm.Router.Types.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
-   var _op = {};
-   var matchRoute = F3(function (_p0,cache,url) {
-      var _p1 = _p0;
-      var _p5 = _p1._0;
-      var routeConfig = _p5.routeConfig;
-      var getSegment = function (_p2) {
-         return function (_) {
-            return _.segment;
-         }(routeConfig(_p2));
-      };
-      var getConstraints = function (_p3) {
-         return function (_) {
-            return _.constraints;
-         }(routeConfig(_p3));
-      };
-      var rawRoute = function (route) {
-         var _p4 = A2($Dict.get,getSegment(route),cache.unwrap);
-         if (_p4.ctor === "Just") {
-               return {ctor: "_Tuple2"
-                      ,_0: _p4._0
-                      ,_1: getConstraints(route)};
-            } else {
-               return {ctor: "_Tuple2"
-                      ,_0: $Router$Matcher.unwrap(getSegment(route))
-                      ,_1: getConstraints(route)};
-            }
-      };
-      return A3($Router$Matcher.matchRaw,rawRoute,_p5.routes,url);
-   });
-   var getHandlers = F4(function (router,cache,from,to) {
-      var toParams = $Basics.snd(to);
-      var toRoute = $Basics.fst(to);
-      var fromParams = A2($Maybe.withDefault,
-      $Dict.empty,
-      A2($Maybe.map,$Basics.snd,from));
-      var fromRoute = A2($Maybe.map,$Basics.fst,from);
-      var _p6 = router.config;
-      var config = _p6._0;
-      var fromPath = A2($Maybe.withDefault,
-      _U.list([]),
-      A3($Basics.flip,
-      $Maybe.map,
-      fromRoute,
-      function (f) {
-         var _p7 = A2($Dict.get,$Basics.toString(f),cache.traverse);
-         if (_p7.ctor === "Just") {
-               return _p7._0;
-            } else {
-               return A2($Router$Matcher.getPath,f,config.routes);
-            }
-      }));
-      var toPath = function () {
-         var _p8 = A2($Dict.get,
-         $Basics.toString(toRoute),
-         cache.traverse);
-         if (_p8.ctor === "Just") {
-               return _p8._0;
-            } else {
-               return A2($Router$Matcher.getPath,toRoute,config.routes);
-            }
-      }();
-      var path = A3($List.map2,
-      F2(function (v0,v1) {
-         return {ctor: "_Tuple2",_0: v0,_1: v1};
-      }),
-      fromPath,
-      toPath);
-      var fromPath$ = A3($Router$Matcher.mapParams,
-      function (_p9) {
-         return function (_) {
-            return _.segment;
-         }(config.routeConfig(_p9));
-      },
-      fromPath,
-      fromParams);
-      var toPath$ = A3($Router$Matcher.mapParams,
-      function (_p10) {
-         return function (_) {
-            return _.segment;
-         }(config.routeConfig(_p10));
-      },
-      toPath,
-      toParams);
-      var commons = $List.length(A2($List$Extra.takeWhile,
-      $Basics.uncurry(F2(function (x,y) {    return _U.eq(x,y);})),
-      A3($List.map2,
-      F2(function (v0,v1) {
-         return {ctor: "_Tuple2",_0: v0,_1: v1};
-      }),
-      fromPath$,
-      toPath$)));
-      var routes = A2($List.drop,commons,toPath);
-      return A2($List.map,
-      function (_p11) {
-         return function (h) {
-            return h(router);
-         }(function (_) {
-            return _.handler;
-         }(config.routeConfig(_p11)));
-      },
-      routes);
-   });
-   var render = F2(function (router,state) {
-      var route = state.router.route;
-      var handlers = A2($Maybe.withDefault,
-      _U.list([]),
-      A3($Basics.flip,
-      $Maybe.map,
-      route,
-      function (r) {
-         return A4(getHandlers,
-         router,
-         state.router.cache,
-         $Maybe.Nothing,
-         {ctor: "_Tuple2",_0: r,_1: $Dict.empty});
-      }));
-      var views = A2($List.map,
-      function (_) {
-         return _.view;
-      },
-      handlers);
-      var htmlParts = A3($List.foldr,
-      F2(function (view,parsed) {
-         return A2($Dict.union,
-         parsed,
-         A3(view,$Router$Mailbox.address,state,parsed));
-      }),
-      $Dict.empty,
-      views);
-      var _p12 = router.config;
-      var config = _p12._0;
-      var layout = config.layout;
-      return A3(layout,router,state,htmlParts);
-   });
-   var prepareCache = F2(function (getSegment,forest) {
-      var routes = $List.concat(A2($List.map,
-      $MultiwayTreeUtil.flatten,
-      forest));
-      var urls = A3($Basics.flip,
-      $List.map,
-      routes,
-      function (r) {
-         return {ctor: "_Tuple2"
-                ,_0: $Basics.toString(r)
-                ,_1: A3($Router$Matcher.composeRawUrl,getSegment,forest,r)};
-      });
-      var segments = A2($List.map,getSegment,routes);
-      var unwraps = A3($Basics.flip,
-      $List.map,
-      A2($Basics._op["++"],segments,A2($List.map,$Basics.snd,urls)),
-      function (url) {
-         return {ctor: "_Tuple2"
-                ,_0: url
-                ,_1: $Router$Matcher.unwrap(url)};
-      });
-      var traverses = A3($Basics.flip,
-      $List.map,
-      routes,
-      function (route) {
-         return {ctor: "_Tuple2"
-                ,_0: $Basics.toString(route)
-                ,_1: A2($Router$Matcher.getPath,route,forest)};
-      });
-      return {rawUrl: $Dict.fromList(urls)
-             ,unwrap: $Dict.fromList(unwraps)
-             ,traverse: $Dict.fromList(traverses)};
-   });
-   var runAction = F2(function (action,_p13) {
-      var _p14 = _p13;
-      var _p15 = action(_p14._0);
-      var state$ = _p15._0._0;
-      var effects$ = _p15._0._1;
-      return {ctor: "_Tuple2"
-             ,_0: state$
-             ,_1: $Effects.batch(_U.list([_p14._1,effects$]))};
-   });
-   var combineActions = F2(function (actions,state) {
-      return $Router$Types.Response(A3($List.foldl,
-      runAction,
-      $Router$Helpers.noFx(state),
-      actions));
-   });
-   var transition = F4(function (router,from,to,state) {
-      var handlers = A4(getHandlers,
-      router,
-      state.router.cache,
-      from,
-      to);
-      var actions = A2($List.map,
-      function (_p16) {
-         return combineActions(function (_) {
-            return _.actions;
-         }(_p16));
-      },
-      handlers);
-      return $Router$Types.Response(A3($List.foldl,
-      runAction,
-      $Router$Helpers.noFx(state),
-      actions));
-   });
-   var setRoute = F3(function (router,route,state) {
-      var _p17 = route;
-      var toRoute = _p17._0;
-      var toParams = _p17._1;
-      var rs = state.router;
-      var from = A2($Maybe.map,
-      function (r) {
-         return {ctor: "_Tuple2",_0: r,_1: rs.params};
-      },
-      rs.route);
-      var state$ = _U.update(state,
-      {router: _U.update(rs,
-      {route: $Maybe.Just(toRoute),params: toParams})});
-      return A4(transition,router,from,route,state$);
-   });
-   var setUrl = F3(function (router,cache,url) {
-      var _p18 = router.config;
-      var config = _p18._0;
-      var _p19 = A3(matchRoute,router.config,cache,url);
-      if (_p19.ctor === "Nothing") {
-            return router.redirect(config.fallback);
-         } else {
-            return A2(setRoute,router,_p19._0);
-         }
-   });
-   return _elm.Router.Functions.values = {_op: _op
-                                         ,runAction: runAction
-                                         ,combineActions: combineActions
-                                         ,prepareCache: prepareCache
-                                         ,render: render
-                                         ,setUrl: setUrl
-                                         ,setRoute: setRoute
-                                         ,transition: transition
-                                         ,getHandlers: getHandlers
-                                         ,matchRoute: matchRoute};
 };Elm.Router = Elm.Router || {};
 Elm.Router.make = function (_elm) {
    "use strict";
@@ -15654,24 +15563,103 @@ Elm.Router.make = function (_elm) {
    $String = Elm.String.make(_elm),
    $Task = Elm.Task.make(_elm);
    var _op = {};
-   var runRouter = function (router) {
-      var update = F2(function (actions,_p0) {
-         var _p1 = _p0;
+   var matchRoute = F2(function (matcher,url) {
+      return matcher.match(url);
+   });
+   var initialState = {route: $Maybe.Nothing,params: $Dict.empty};
+   var hash = _U.chr("#");
+   var buildUrl = F3(function (routerConfig,matcher,_p0) {
+      var _p1 = _p0;
+      var url = matcher.buildUrl({ctor: "_Tuple2"
+                                 ,_0: _p1._0
+                                 ,_1: _p1._1});
+      var _p2 = routerConfig;
+      var config = _p2._0;
+      var url$ = config.removeTrailingSlash ? $Router$Matcher.removeTrailingSlash(url) : url;
+      var url$$ = config.html5 ? url$ : A2($String.cons,hash,url$);
+      return url$$;
+   });
+   var forward = F4(function (routerConfig,matcher,route,state) {
+      var url = A3(buildUrl,routerConfig,matcher,route);
+      var task = A2($Task.map,
+      $Basics.always($Router$Helpers.doNothing),
+      $History.setPath(url));
+      var _p3 = routerConfig;
+      var config = _p3._0;
+      return $Router$Types.Response({ctor: "_Tuple2"
+                                    ,_0: state
+                                    ,_1: $Effects.task(task)});
+   });
+   var bindForward = F4(function (config,matcher,route,attrs) {
+      var action = function (_p4) {
+         return A2($Signal.message,
+         $Router$Mailbox.address,
+         A3(forward,config,matcher,route));
+      };
+      var options = {stopPropagation: true,preventDefault: true};
+      return A2($List._op["::"],
+      $Html$Attributes.href(A3(buildUrl,config,matcher,route)),
+      A2($List._op["::"],
+      A4($Html$Events.onWithOptions,
+      "click",
+      options,
+      $Json$Decode.value,
+      action),
+      attrs));
+   });
+   var redirect = F4(function (routerConfig,matcher,route,state) {
+      var url = A3(buildUrl,routerConfig,matcher,route);
+      var task = A2($Task.map,
+      $Basics.always($Router$Helpers.doNothing),
+      $History.replacePath(url));
+      var _p5 = routerConfig;
+      var config = _p5._0;
+      return $Router$Types.Response({ctor: "_Tuple2"
+                                    ,_0: state
+                                    ,_1: $Effects.task(task)});
+   });
+   var constructor = F2(function (config,matcher) {
+      var _p6 = config;
+      var c = _p6._0;
+      var config$ = $Router$Types.RouterConfig(_U.update(c,
+      {routeConfig: matcher.getConfig}));
+      return {config: config$
+             ,address: $Router$Mailbox.address
+             ,bindForward: A2(bindForward,config$,matcher)
+             ,buildUrl: A2(buildUrl,config$,matcher)
+             ,forward: A2(forward,config$,matcher)
+             ,redirect: A2(redirect,config$,matcher)
+             ,match: matchRoute(matcher)};
+   });
+   var runRouter = function (config) {
+      var update = F2(function (actions,_p7) {
+         var _p8 = _p7;
          return A3($List.foldl,
          $Router$Functions.runAction,
-         $Router$Helpers.noFx(_p1._0),
+         $Router$Helpers.noFx(_p8._0),
          A2($List.map,$Basics.snd,actions));
       });
-      var _p2 = router.config;
-      var config = _p2._0;
-      var initialState = config.init;
+      var matcher = $Router$Matcher.matcher(config);
+      var router = A2(constructor,config,matcher);
+      var deps = A2($Router$Functions.dependencies,router,matcher);
+      var render$ = function (state) {
+         return A3($Router$Functions.render,
+         router,
+         function (_p9) {
+            return A2($List.map,deps.getHandlers,matcher.traverse(_p9));
+         },
+         state);
+      };
+      var _p10 = config;
+      var c = _p10._0;
+      var initial = c.init;
       var update$ = function (actions) {
          return A3($List.foldl,
          $Router$Functions.runAction,
-         $Router$Helpers.noFx(initialState),
+         $Router$Helpers.noFx(initial),
          A2($List.map,$Basics.snd,A2($List.filter,$Basics.fst,actions)));
       };
-      var pathSignal = config.html5 ? $History.path : A2($Signal.map,
+      var pathSignal = c.html5 ? $History.path : A2($Signal.map,
       function (hash) {
          return A2($Maybe.withDefault,
          "/",
@@ -15679,17 +15667,16 @@ Elm.Router.make = function (_elm) {
       },
       $History.hash);
       var init = A2($Signal.map,
-      function (_p3) {
+      function (_p11) {
          return $Router$Helpers.singleton(A2(F2(function (v0,v1) {
             return {ctor: "_Tuple2",_0: v0,_1: v1};
          }),
          true,
-         A3($Router$Functions.setUrl,
-         router,
-         initialState.router.cache,
-         _p3)));
+         A2($Router$Functions.setUrl,deps,_p11)));
       },
-      pathSignal);
+      c.removeTrailingSlash ? A2($Signal.map,
+      $Router$Matcher.removeTrailingSlash,
+      pathSignal) : pathSignal);
       var inputs = A3($List.foldl,
       $Signal$Extra.fairMerge($List.append),
       init,
@@ -15701,147 +15688,38 @@ Elm.Router.make = function (_elm) {
       $Router$Mailbox.mailbox.signal),
       A2($Basics._op["++"],
       A2($List.map,
-      $Signal.map(function (_p4) {
+      $Signal.map(function (_p12) {
          return $Router$Helpers.singleton(A2(F2(function (v0,v1) {
             return {ctor: "_Tuple2",_0: v0,_1: v1};
          }),
          true,
-         _p4));
+         _p12));
       }),
-      config.inits),
+      c.inits),
       A2($List.map,
-      $Signal.map(function (_p5) {
+      $Signal.map(function (_p13) {
          return $Router$Helpers.singleton(A2(F2(function (v0,v1) {
             return {ctor: "_Tuple2",_0: v0,_1: v1};
          }),
          false,
-         _p5));
+         _p13));
       }),
-      config.inputs))));
+      c.inputs))));
       var result = A3($Signal$Extra.foldp$,update,update$,inputs);
-      var state = A2($Signal.map,$Basics.fst,result);
-      return {html: A2($Signal.map,
-             $Router$Functions.render(router),
-             state)
+      var state = $Signal.dropRepeats(A2($Signal.map,
+      $Basics.fst,
+      result));
+      return {html: A2($Signal.map,render$,state)
              ,state: state
              ,tasks: A2($Signal.map,
-             function (_p6) {
+             function (_p14) {
                 return A2($Effects.toTask,
                 $Router$Mailbox.mailbox.address,
-                $Basics.snd(_p6));
+                $Basics.snd(_p14));
              },
              result)};
    };
-   var buildUrl = F3(function (routerConfig,cache,_p7) {
-      var _p8 = _p7;
-      var _p13 = _p8._0;
-      var _p9 = routerConfig;
-      var config = _p9._0;
-      var raw = function () {
-         var _p10 = A2($Dict.get,$Basics.toString(_p13),cache.rawUrl);
-         if (_p10.ctor === "Just") {
-               return _p10._0;
-            } else {
-               return A3($Router$Matcher.composeRawUrl,
-               function (_p11) {
-                  return function (_) {
-                     return _.segment;
-                  }(config.routeConfig(_p11));
-               },
-               config.routes,
-               _p13);
-            }
-      }();
-      var raws = function () {
-         var _p12 = A2($Dict.get,raw,cache.unwrap);
-         if (_p12.ctor === "Just") {
-               return _p12._0;
-            } else {
-               return $Router$Matcher.unwrap(raw);
-            }
-      }();
-      return A2($Router$Matcher.buildRawUrl,
-      raws,
-      {ctor: "_Tuple2",_0: _p13,_1: _p8._1});
-   });
-   var initialState = {route: $Maybe.Nothing
-                      ,params: $Dict.empty
-                      ,cache: {unwrap: $Dict.empty
-                              ,rawUrl: $Dict.empty
-                              ,traverse: $Dict.empty}};
-   var hash = _U.chr("#");
-   var forward = F3(function (routerConfig,route,state) {
-      var url = A3(buildUrl,routerConfig,state.router.cache,route);
-      var _p14 = routerConfig;
-      var config = _p14._0;
-      var url$ = config.html5 ? url : A2($String.cons,hash,url);
-      var task = A2($Task.map,
-      $Basics.always(function (s) {
-         return $Router$Types.Response($Router$Helpers.noFx(s));
-      }),
-      $History.setPath(url$));
-      return $Router$Types.Response({ctor: "_Tuple2"
-                                    ,_0: state
-                                    ,_1: $Effects.task(task)});
-   });
-   var bindForward = F4(function (config,cache,route,attrs) {
-      var action = function (_p15) {
-         return A2($Signal.message,
-         $Router$Mailbox.address,
-         A2(forward,config,route));
-      };
-      var options = {stopPropagation: true,preventDefault: true};
-      return A2($List._op["::"],
-      $Html$Attributes.href(A3(buildUrl,config,cache,route)),
-      A2($List._op["::"],
-      A4($Html$Events.onWithOptions,
-      "click",
-      options,
-      $Json$Decode.value,
-      action),
-      attrs));
-   });
-   var redirect = F3(function (routerConfig,route,state) {
-      var url = A3(buildUrl,routerConfig,state.router.cache,route);
-      var _p16 = routerConfig;
-      var config = _p16._0;
-      var url$ = config.html5 ? url : A2($String.cons,hash,url);
-      var task = A2($Task.map,
-      $Basics.always(function (s) {
-         return $Router$Types.Response($Router$Helpers.noFx(s));
-      }),
-      $History.replacePath(url$));
-      return $Router$Types.Response({ctor: "_Tuple2"
-                                    ,_0: state
-                                    ,_1: $Effects.task(task)});
-   });
-   var router = function (_p17) {
-      var _p18 = _p17;
-      var _p20 = _p18._0;
-      var state = _p20.init;
-      var cache = A2($Router$Functions.prepareCache,
-      function (_p19) {
-         return function (_) {
-            return _.segment;
-         }(_p20.routeConfig(_p19));
-      },
-      _p20.routes);
-      var state$ = function () {
-         if (_p20.useCache) {
-               var rs = state.router;
-               return _U.update(state,{router: _U.update(rs,{cache: cache})});
-            } else return state;
-      }();
-      var config$ = $Router$Types.RouterConfig(_U.update(_p20,
-      {init: state$}));
-      return {config: config$
-             ,bindForward: A2(bindForward,config$,state$.router.cache)
-             ,buildUrl: A2(buildUrl,config$,state$.router.cache)
-             ,forward: forward(config$)
-             ,redirect: redirect(config$)};
-   };
    return _elm.Router.values = {_op: _op
-                               ,router: router
                                ,runRouter: runRouter
                                ,initialState: initialState};
 };Elm.Main = Elm.Main || {};
@@ -15863,6 +15741,7 @@ Elm.Main.make = function (_elm) {
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Router = Elm.Router.make(_elm),
+   $Router$Helpers = Elm.Router.Helpers.make(_elm),
    $Router$Types = Elm.Router.Types.make(_elm),
    $Signal = Elm.Signal.make(_elm),
    $Task = Elm.Task.make(_elm);
@@ -15875,16 +15754,24 @@ Elm.Main.make = function (_elm) {
       var _p0 = route;
       switch (_p0.ctor)
       {case "Home": return {segment: "/"
+                           ,bypass: false
+                           ,parent: $Maybe.Nothing
                            ,constraints: $Dict.empty
                            ,handler: $App$Handlers.homeHandler};
          case "NotFound": return {segment: "/404"
+                                 ,bypass: false
+                                 ,parent: $Maybe.Nothing
                                  ,constraints: $Dict.empty
                                  ,handler: $App$Handlers.notFoundHandler};
          case "Static": var _p1 = _p0._0;
            return {segment: A2($Basics._op["++"],"/",_p1)
+                  ,bypass: false
+                  ,parent: $Maybe.Nothing
                   ,constraints: $Dict.empty
                   ,handler: $App$Handlers.staticHandler(_p1)};
          case "Category": return {segment: ":category[/:subcategory]"
+                                 ,bypass: false
+                                 ,parent: $Maybe.Just($App$Routes.Home)
                                  ,constraints: $Dict.fromList(_U.list([{ctor: "_Tuple2"
                                                                        ,_0: "category"
                                                                        ,_1: $Router$Types.Enum(_U.list(["animals"
@@ -15892,30 +15779,33 @@ Elm.Main.make = function (_elm) {
                                                                                                        ,"colors"]))}]))
                                  ,handler: $App$Handlers.categoryHandler};
          default: return {segment: "/post/:postId"
+                         ,bypass: false
+                         ,parent: $Maybe.Just($App$Routes.Category)
                          ,constraints: $Dict.fromList(_U.list([{ctor: "_Tuple2"
                                                                ,_0: "postId"
                                                                ,_1: $Router$Types.Int}]))
                          ,handler: $App$Handlers.postHandler};}
    };
-   var router = $Router.router($Router$Types.RouterConfig({init: initialState
-                                                          ,useCache: false
-                                                          ,html5: false
-                                                          ,fallback: {ctor: "_Tuple2"
-                                                                     ,_0: $App$Routes.NotFound
-                                                                     ,_1: $Dict.empty}
-                                                          ,layout: $App$Layout.layout
-                                                          ,routes: $App$Routes.routes
-                                                          ,routeConfig: config
-                                                          ,inits: _U.list([])
-                                                          ,inputs: _U.list([])}));
-   var result = $Router.runRouter(router);
+   var result = $Router.runRouter($Router$Types.RouterConfig({init: initialState
+                                                             ,html5: false
+                                                             ,removeTrailingSlash: true
+                                                             ,onTransition: F3(function (_p4,_p3,_p2) {
+                                                                return $Router$Helpers.doNothing;
+                                                             })
+                                                             ,fallback: {ctor: "_Tuple2"
+                                                                        ,_0: $App$Routes.NotFound
+                                                                        ,_1: $Dict.empty}
+                                                             ,layout: $App$Layout.layout
+                                                             ,routes: $App$Routes.routes
+                                                             ,routeConfig: config
+                                                             ,inits: _U.list([])
+                                                             ,inputs: _U.list([])}));
    var main = result.html;
    var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",
    result.tasks);
    return _elm.Main.values = {_op: _op
                              ,config: config
                              ,initialState: initialState
-                             ,router: router
                              ,result: result
                              ,main: main};
 };</script></head><body><script type="text/javascript">Elm.fullscreen(Elm.Main)</script></body></html>
