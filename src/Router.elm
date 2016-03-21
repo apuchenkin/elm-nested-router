@@ -1,9 +1,8 @@
 module Router (runRouter, initialState) where
 {-| A simple nested router for single page applications.
 
-See [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/example)
+See [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/example) ([Live demo](http://apuchenkin.github.io/elm-nested-router/example))
 and [Tests](https://github.com/apuchenkin/elm-nested-router/tree/master/test/Test) for more details
-([Live demo](http://apuchenkin.github.io/elm-nested-router/example))
 
 @docs runRouter, initialState
 -}
