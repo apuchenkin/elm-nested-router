@@ -1,19 +1,21 @@
 module Test.Router.Matcher where
 
-import Dict         exposing (Dict)
-import ElmTest      exposing (..)
-import Router.Matcher   exposing (..)
-import Test.Mock.Data   exposing (..)
+import Dict exposing (Dict)
+import ElmTest exposing (..)
+import Router.Matcher exposing (..)
+import Test.Mock.Data exposing (..)
 
 testSuite : Test
 testSuite = suite "Mather" [
-    testUnwrap,
-    testParseUrlParams,
-    testMatch,
-    testBuildUrl,
-    testReversible,
-    testGetPath,
-    testMapParams
+    testUnwrap
+  , testParseUrlParams
+  , testMatch
+  , testBuildUrl
+  , testReversible
+  , testGetPath
+  , testMapParams
+  , testRemoveTrailingSlash
+  , testRouteDiff
   ]
 
 {-| Private -}
@@ -67,6 +69,12 @@ testParseUrlParams = suite "parseUrlParams"
     test "plain"
       <| assertEqual (Ok Dict.empty, "")
       <| parseUrlParams "/url" Dict.empty "/url"
+  , test "empty"
+      <| assertEqual (Ok Dict.empty, "")
+      <| parseUrlParams "" Dict.empty ""
+  , test "empty2"
+      <| assertEqual (Ok Dict.empty, "/url")
+      <| parseUrlParams "" Dict.empty "/url"
   , test "param"
       <| assertEqual (Ok (Dict.fromList [("param","value")]), "")
       <| parseUrlParams "/:param" Dict.empty "/value"
@@ -89,34 +97,34 @@ testMatch = suite "match"
   [
     test "match Home"
       <| assertEqual (Just (Home, Dict.empty))
-      <| match routeMap routeTree "/"
+      <| match config routes "/"
   , test "match Page"
       <| assertEqual (Just (Page, (Dict.fromList [("category","B")])))
-      <| match routeMap routeTree "/B"
+      <| match config routes "/B"
   , test "no match Page by constraint"
       <| assertEqual Nothing
-      <| match routeMap routeTree "/D"
+      <| match config routes "/D"
   , test "match NotFound"
       <| assertEqual (Just (NotFound, Dict.empty))
-      <| match routeMap routeTree "/404"
+      <| match config routes "/404"
   , test "match Page with optional params"
       <| assertEqual (Just (Page, (Dict.fromList [("category","A"),("subcategory","param2")])))
-      <| match routeMap routeTree "/A/param2"
+      <| match config routes "/A/param2"
   , test "match Subpage without optional params"
       <| assertEqual (Just (Subpage, Dict.fromList [("category","C"),("item","3")]))
-      <| match routeMap routeTree "/C/item/3"
+      <| match config routes "/C/item/3"
   , test "no-match Page without optional params"
       <| assertEqual Nothing
-      <| match routeMap routeTree "/C/item/item3"
+      <| match config routes "/C/item/item3"
   , test "match Subpage"
       <| assertEqual (Just (Subpage, Dict.fromList [("category","A"),("subcategory","param2"),("item","4")]))
-      <| match routeMap routeTree "/A/param2/item/4"
+      <| match config routes "/A/param2/item/4"
   , test "no-match by pattern"
       <| assertEqual (Nothing)
-      <| match routeMap routeTree "/B/param2/param3"
+      <| match config routes "/B/param2/param3"
   , test "no-match by pattern"
       <| assertEqual (Nothing)
-      <| match routeMap routeTree "/C/param2/item/4/4"
+      <| match config routes "/C/param2/item/4/4"
   ]
 
 testBuildUrl : Test
@@ -124,19 +132,19 @@ testBuildUrl = suite "buildUrl"
   [
     test "home"
       <| assertEqual "/"
-      <| buildUrl (fst << routeMap) routeTree (Home, Dict.empty)
+      <| buildUrl (.segment << config) (.parent << config) (Home, Dict.empty)
   , test "category"
       <| assertEqual "/param"
-      <| buildUrl (fst << routeMap) routeTree (Page, (Dict.fromList [("category","param")]))
+      <| buildUrl (.segment << config) (.parent << config) (Page, (Dict.fromList [("category","param")]))
   , test "subcategory"
       <| assertEqual "/param/param2"
-      <| buildUrl (fst << routeMap) routeTree (Page, (Dict.fromList [("category","param"),("subcategory","param2")]))
+      <| buildUrl (.segment << config) (.parent << config) (Page, (Dict.fromList [("category","param"),("subcategory","param2")]))
   , test "subcategory"
       <| assertEqual "/param/param2"
-      <| buildUrl (fst << routeMap) routeTree (Page, (Dict.fromList [("subcategory","param2"),("category","param")]))
+      <| buildUrl (.segment << config) (.parent << config) (Page, (Dict.fromList [("subcategory","param2"),("category","param")]))
   , test "item"
       <| assertEqual "/param/item/123"
-      <| buildUrl (fst << routeMap) routeTree (Subpage, (Dict.fromList [("category","param"),("item","123")]))
+      <| buildUrl (.segment << config) (.parent << config) (Subpage, (Dict.fromList [("category","param"),("item","123")]))
   ]
 
 testReversible : Test
@@ -144,38 +152,38 @@ testReversible = suite "reversible"
   [
     test "match"
       <| assertEqual (Just "/")
-      <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/")
+      <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/")
   , test "fail by constraint"
       <| assertEqual Nothing
-      <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/param")
+      <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/param")
   , test "equal with constraint"
       <| assertEqual (Just "/A")
-      <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/A")
+      <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/A")
   , test "match 404"
       <| assertEqual (Just "/404")
-      <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/404")
+      <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/404")
   , test "match with optional param"
       <| assertEqual (Just "/A/subcategory")
-      <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/A/subcategory")
+      <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/A/subcategory")
   , test "match Subpage without optional param"
       <| assertEqual (Just "/B/item/3")
-      <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/B/item/3")
+      <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/B/item/3")
   , test "match Subpage with optional param"
       <| assertEqual (Just "/C/subcategory/item/4")
-      <| Maybe.map (buildUrl (fst << routeMap) routeTree) <| (match routeMap routeTree "/C/subcategory/item/4")
+      <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/C/subcategory/item/4")
   ]
 
 testGetPath : Test
 testGetPath = suite "getPath" [
     test "mapParams"
       <| assertEqual [Home, Page, Subpage]
-      <| getPath Subpage routeTree
+      <| getPath (.parent << config) Subpage
   , test "mapParams"
       <| assertEqual [Home, Page]
-      <| getPath Page routeTree
+      <| getPath (.parent << config) Page
   , test "mapParams"
       <| assertEqual [Home]
-      <| getPath Home routeTree
+      <| getPath (.parent << config) Home
   ]
 
 testMapParams : Test
@@ -184,5 +192,48 @@ testMapParams =
   in suite "mapParams" [
     test "mapParams"
       <| assertEqual [(Home, Dict.empty), (Page, Dict.fromList [("category","param"),("subcategory","param2")]), (Subpage, Dict.fromList [("item","4")])]
-      <| mapParams (fst << routeMap) (getPath Subpage routeTree) params
+      <| mapParams Test.Mock.Data.matcher [Home, Page, Subpage] params
+  ]
+
+testRemoveTrailingSlash : Test
+testRemoveTrailingSlash = suite "removeTrailingSlash" [
+    test "slash is removed"
+      <| assertEqual "/url/with/trailing/slash"
+      <| removeTrailingSlash "/url/with/trailing/slash/"
+  , test "no slash"
+      <| assertEqual "/url/without/trailing/slash"
+      <| removeTrailingSlash "/url/without/trailing/slash"
+  , test "empty"
+      <| assertEqual ""
+      <| removeTrailingSlash ""
+  , test "just slash"
+      <| assertEqual "/"
+      <| removeTrailingSlash "/"
+  ]
+
+-- routeDiff : (route -> RouteConfig route state) -> Maybe (Route route) -> Route route -> List route
+testRouteDiff : Test
+testRouteDiff =
+  let
+    routeDiff' = routeDiff Test.Mock.Data.matcher
+  in suite "routeDiff"
+  [
+    test "length"
+      <| assertEqual 1
+      <| List.length <| routeDiff' Nothing (Home, Dict.empty)
+  , test "length"
+      <| assertEqual 3
+      <| List.length <| routeDiff' Nothing (Subpage, Dict.empty)
+  , test "no transition - no handlers"
+      <| assertEqual 0
+      <| List.length <| routeDiff' (Just (Home, Dict.empty)) (Home, Dict.empty)
+  , test "unmatched params has no effects"
+      <| assertEqual 0
+      <| List.length <| routeDiff' (Just (Home, Dict.empty)) (Home, Dict.fromList [("param1", "value1")])
+  , test "matched params does matter"
+      <| assertEqual 1
+      <| List.length <| routeDiff' (Just (Page, Dict.fromList [("category", "bar")])) (Page, Dict.fromList [("category", "foo")])
+  , test "matched params does matter"
+      <| assertEqual 2
+      <| List.length <| routeDiff' (Just (Subpage, Dict.fromList [("category", "bar")])) (Subpage, Dict.fromList [("category", "foo")])
   ]

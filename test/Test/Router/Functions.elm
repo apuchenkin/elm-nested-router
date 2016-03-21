@@ -7,6 +7,7 @@ import ElmTest exposing (..)
 import Router.Types     exposing (..)
 import Router.Helpers   exposing (noFx)
 import Router.Functions exposing (..)
+import Router.Matcher   as Matcher
 
 import Test.Mock.Data exposing (..)
 
@@ -14,12 +15,10 @@ testSuite : Test
 testSuite = suite "Functions"
   [ testRunAction
   , testCombineActions
-  , testPrepareCache
   , testRender
   , testSetUrl
   , testSetRoute
   , testTransition
-  , testGetHandlers
   , testMatchRoute
   ]
 
@@ -58,36 +57,26 @@ testCombineActions = suite "combineActions"
       in result.str == "AB" && result.sum == 2
   ]
 
--- prepareCache : (route -> RawSegment) -> Forest route -> RouterCache route
-testPrepareCache : Test
-testPrepareCache =
-  let cache = prepareCache (fst << routeMap) routeTree
-  in suite "prepareCache"
-  [
-    test "not empty" <| assertNotEqual Dict.empty cache.rawUrl
-  , test "not empty" <| assertNotEqual Dict.empty cache.unwrap
-  , test "not empty" <| assertNotEqual Dict.empty cache.traverse
-  ]
-
 -- render : Router route (WithRouter route state) -> Html -> (WithRouter route state) ->  Html
 testRender : Test
 testRender =
   let
-   state' route = let rs = init.router in {init | router = {rs | route = Just route}}
+    render' = render router (List.map ((\h -> h router) << .handler << config) << Matcher.getPath (.parent << config))
+    state' route = let rs = init.router in {init | router = {rs | route = Just route}}
   in suite "render"
   [
     test "fail render"
       <| assertEqual (toString <| Html.text "error")
-      <| toString <| render router init
+      <| toString <| render' init
   , test "render home"
       <| assertEqual (toString <| Html.text "handlerA")
-      <| toString <| render router (state' Home)
+      <| toString <| render' (state' Home)
   , test "render Page"
       <| assertEqual (toString <| Html.text "0")
-      <| toString <| render router (state' Page)
+      <| toString <| render' (state' Page)
   , test "render Subpage"
       <| assertEqual (toString <| Html.text "")
-      <| toString <| render router (state' Subpage)
+      <| toString <| render' (state' Subpage)
   ]
 
 -- setRoute : Router route (WithRouter route state) -> Route route -> Action (WithRouter route state)
@@ -95,53 +84,30 @@ testSetRoute : Test
 testSetRoute =
   let
    state' route = let rs = init.router in {init | router = {rs | route = Just route}}
+   setRoute' = setRoute deps
   in suite "setRoute"
   [
     test "route setted"
       <| assertEqual (Just Home)
-      <| let (Response (result,_)) = setRoute router (Home, Dict.empty) init in result.router.route
+      <| let (Response (result,_)) = setRoute' (Home, Dict.empty) init in result.router.route
   , test "route setted"
       <| assertEqual (Just Page)
-      <| let (Response (result,_)) = setRoute router (Page, Dict.empty) (state' NotFound) in result.router.route
+      <| let (Response (result,_)) = setRoute' (Page, Dict.empty) (state' NotFound) in result.router.route
   , test "params setted"
       <| assertEqual (Dict.fromList [("param1", "value1")])
-      <| let (Response (result,_)) = setRoute router (Subpage, Dict.fromList [("param1", "value1")]) init in result.router.params
+      <| let (Response (result,_)) = setRoute' (Subpage, Dict.fromList [("param1", "value1")]) init in result.router.params
   , test "route actions"
       <| assertEqual 1
-      <| let (Response (result,_)) = setRoute router (Page, Dict.empty) init in result.sum
+      <| let (Response (result,_)) = setRoute' (Page, Dict.empty) init in result.sum
   , test "route actions"
       <| assertEqual (2,"foo")
-      <| let (Response (result,_)) = setRoute router (Subpage, Dict.empty) init in (result.sum, result.str)
+      <| let (Response (result,_)) = setRoute' (Subpage, Dict.empty) init in (result.sum, result.str)
   , test "route actions"
       <| assertEqual (1,"foo")
-      <| let (Response (result,_)) = setRoute router (Subpage, Dict.empty) (state' Page) in (result.sum, result.str)
+      <| let (Response (result,_)) = setRoute' (Subpage, Dict.empty) (state' Page) in (result.sum, result.str)
   , test "route actions"
       <| assertEqual (0,"")
-      <| let (Response (result,_)) = setRoute router (Subpage, Dict.empty) (state' Subpage) in (result.sum, result.str)
-  ]
-
--- getHandlers : Router route state -> RouterCache route -> Maybe (Route route) -> Route route -> List (Handler state)
-testGetHandlers : Test
-testGetHandlers = suite "getHandlers"
-  [
-    test "length"
-      <| assertEqual 1
-      <| List.length <| getHandlers router init.router.cache Nothing (Home, Dict.empty)
-  , test "length"
-      <| assertEqual 3
-      <| List.length <| getHandlers router init.router.cache Nothing (Subpage, Dict.empty)
-  , test "no transition - no handlers"
-      <| assertEqual 0
-      <| List.length <| getHandlers router init.router.cache (Just (Home, Dict.empty)) (Home, Dict.empty)
-  , test "unmatched params has no effects"
-      <| assertEqual 0
-      <| List.length <| getHandlers router init.router.cache (Just (Home, Dict.empty)) (Home, Dict.fromList [("param1", "value1")])
-  , test "matched params does matter"
-      <| assertEqual 1
-      <| List.length <| getHandlers router init.router.cache (Just (Page, Dict.fromList [("category", "bar")])) (Page, Dict.fromList [("category", "foo")])
-  , test "matched params does matter"
-      <| assertEqual 2
-      <| List.length <| getHandlers router init.router.cache (Just (Subpage, Dict.fromList [("category", "bar")])) (Subpage, Dict.fromList [("category", "foo")])
+      <| let (Response (result,_)) = setRoute' (Subpage, Dict.empty) (state' Subpage) in (result.sum, result.str)
   ]
 
 -- setUrl : Router route (WithRouter route state) -> RouterCache route -> String -> Action (WithRouter route state)

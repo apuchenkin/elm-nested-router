@@ -5,17 +5,16 @@ module Router.Types where
 @docs URL, RawURL, RawSegment, Param, Constraint, Route, RouteConfig, RouteParams
 
 # Actions and handlers
-@docs WithRouter, Handler, Action, ActionEffects, Response
+@docs WithRouter, Handler, Action, ActionEffects, Response, Transition
 
 # Router
-@docs Router, RouterConfig, RouterResult, RouterCache, RouterState
+@docs Router, RouterConfig, RouterResult, RouterState
 -}
 
 import Dict           exposing (Dict)
 import Html           exposing (Html)
 import Task           exposing (Task)
 import Effects        exposing (Effects, Never)
-import MultiwayTree   exposing (Tree, Forest)
 
 -----------------------------------------
 -- Route mather related types
@@ -69,7 +68,7 @@ type alias ActionEffects state = Effects (Action state)
   * `actions` &mdash; A set of necessary to perform actions
 -}
 type alias Handler state = {
-    view: Signal.Address (Action state) -> state -> Dict String Html -> Dict String Html
+    view: state -> Dict String Html -> Dict String Html
   , actions: List (Action state)
   }
 
@@ -84,8 +83,10 @@ type alias Handler state = {
 "/post/:postId",
 "/author[/:authorId]"
 ```
-  * `constraints` &mdash; A set of constraints applied to route params (`String`, `Int`, `Enum`, `Regexp`)
-  * `handler` &mdash; A binding to handler. Router might be injected in handler
+  * `parent` &mdash; A parent route
+  * `bypass` &mdash; When setted to True - route will not be matched directly, but still can provide actions and views
+  * `constraints` &mdash; A set of constraints applied to route params. (`String`, `Int`, `Enum`, `Regexp`) constraints are supported
+  * `handler` &mdash; A binding to handler.
 
   **Exapmle of route configuration**:
 ```
@@ -93,9 +94,12 @@ type alias Handler state = {
     -- "author" and "postId" is dynamic url parts
     -- "postId" is marked as optional and might me ommited in URL
     segment = "/page/:author[/:postId]"
+  , parent = Nothing
+    -- setting a parent for route means that full route URL will be combined with it's parent, and actions for route and it's parent will be fired on match
+  , bypass = False
+  , constraints = Dict.fromList [("author", String),("postId", Int)]
     -- constraints specify that `author` param must be a string,
     -- and postId an integer
-  , constraints = Dict.fromList [("author", String),("postId", Int)]
   , handler = always PostHandler
   }
 ```
@@ -108,69 +112,78 @@ type alias Handler state = {
   Everything enclosed by brackets considered as optional.
 -}
 type alias RouteConfig route state = {
-    segment:      RawSegment
-  , constraints:  Dict Param Constraint
-  , handler:      Router route state -> Handler state
-  }
-
-{-| Router cache -}
-type alias RouterCache route = {
-    rawUrl:     Dict String RawURL
-  , unwrap:     Dict String (List String)
-  , traverse:   Dict String (List route)
+    segment: RawSegment
+  , parent: Maybe route
+  , bypass: Bool
+  , constraints: Dict Param Constraint
+  , handler: Router route state -> Handler state
   }
 
 {-| A state of router -}
 type alias RouterState route = {
-    route:  Maybe route
+    route: Maybe route
   , params: RouteParams
-  , cache:  RouterCache route
   }
 
 {-| Type extension for the application state -}
 type alias WithRouter route state = { state | router : RouterState route}
 
+{-| A transition from route A to route B -}
+type alias Transition route state = Maybe (Route route) -> Route route -> Action state
+
 {-|
   `RouterConfig` is configuration for the router:
 
   * `init` &mdash; Initial application state
-  * `useCache` &mdash; A boolean flag that turns caching on or off. Using cache might slow down application at start-up but will give a perfomance boost in runtime.
-  * `html5` &mdash; Use html5 pushState
+  * `html5` &mdash; Use html5 pushState.
+  * `removeTrailingSlash` &mdash; Trailing slashes will be removed from matched and builded urls
   * `fallback` &mdash; A fallback route is used when url matching fails
   * `layout` &mdash; Main rendered function that combines named views gathered from Handlers in a single HTML
+  * `onTransition` &mdash; An action that should be executed on every router transition
   * `routeConfig` &mdash; A mapping between route and route configuration
-  * `routes` &mdash; A list of route trees, used for nested navigation
+  * `routes` &mdash; A list of routes available for routing
   * `inits` &mdash; A list of signals that should run for inititialisation of state
   * `inputs` &mdash; A list of signals utilized in application in runtime
 -}
 type RouterConfig route state = RouterConfig {
-    init:         state
-  , useCache:     Bool
-  , html5:        Bool
-  , fallback:     Route route
-  , layout:       Router route state -> state -> Dict String Html -> Html
-  , routeConfig:  route -> RouteConfig route state
-  , routes:       Forest route
-  , inits:        List (Signal.Signal (Action state))
-  , inputs:       List (Signal.Signal (Action state))
+    init: state
+  , html5: Bool
+  , removeTrailingSlash: Bool
+  , fallback: Route route
+  , layout: Router route state -> state -> Dict String Html -> Html
+  , onTransition: Router route state -> Transition route state
+  , routeConfig: route -> RouteConfig route state
+  , routes: List route
+  , inits: List (Signal.Signal (Action state))
+  , inputs: List (Signal.Signal (Action state))
   }
 
-{-| A `Router` is a provider of following functions:
+
+{-|
+  A `Router` is a provider of following functions:
+
   * `bindForward` &mdash; Binds a `forward` action to a provided `Route` with a list of html attributes.
     This is useful to create links in application
   * `buildUrl` &mdash; Builds an URL for provided `Route`
   * `forward` &mdash; Preforms a transition to provided `Route`
   * `redirect` &mdash; Redirects to provided `Route`
+  * `match` &mdash; Performs attempt to match provided URL.
+
+  Router also provide it's `config` and `address`
 -}
 type alias Router route state = {
-    config        : RouterConfig route state
-  , bindForward   : Route route -> List Html.Attribute -> List Html.Attribute
-  , buildUrl      : Route route -> URL
-  , forward       : Route route -> Action state
-  , redirect      : Route route -> Action state
+    config : RouterConfig route state
+  , address: Signal.Address (Action state)
+  , bindForward : Route route -> List Html.Attribute -> List Html.Attribute
+  , buildUrl : Route route -> URL
+  , forward : Route route -> Action state
+  , redirect : Route route -> Action state
+  , match : String -> Maybe (Route route)
   }
 
-{-| A `RouterResult` is a combination of resulting signals:
+{-|
+  A `RouterResult` is a combination of resulting signals:
+
   * `html` &mdash; a signal of `Html` representing the current visual
     representation of your app. This should be fed into `main`.
   * `state` &mdash; a signal representing the central state of your application.
@@ -179,7 +192,7 @@ type alias Router route state = {
     be hooked up to a `port` to ensure they get run.
 -}
 type alias RouterResult state =
-  { html  : Signal Html
+  { html : Signal Html
   , state : Signal state
   , tasks : Signal (Task Never ())
   }

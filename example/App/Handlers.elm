@@ -12,7 +12,7 @@ staticHandler : String -> Router Route State -> Handler State
 staticHandler page router =
   let
     body = Html.text page
-    view address state parsed = Dict.fromList [
+    view state parsed = Dict.fromList [
       ("header", Html.header [] [homeLink router, Html.text " >> ", Html.text page])
     , ("body", body)
     ]
@@ -26,7 +26,7 @@ notFoundHandler : Router Route State -> Handler State
 notFoundHandler router =
   let
     body = Html.text "404"
-    view address state _ = Dict.fromList [
+    view state _ = Dict.fromList [
       ("header", Html.header [] [homeLink router])
     , ("body", body)
     ]
@@ -77,7 +77,7 @@ renderPosts router state posts = Html.div [Attr.class "posts"] [
 homeHandler : Router Route State -> Handler State
 homeHandler router =
   let
-    view address state _ = Dict.fromList [("body", renderCategories router state.categories)]
+    view state _ = Dict.fromList [("body", renderCategories router state.categories)]
   in
     {
       view = view,
@@ -89,7 +89,7 @@ homeHandler router =
 categoryHandler : Router Route State -> Handler State
 categoryHandler router =
   let
-    view address state parsed =
+    view state parsed =
     let body = renderPosts router state state.posts
     in Dict.fromList [
       ("header", Html.header [] [homeLink router, Html.text " >> ", Html.text <| Maybe.withDefault "error" <| getCategory state])
@@ -106,7 +106,7 @@ categoryHandler router =
 postHandler : Router Route State -> Handler State
 postHandler router =
   let
-    view address state _ =
+    view state _ =
       let
         category = getCategory state
         title = Maybe.withDefault "" <| Maybe.map (.title) state.post

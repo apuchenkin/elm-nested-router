@@ -2,24 +2,18 @@ module Test.Mock.Data where
 
 import Html exposing (Html)
 import Dict exposing (Dict)
-import MultiwayTree exposing (Tree (..), Forest)
 
-import Router.Helpers  exposing (noFx)
+import Router.Helpers  exposing (noFx, doNothing)
 import Router.Types    exposing (..)
+import Router.Matcher as Matcher exposing (Matcher)
+import Router.Functions exposing (dependencies)
 
 import Test.Mock.Router exposing (..)
 
 type Route = Home | Page | Subpage | NotFound
 
-routeTree : Forest Route
-routeTree = [
-    Tree NotFound [],
-    Tree Home [
-      Tree Page [
-        Tree Subpage []
-      ]
-    ]
-  ]
+routes : List Route
+routes = [NotFound, Home, Page, Subpage]
 
 type alias State = WithRouter Route
   {
@@ -31,27 +25,32 @@ config : Route -> RouteConfig Route State
 config route = case route of
     Home -> {
       segment = "/"
+    , bypass = False
+    , parent = Nothing
     , constraints = Dict.empty
     , handler = always handlerA
     }
     NotFound -> {
       segment = "/404"
+    , bypass = False
+    , parent = Nothing
     , constraints = Dict.empty
     , handler = always handlerA
     }
     Page -> {
       segment = ":category[/:subcategory]"
+    , bypass = False
+    , parent = Just Home
     , constraints = Dict.fromList [("category", Enum ["A","B","C"])]
     , handler = always handlerB
     }
     Subpage -> {
       segment = "/item/:item"
+    , bypass = False
+    , parent = Just Page
     , constraints = Dict.fromList [("item", Int)]
     , handler = always handlerC
     }
-
-routeMap : Route -> (RawURL, Dict String Constraint)
-routeMap route = (.segment <| config route, .constraints <| config route)
 
 init : State
 init = {
@@ -70,15 +69,16 @@ layout _ _ parsed =
 
 routerConfig : RouterConfig Route State
 routerConfig = RouterConfig {
-    init      = init,
-    useCache  = True,
-    html5     = True,
-    fallback  = (NotFound, Dict.empty),
-    layout    = layout,
-    routes    = routeTree,
-    routeConfig = config,
-    inits  = [],
-    inputs = []
+    init = init
+  , html5 = True
+  , removeTrailingSlash = True
+  , fallback = (NotFound, Dict.empty)
+  , layout = layout
+  , onTransition = \_ _ _ -> doNothing
+  , routes = routes
+  , routeConfig = config
+  , inits = []
+  , inputs = []
   }
 ------------ actions ----------------------
 noAction : Action State
@@ -96,7 +96,7 @@ append string state = Response <| noFx {state | str = state.str ++ string}
 
 handlerA : Handler State
 handlerA = {
-    view = \address state parsed -> Dict.fromList [("handlerA", Html.text "handlerA")],
+    view = \state _ -> Dict.fromList [("handlerA", Html.text "handlerA")],
     actions = [
       noAction
     ]
@@ -104,7 +104,7 @@ handlerA = {
 
 handlerB : Handler State
 handlerB = {
-    view = \address state parsed -> Dict.fromList [("handlerB", Html.text <| toString state.sum)],
+    view = \state _ -> Dict.fromList [("handlerB", Html.text <| toString state.sum)],
     actions = [
       succ
     ]
@@ -112,7 +112,7 @@ handlerB = {
 
 handlerC : Handler State
 handlerC = {
-    view = \address state parsed -> Dict.fromList [("handlerC", Html.text state.str)],
+    view = \state _ -> Dict.fromList [("handlerC", Html.text state.str)],
     actions = [
       succ,
       append "foo"
@@ -121,3 +121,9 @@ handlerC = {
 
 router : Router Route State
 router = routerMock routerConfig
+
+matcher : Matcher Route State
+matcher = Matcher.matcher routerConfig
+
+deps : Router.Functions.Dependencies Route State
+deps = dependencies router matcher
