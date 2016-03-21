@@ -1,5 +1,5 @@
 {
-    "version": "1.0.0",
+    "version": "2.0.0",
     "summary": "A simple nested router for Elm SPA",
     "repository": "https://github.com/apuchenkin/elm-nested-router.git",
     "license": "MIT",
