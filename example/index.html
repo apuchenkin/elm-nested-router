@@ -14885,16 +14885,11 @@ Elm.Router.Matcher.make = function (_elm) {
              ,sids: g};
    });
    var hasTrailingSlash = function (url) {
-      var _p0 = url;
+      var _p0 = A2($String.right,1,url);
       if (_p0 === "/") {
-            return false;
+            return true;
          } else {
-            var _p1 = A2($String.right,1,url);
-            if (_p1 === "/") {
-                  return true;
-               } else {
-                  return false;
-               }
+            return false;
          }
    };
    var removeTrailingSlash = function (url) {
@@ -14910,7 +14905,7 @@ Elm.Router.Matcher.make = function (_elm) {
          return {ctor: "_Tuple2"
                 ,_0: route
                 ,_1: A2($Dict.filter,
-                F2(function (param,_p2) {
+                F2(function (param,_p1) {
                    return A2($List.member,param,matcher.routeParams(route));
                 }),
                 params)};
@@ -14944,21 +14939,21 @@ Elm.Router.Matcher.make = function (_elm) {
       fromPath$,
       toPath$)));
       var getConfig = matcher.getConfig;
-      var getParent = function (_p3) {
+      var getParent = function (_p2) {
          return function (_) {
             return _.parent;
-         }(getConfig(_p3));
+         }(getConfig(_p2));
       };
       return A2($List.drop,commons,toPath);
    });
    var getPathInternal = F3(function (getParent,route,acc) {
-      var _p4 = getParent(route);
-      if (_p4.ctor === "Nothing") {
+      var _p3 = getParent(route);
+      if (_p3.ctor === "Nothing") {
             return A2($List._op["::"],route,acc);
          } else {
             return A2($List._op["::"],
             route,
-            A3(getPathInternal,getParent,_p4._0,acc));
+            A3(getPathInternal,getParent,_p3._0,acc));
          }
    });
    var getPath = F2(function (getParent,route) {
@@ -14980,15 +14975,15 @@ Elm.Router.Matcher.make = function (_elm) {
    });
    var filterParent = F3(function (getParent,route,routes) {
       return A3($List.foldl,
-      F2(function (r,_p5) {
-         var _p6 = _p5;
-         var _p8 = _p6._1;
-         var _p7 = _p6._0;
+      F2(function (r,_p4) {
+         var _p5 = _p4;
+         var _p7 = _p5._1;
+         var _p6 = _p5._0;
          return _U.eq(getParent(r),route) ? {ctor: "_Tuple2"
-                                            ,_0: A2($Basics._op["++"],_p7,_U.list([r]))
-                                            ,_1: _p8} : {ctor: "_Tuple2"
-                                                        ,_0: _p7
-                                                        ,_1: A2($Basics._op["++"],_p8,_U.list([r]))};
+                                            ,_0: A2($Basics._op["++"],_p6,_U.list([r]))
+                                            ,_1: _p7} : {ctor: "_Tuple2"
+                                                        ,_0: _p6
+                                                        ,_1: A2($Basics._op["++"],_p7,_U.list([r]))};
       }),
       {ctor: "_Tuple2",_0: _U.list([]),_1: _U.list([])},
       routes);
@@ -14997,29 +14992,29 @@ Elm.Router.Matcher.make = function (_elm) {
       var regex = $Regex.regex("^(.*)\\[([^\\]\\[]+)\\](.*)$");
       var matches = A3($Regex.find,$Regex.AtMost(1),regex,raw);
       var result = function () {
-         var _p9 = matches;
-         if (_p9.ctor === "[]") {
+         var _p8 = matches;
+         if (_p8.ctor === "[]") {
                return _U.list([raw]);
             } else {
-               if (_p9._1.ctor === "[]") {
-                     var _p10 = _p9._0.submatches;
-                     if (_p10.ctor === "::" && _p10._0.ctor === "Just" && _p10._1.ctor === "::" && _p10._1._0.ctor === "Just" && _p10._1._1.ctor === "::" && _p10._1._1._0.ctor === "Just" && _p10._1._1._1.ctor === "[]")
+               if (_p8._1.ctor === "[]") {
+                     var _p9 = _p8._0.submatches;
+                     if (_p9.ctor === "::" && _p9._0.ctor === "Just" && _p9._1.ctor === "::" && _p9._1._0.ctor === "Just" && _p9._1._1.ctor === "::" && _p9._1._1._0.ctor === "Just" && _p9._1._1._1.ctor === "[]")
                      {
-                           var _p12 = _p10._1._1._0._0;
-                           var _p11 = _p10._0._0;
+                           var _p11 = _p9._1._1._0._0;
+                           var _p10 = _p9._0._0;
                            return $List.concat(A2($List.map,
                            unwrap,
                            _U.list([A2($Basics._op["++"],
-                                   _p11,
-                                   A2($Basics._op["++"],_p10._1._0._0,_p12))
-                                   ,A2($Basics._op["++"],_p11,_p12)])));
+                                   _p10,
+                                   A2($Basics._op["++"],_p9._1._0._0,_p11))
+                                   ,A2($Basics._op["++"],_p10,_p11)])));
                         } else {
                            return _U.list([raw]);
                         }
                   } else {
                      return _U.crashCase("Router.Matcher",
                      {start: {line: 50,column: 14},end: {line: 55,column: 52}},
-                     _p9)("result = case matches of _");
+                     _p8)("result = case matches of _");
                   }
             }
       }();
@@ -15051,41 +15046,41 @@ Elm.Router.Matcher.make = function (_elm) {
       return !_U.eq(x,y);
    })(paramChar))));
    var getParams = function (string) {
-      var _p14 = $Basics.fst(A2($Combine.parse,
+      var _p13 = $Basics.fst(A2($Combine.parse,
       paramsParser,
       string));
-      if (_p14.ctor === "Err") {
+      if (_p13.ctor === "Err") {
             return _U.crashCase("Router.Matcher",
             {start: {line: 37,column: 20},end: {line: 39,column: 21}},
-            _p14)("getParams : String -> List String");
+            _p13)("getParams : String -> List String");
          } else {
-            return _p14._0;
+            return _p13._0;
          }
    };
    var parseUrlParams = F3(function (raw,constraints,url) {
       var params = getParams(raw);
       var strings = function () {
-         var _p16 = params;
-         if (_p16.ctor === "[]") {
+         var _p15 = params;
+         if (_p15.ctor === "[]") {
                return _U.list([raw]);
             } else {
                return A3($Regex.split,
                $Regex.All,
                $Regex.regex(A2($String.join,
                "|",
-               A2($List.map,$String.cons(paramChar),_p16))),
+               A2($List.map,$String.cons(paramChar),_p15))),
                raw);
             }
       }();
       var sringParsers = A2($List.map,$Combine.string,strings);
       var last = function () {
-         var _p17 = $List$Extra.last(sringParsers);
-         if (_p17.ctor === "Nothing") {
+         var _p16 = $List$Extra.last(sringParsers);
+         if (_p16.ctor === "Nothing") {
                return _U.crashCase("Router.Matcher",
                {start: {line: 76,column: 12},end: {line: 78,column: 19}},
-               _p17)("List.Extra.last sringParsers");
+               _p16)("List.Extra.last sringParsers");
             } else {
-               return _p17._0;
+               return _p16._0;
             }
       }();
       var paramParsers = A2($List.map,
@@ -15094,15 +15089,15 @@ Elm.Router.Matcher.make = function (_elm) {
          stringParser,
          A2($Maybe.map,
          function (c) {
-            var _p19 = c;
-            switch (_p19.ctor)
+            var _p18 = c;
+            switch (_p18.ctor)
             {case "Int": return A2($Combine$Infix._op["<$>"],
                  $Basics.toString,
                  $Combine$Num.$int);
                case "Enum": return $Combine.choice(A2($List.map,
                  $Combine.string,
-                 _p19._0));
-               case "Regex": return $Combine.regex(_p19._0);
+                 _p18._0));
+               case "Regex": return $Combine.regex(_p18._0);
                default: return stringParser;}
          },
          A2($Dict.get,param,constraints)));
@@ -15126,9 +15121,9 @@ Elm.Router.Matcher.make = function (_elm) {
       }),
       A2($Combine$Infix._op["<$>"],$Router$Helpers.singleton,last),
       A2($List.map,$Combine.map($Router$Helpers.singleton),parsers));
-      var _p20 = A2($Combine.parse,parser,url);
-      var result = _p20._0;
-      var context = _p20._1;
+      var _p19 = A2($Combine.parse,parser,url);
+      var result = _p19._0;
+      var context = _p19._1;
       var zipValues = function (values) {
          return $Dict.fromList(A3($List.map2,
          F2(function (v0,v1) {
@@ -15148,37 +15143,37 @@ Elm.Router.Matcher.make = function (_elm) {
    url) {
       return A3($List.foldl,
       F2(function (route,match) {
-         var _p21 = match;
-         if (_p21.ctor === "Just") {
+         var _p20 = match;
+         if (_p20.ctor === "Just") {
                return match;
             } else {
                var config = getConfig(route);
                var raws = unwrap(config.segment);
                return A3($List.foldl,
                F2(function (raw,match$) {
-                  var _p22 = match$;
-                  if (_p22.ctor === "Just") {
+                  var _p21 = match$;
+                  if (_p21.ctor === "Just") {
                         return match$;
                      } else {
-                        var _p23 = A3(parseUrlParams,raw,config.constraints,url);
-                        var result = _p23._0;
-                        var url$ = _p23._1;
-                        var _p24 = result;
-                        if (_p24.ctor === "Err") {
+                        var _p22 = A3(parseUrlParams,raw,config.constraints,url);
+                        var result = _p22._0;
+                        var url$ = _p22._1;
+                        var _p23 = result;
+                        if (_p23.ctor === "Err") {
                               return $Maybe.Nothing;
                            } else {
-                              var _p29 = _p24._0;
+                              var _p28 = _p23._0;
                               var matchChildren = function (route) {
-                                 var _p25 = A3(filterParent,
-                                 function (_p26) {
+                                 var _p24 = A3(filterParent,
+                                 function (_p25) {
                                     return function (_) {
                                        return _.parent;
-                                    }(getConfig(_p26));
+                                    }(getConfig(_p25));
                                  },
                                  $Maybe.Just(route),
                                  pool);
-                                 var childrens = _p25._0;
-                                 var pool$ = _p25._1;
+                                 var childrens = _p24._0;
+                                 var pool$ = _p24._1;
                                  var child = A5(matchInternal,
                                  unwrap,
                                  getConfig,
@@ -15186,17 +15181,17 @@ Elm.Router.Matcher.make = function (_elm) {
                                  pool$,
                                  url$);
                                  var childRoute = A2($Maybe.map,
-                                 $Router$Helpers.combineParams(_p29),
+                                 $Router$Helpers.combineParams(_p28),
                                  child);
                                  return childRoute;
                               };
-                              var _p27 = config.bypass;
-                              if (_p27 === true) {
+                              var _p26 = config.bypass;
+                              if (_p26 === true) {
                                     return matchChildren(route);
                                  } else {
-                                    var _p28 = $String.isEmpty(url$);
-                                    if (_p28 === true) {
-                                          return $Maybe.Just({ctor: "_Tuple2",_0: route,_1: _p29});
+                                    var _p27 = $String.isEmpty(url$);
+                                    if (_p27 === true) {
+                                          return $Maybe.Just({ctor: "_Tuple2",_0: route,_1: _p28});
                                        } else {
                                           return matchChildren(route);
                                        }
@@ -15212,23 +15207,23 @@ Elm.Router.Matcher.make = function (_elm) {
       routes);
    });
    var match$ = F4(function (unwrap,getConfig,routes,url) {
-      var _p30 = A3(filterParent,
-      function (_p31) {
+      var _p29 = A3(filterParent,
+      function (_p30) {
          return function (_) {
             return _.parent;
-         }(getConfig(_p31));
+         }(getConfig(_p30));
       },
       $Maybe.Nothing,
       routes);
-      var roots = _p30._0;
-      var pool = _p30._1;
+      var roots = _p29._0;
+      var pool = _p29._1;
       return A5(matchInternal,unwrap,getConfig,roots,pool,url);
    });
    var match = F3(function (getConfig,routes,url) {
       return A4(match$,unwrap,getConfig,routes,url);
    });
-   var buildRawUrl = F2(function (raws,_p32) {
-      var _p33 = _p32;
+   var buildRawUrl = F2(function (raws,_p31) {
+      var _p32 = _p31;
       var urls = A2($List.map,
       function (raw) {
          return A3($Dict.foldl,
@@ -15240,49 +15235,49 @@ Elm.Router.Matcher.make = function (_elm) {
             string);
          }),
          raw,
-         _p33._1);
+         _p32._1);
       },
       raws);
       var urls$ = A2($List.filter,
-      function (_p34) {
+      function (_p33) {
          return $Basics.not(A2($String.contains,
          $String.fromChar(paramChar),
-         _p34));
+         _p33));
       },
       urls);
-      var _p35 = $List.head(urls$);
-      if (_p35.ctor === "Nothing") {
+      var _p34 = $List.head(urls$);
+      if (_p34.ctor === "Nothing") {
             return _U.crashCase("Router.Matcher",
             {start: {line: 147,column: 6},end: {line: 149,column: 20}},
-            _p35)(A2($Basics._op["++"],
+            _p34)(A2($Basics._op["++"],
             "not enough params to build URL: ",
-            $Basics.toString(_p33._0)));
+            $Basics.toString(_p32._0)));
          } else {
-            return _p35._0;
+            return _p34._0;
          }
    });
-   var buildUrl = F3(function (getSegment,getParent,_p37) {
-      var _p38 = _p37;
-      var _p39 = _p38._0;
-      var raws = unwrap(A3(composeRawUrl,getSegment,getParent,_p39));
+   var buildUrl = F3(function (getSegment,getParent,_p36) {
+      var _p37 = _p36;
+      var _p38 = _p37._0;
+      var raws = unwrap(A3(composeRawUrl,getSegment,getParent,_p38));
       return A2(buildRawUrl,
       raws,
-      {ctor: "_Tuple2",_0: _p39,_1: _p38._1});
+      {ctor: "_Tuple2",_0: _p38,_1: _p37._1});
    });
-   var matcher = function (_p40) {
-      var _p41 = _p40;
-      var _p51 = _p41._0;
-      var getParent = function (_p42) {
+   var matcher = function (_p39) {
+      var _p40 = _p39;
+      var _p50 = _p40._0;
+      var getParent = function (_p41) {
          return function (_) {
             return _.parent;
-         }(_p51.routeConfig(_p42));
+         }(_p50.routeConfig(_p41));
       };
-      var getSegment = function (_p43) {
+      var getSegment = function (_p42) {
          return function (_) {
             return _.segment;
-         }(_p51.routeConfig(_p43));
+         }(_p50.routeConfig(_p42));
       };
-      var routes = _p51.routes;
+      var routes = _p50.routes;
       var segments = A2($List.map,getSegment,routes);
       var sids = A2($List.map,$Basics.toString,routes);
       var dict = $Dict.fromList(A3($List.map2,
@@ -15292,13 +15287,13 @@ Elm.Router.Matcher.make = function (_elm) {
       sids,
       routes));
       var stringToRoute = function (sid) {
-         var _p44 = A2($Dict.get,sid,dict);
-         if (_p44.ctor === "Just") {
-               return _p44._0;
+         var _p43 = A2($Dict.get,sid,dict);
+         if (_p43.ctor === "Just") {
+               return _p43._0;
             } else {
                return _U.crashCase("Router.Matcher",
-               {start: {line: 239,column: 25},end: {line: 241,column: 57}},
-               _p44)(A2($Basics._op["++"],"stringToRoute: ",sid));
+               {start: {line: 237,column: 25},end: {line: 239,column: 57}},
+               _p43)(A2($Basics._op["++"],"stringToRoute: ",sid));
             }
       };
       var composeUrl = A2($Router$Helpers.memoFallback,
@@ -15309,8 +15304,8 @@ Elm.Router.Matcher.make = function (_elm) {
          stringToRoute(sid));
       },
       sids);
-      var composeUrl$ = function (_p46) {
-         return composeUrl($Basics.toString(_p46));
+      var composeUrl$ = function (_p45) {
+         return composeUrl($Basics.toString(_p45));
       };
       var urls = A2($List.map,composeUrl$,routes);
       var unwrap$ = A2($Router$Helpers.memoFallback,
@@ -15322,27 +15317,27 @@ Elm.Router.Matcher.make = function (_elm) {
       };
       var getConfig = A2($Router$Helpers.memoFallback,
       function (sid) {
-         return _p51.routeConfig(stringToRoute(sid));
+         return _p50.routeConfig(stringToRoute(sid));
       },
       sids);
-      var getConfig$ = function (_p47) {
-         return getConfig($Basics.toString(_p47));
+      var getConfig$ = function (_p46) {
+         return getConfig($Basics.toString(_p46));
       };
       var traverse = A2($Router$Helpers.memoFallback,
       function (sid) {
          return A2(getPath,getParent,stringToRoute(sid));
       },
       sids);
-      var traverse$ = function (_p48) {
-         return traverse($Basics.toString(_p48));
+      var traverse$ = function (_p47) {
+         return traverse($Basics.toString(_p47));
       };
       var routeParams = A2($Router$Helpers.memoFallback,
-      function (_p49) {
-         return getParams(getSegment(stringToRoute(_p49)));
+      function (_p48) {
+         return getParams(getSegment(stringToRoute(_p48)));
       },
       sids);
-      var routeParams$ = function (_p50) {
-         return routeParams($Basics.toString(_p50));
+      var routeParams$ = function (_p49) {
+         return routeParams($Basics.toString(_p49));
       };
       return {getConfig: getConfig$
              ,buildUrl: buildUrl$
@@ -15753,7 +15748,7 @@ Elm.Main.make = function (_elm) {
    var config = function (route) {
       var _p0 = route;
       switch (_p0.ctor)
-      {case "Home": return {segment: "/"
+      {case "Home": return {segment: ""
                            ,bypass: false
                            ,parent: $Maybe.Nothing
                            ,constraints: $Dict.empty
@@ -15769,7 +15764,7 @@ Elm.Main.make = function (_elm) {
                   ,parent: $Maybe.Nothing
                   ,constraints: $Dict.empty
                   ,handler: $App$Handlers.staticHandler(_p1)};
-         case "Category": return {segment: ":category[/:subcategory]"
+         case "Category": return {segment: "/:category[/:subcategory]"
                                  ,bypass: false
                                  ,parent: $Maybe.Just($App$Routes.Home)
                                  ,constraints: $Dict.fromList(_U.list([{ctor: "_Tuple2"
