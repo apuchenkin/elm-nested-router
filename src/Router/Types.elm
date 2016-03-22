@@ -149,7 +149,7 @@ type RouterConfig route state = RouterConfig {
     init: state
   , html5: Bool
   , removeTrailingSlash: Bool
-  , fallback: Route route
+  , fallbackAction: Router route state -> Action state
   , layout: Router route state -> state -> Dict String Html -> Html
   , onTransition: Router route state -> Transition route state
   , routeConfig: route -> RouteConfig route state

@@ -45,7 +45,7 @@ setUrl deps url =
   let
     (RouterConfig config) = deps.router.config
   in case deps.router.match url of
-    Nothing               -> deps.router.redirect config.fallback
+    Nothing               -> config.fallbackAction deps.router
     Just route            -> setRoute deps route
 
 {-| @Private
