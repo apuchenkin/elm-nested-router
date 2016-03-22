@@ -15,7 +15,7 @@ import Router.Helpers exposing (doNothing)
 config : Route -> RouteConfig Route State
 config route = case route of
   Home -> {
-      segment = "/",
+      segment = "",
       bypass = False,
       parent = Nothing,
       constraints = Dict.empty,
@@ -36,7 +36,7 @@ config route = case route of
       handler = staticHandler page
     }
   Category -> {
-      segment = ":category[/:subcategory]",
+      segment = "/:category[/:subcategory]",
       bypass = False,
       parent = Just Home,
       constraints = Dict.fromList [("category", Enum ["animals", "flowers", "colors"])],
