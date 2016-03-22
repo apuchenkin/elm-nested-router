@@ -207,7 +207,7 @@ testRemoveTrailingSlash = suite "removeTrailingSlash" [
       <| assertEqual ""
       <| removeTrailingSlash ""
   , test "just slash"
-      <| assertEqual "/"
+      <| assertEqual ""
       <| removeTrailingSlash "/"
   ]
 
