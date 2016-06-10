@@ -57,7 +57,7 @@ initialState = {
 
 -- init: flags -> Maybe (Route route) -> (state, Cmd (Action state))
 main : Program Never
-main = Router.runRouter <| RouterConfig {
+main = Router.dispatch <| RouterConfig {
     init = \_ _ -> (initialState, Cmd.none)
   , html5 = False
   , removeTrailingSlash = True

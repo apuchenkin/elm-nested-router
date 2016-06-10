@@ -31,6 +31,8 @@ type alias Post = {
   text: Maybe String
 }
 
+type Msg = Foo | Bar
+
 getCategory : State -> Maybe String
 getCategory state =
   let
@@ -68,6 +70,7 @@ loadCategories router state =
         action = Maybe.withDefault update <| flip Maybe.map categoryParam <| \category ->
           update `chainAction` (loadPosts router)
       in Task.succeed <| action
+    act = Foo
 
   in Response (state, execute task)
 

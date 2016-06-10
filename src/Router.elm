@@ -1,24 +1,21 @@
-module Router exposing ( runRouter, initialState )
+module Router exposing ( dispatch, initialState )
 {-| A simple nested router for single page applications.
 
 See [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/example) ([Live demo](http://apuchenkin.github.io/elm-nested-router/example))
 and [Tests](https://github.com/apuchenkin/elm-nested-router/tree/master/test/Test) for more details
 
-@docs runRouter, initialState
+@docs dispatch, initialState
 -}
 
 import Dict
 import String
 import Navigation
 import Html             exposing (Html)
--- import Task             exposing (Task)
 import Html.Events      exposing (onWithOptions)
--- import Html.App         as App
 import Html.Attributes  as Attr
 import Json.Decode      as Json
 
 import Router.Matcher      as Matcher exposing (Matcher)
--- import Router.Helpers      exposing (..)
 import Router.Types        exposing (..)
 import Router.Functions    exposing (..)
 
@@ -97,45 +94,16 @@ update action state = let
     (Response state') = action state
   in state'
 
-
 {-| Launches the router -}
-runRouter : RouterConfig flags route (WithRouter route state) -> Program flags -- flags
+dispatch : RouterConfig flags route (WithRouter route state) -> Program flags -- flags
 --RouterResult (WithRouter route state)
-runRouter config =
+dispatch config =
   let
     (RouterConfig c) = config
     matcher = Matcher.matcher config
     router = constructor config matcher
     deps = dependencies router matcher
 
-    --
-    -- initial = c.init
-    -- pathSignal = if c.html5
-    --   then History.path
-    --   else Signal.map (\hash -> Maybe.withDefault "/" <| Maybe.map snd <| String.uncons hash) History.hash
-    --
-    -- init = Signal.map (singleton << (,) True << setUrl deps)
-    --   <| if c.removeTrailingSlash then Signal.map Matcher.removeTrailingSlash pathSignal else pathSignal
-    --
-    -- -- inputs : Signal (List (Bool, Action state))
-    -- inputs =
-    --   List.foldl (Signal.Extra.fairMerge List.append)
-    --   init <|
-    --   (Signal.map (List.map ((,) False)) mailbox.signal) -- actions from events
-    --   :: List.map (Signal.map (singleton << (,) True))  c.inits
-    --   ++ List.map (Signal.map (singleton << (,) False)) c.inputs
-    --
-    -- -- update : List (Bool, Action state) -> (state, ActionEffects state) -> (state, ActionEffects state)
-    -- update  actions (state,_) = List.foldl runAction (noFx state)
-    --   <| List.map snd actions
-    --
-    -- -- update' : List (Bool, Action state) -> (state, ActionEffects state)
-    -- update' actions = List.foldl runAction (noFx initial)
-    --   <| List.map snd
-    --   <| List.filter fst actions
-    --
-    -- result = Signal.Extra.foldp' update update' inputs
-    -- state = Signal.dropRepeats <| Signal.map fst result
     render' state = render router (List.map deps.getHandlers << matcher.traverse) state
 
     -- urlUpdate : Maybe route -> (WithRouter route state) -> ((WithRouter route state), Cmd (Action (WithRouter route state)))
@@ -146,22 +114,20 @@ runRouter config =
         Nothing -> update (c.fallbackAction deps.router) state
         Just route -> update (setRoute deps route) state
 
-    dehash hash = Maybe.withDefault "/" <| Maybe.map snd <| String.uncons hash
+    dehash hash =
+      let
+        hash' = if c.html5 then hash else Maybe.withDefault "/" <| Maybe.map snd <| String.uncons hash
+      in
+        if c.removeTrailingSlash then Matcher.removeTrailingSlash hash' else hash'
+
     parser = Navigation.makeParser (matcher.match << dehash << .hash)
+    init flags maybeRoute = let (state, cmd) = c.init flags maybeRoute in urlUpdate maybeRoute state
   in
     Navigation.programWithFlags parser
     {
-      init = c.init
+      init = init
     , update = update
     , urlUpdate = urlUpdate
     , view = render'
     , subscriptions = \_ -> Sub.none
     }
-
-
-    --
-    -- {
-    --   html  = Signal.map render' state
-    -- , state = state
-    -- , tasks = Signal.map (Effects.toTask mailbox.address << snd) result
-    -- }
