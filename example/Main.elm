@@ -1,6 +1,3 @@
-import Task     exposing (Task)
-import Html     exposing (Html)
-import Effects  exposing (Never)
 import Dict     exposing (Dict)
 
 import App.Routes exposing (..)
@@ -9,10 +6,10 @@ import App.Actions exposing (State)
 import App.Layout exposing (..)
 
 import Router
-import Router.Types  exposing (Router, RouterConfig (..), RouteConfig, RouterResult, Constraint (..))
+import Router.Types  exposing (Router, RouterConfig (..), RouteConfig, Constraint (..))
 import Router.Helpers exposing (doNothing)
 
-config : Route -> RouteConfig Route State
+config : Route -> RouteConfig flags Route State
 config route = case route of
   Home -> {
       segment = "",
@@ -58,22 +55,15 @@ initialState = {
   , post        = Nothing
   }
 
-result : RouterResult State
-result = Router.runRouter <| RouterConfig {
-    init      = initialState
-  , html5     = False
+-- init: flags -> Maybe (Route route) -> (state, Cmd (Action state))
+main : Program Never
+main = Router.runRouter <| RouterConfig {
+    init = \_ _ -> (initialState, Cmd.none)
+  , html5 = False
   , removeTrailingSlash = True
   , onTransition = \_ _ _ -> doNothing
-  , fallback  = (NotFound, Dict.empty)
-  , layout    = layout
-  , routes    = routes
-  , routeConfig  = config
-  , inits     = []
-  , inputs    = []
+  , fallbackAction = \_ -> doNothing
+  , layout = layout
+  , routes = routes
+  , routeConfig = config
   }
-
-main : Signal Html
-main = result.html
-
-port tasks : Signal (Task Never ())
-port tasks = result.tasks

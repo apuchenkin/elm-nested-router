@@ -1,10 +1,9 @@
-module Router.Helpers where
+module Router.Helpers exposing (..)
 
 {-| A set of utility functions
 @docs singleton, noFx, combineParams, chainAction, doNothing, memoFallback
 -}
 
-import Effects
 import Dict
 import Memo
 import Router.Types exposing (ActionEffects, Response (..), Action, RouteParams, Route)
@@ -15,7 +14,7 @@ singleton action = [ action ]
 
 {-| An action without effects -}
 noFx : state -> (state, ActionEffects state)
-noFx state = (state, Effects.none)
+noFx state = (state, Cmd.none)
 
 {-| An empty action -}
 doNothing : Action state
@@ -31,7 +30,7 @@ chainAction action1 action2 state =
   let
     (Response (state', effects)) = action1 state
     (Response (state'', effects')) = action2 state'
-  in Response (state'', Effects.batch [effects, effects'])
+  in Response (state'', Cmd.batch [effects, effects'])
 
 {-| Performs function memoization with a fallback -}
 memoFallback : (comparable  -> b) -> List comparable  -> comparable  -> b
