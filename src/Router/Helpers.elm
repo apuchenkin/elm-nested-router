@@ -1,16 +1,15 @@
-module Router.Helpers exposing (..)
+module Router.Helpers exposing (
+  noFx,
+  doNothing,
+  chainAction,
+  combineActions
+  )
 
 {-| A set of utility functions
-@docs singleton, noFx, combineParams, chainAction, doNothing, memoFallback
+@docs noFx, doNothing, chainAction, combineActions
 -}
 
-import Dict
-import Memo
-import Router.Types exposing (ActionEffects, Response (..), Action, RouteParams, Route)
-
-{-| Wraps something in a list -}
-singleton : a -> List a
-singleton action = [ action ]
+import Router.Types exposing (ActionEffects, Response (Response), Action)
 
 {-| An action without effects -}
 noFx : state -> (state, ActionEffects state)
@@ -20,10 +19,6 @@ noFx state = (state, Cmd.none)
 doNothing : Action state
 doNothing state = Response <| noFx state
 
-{-| Combine route wit a provided params -}
-combineParams : RouteParams -> Route route -> Route route
-combineParams dict (route, params) = (route, Dict.union params dict)
-
 {-| Combines two action together -}
 chainAction : Action state -> Action state -> Action state
 chainAction action1 action2 state =
@@ -32,12 +27,19 @@ chainAction action1 action2 state =
     (Response (state'', effects')) = action2 state'
   in Response (state'', Cmd.batch [effects, effects'])
 
-{-| Performs function memoization with a fallback -}
-memoFallback : (comparable  -> b) -> List comparable  -> comparable  -> b
-memoFallback fun args =
-  let
-    memoized = Memo.memo fun args
-  in
-    \arg -> case memoized arg of
-      Just val -> val
-      Nothing -> fun arg
+{-| @Private
+  Runs the action for the specified state and initial effects
+ -}
+runAction : Action state -> Response state -> Response state -- (state, ActionEffects state)
+runAction action response =
+    let
+      (Response (state, effects)) = response
+      (Response (state', effects')) = action state
+    in
+      Response (state', Cmd.batch [effects, effects'])
+
+{-| @Private
+  Folds actions for a handlers into a single action
+-}
+combineActions : List (Action state) -> Action state
+combineActions actions state = List.foldl runAction (doNothing state) actions

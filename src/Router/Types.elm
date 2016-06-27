@@ -1,4 +1,5 @@
 module Router.Types exposing (..)
+
 {-| Router types
 
 # URL parts
