@@ -9,7 +9,7 @@ and [Tests](https://github.com/apuchenkin/elm-nested-router/tree/master/test/Tes
 
 import Dict
 import String
-import Navigation
+import Navigation       exposing (Location)
 import Html             exposing (Html)
 import Html.Events      exposing (onWithOptions)
 import Html.Attributes  as Attr
@@ -30,7 +30,7 @@ initialState = {
   }
 
 {-| binds forward action to existing HTML attributes. Exposed by `Router` -}
-bindForward : RouterConfig flags route state -> Matcher flags route state -> Route route -> List (Html.Attribute (Action state)) -> List (Html.Attribute (Action state))
+bindForward : RouterConfig route state -> Matcher route state -> Route route -> List (Html.Attribute (Action state)) -> List (Html.Attribute (Action state))
 bindForward config matcher route attrs =
   let
     options = {stopPropagation = True, preventDefault = True}
@@ -41,7 +41,7 @@ bindForward config matcher route attrs =
     :: attrs
 
 {-| Decomposes Route to string. Exposed by `Router` -}
-buildUrl : RouterConfig flags route state -> Matcher flags route state -> Route route -> String
+buildUrl : RouterConfig route state -> Matcher route state -> Route route -> String
 buildUrl routerConfig matcher (route, params) =
   let
     (RouterConfig config) = routerConfig
@@ -51,7 +51,7 @@ buildUrl routerConfig matcher (route, params) =
   in url''
 
 {-| Preforms a transition to provided `Route`. Exposed by `Router` -}
-forward : RouterConfig flags route state -> Matcher flags route state -> Route route -> Action state
+forward : RouterConfig route state -> Matcher route state -> Route route -> Action state
 forward routerConfig matcher route state =
   let
     -- (RouterConfig config) = routerConfig
@@ -60,7 +60,7 @@ forward routerConfig matcher route state =
   in Response (state, msg)
 
 {-| Redirects to provided `Route`. Exposed by `Router` -}
-redirect : RouterConfig flags route state -> Matcher flags route state -> Route route -> Action state
+redirect : RouterConfig route state -> Matcher route state -> Route route -> Action state
 redirect routerConfig matcher route state =
   let
     -- (RouterConfig config) = routerConfig
@@ -71,11 +71,11 @@ redirect routerConfig matcher route state =
 {-| @Private
   Preforms attempt to match provided url to a route by a given routes configuration
   -}
-matchRoute : Matcher flags route state -> String -> Maybe (Route route)
+matchRoute : Matcher route state -> String -> Maybe (Route route)
 matchRoute matcher url = matcher.match url
 
 {-| Router constructor -}
-constructor : RouterConfig flags route state -> Matcher flags route state -> Router flags route state
+constructor : RouterConfig route state -> Matcher route state -> Router route state
 constructor config matcher =
   let
     (RouterConfig c) = config
@@ -94,40 +94,38 @@ update action state = let
     (Response state') = action state
   in state'
 
+getPath : RouterConfig route state -> Location -> URL
+getPath config location =
+    let
+      (RouterConfig c) = config
+      urlPath = if c.html5
+        then location.pathname
+        else Maybe.withDefault "/" <| Maybe.map snd <| String.uncons location.hash
+    in
+      if c.removeTrailingSlash then Matcher.removeTrailingSlash urlPath else urlPath
+
 {-| Launches the router -}
-dispatch : RouterConfig flags route (WithRouter route state) -> Program flags -- flags
---RouterResult (WithRouter route state)
-dispatch config =
+dispatch : (flags -> (WithRouter route state)) -> RouterConfig route (WithRouter route state) -> Program flags -- flags
+dispatch init config =
   let
     (RouterConfig c) = config
     matcher = Matcher.matcher config
     router = constructor config matcher
-    deps = dependencies router matcher
 
-    render' state = render router (List.map deps.getHandlers << matcher.traverse) state
+    getHandlers = createHandlers router matcher
+    render' state = render router (List.map getHandlers << matcher.traverse) state
 
     -- urlUpdate : Maybe route -> (WithRouter route state) -> ((WithRouter route state), Cmd (Action (WithRouter route state)))
-    urlUpdate maybeRoute state =
-      let
-        _ = Debug.log "urlUpdate" maybeRoute
-      in case maybeRoute of
-        Nothing -> update (c.fallbackAction deps.router) state
-        Just route -> update (setRoute deps route) state
+    urlUpdate route state = update (transition router matcher getHandlers route) state
 
-    dehash hash =
-      let
-        hash' = if c.html5 then hash else Maybe.withDefault "/" <| Maybe.map snd <| String.uncons hash
-      in
-        if c.removeTrailingSlash then Matcher.removeTrailingSlash hash' else hash'
-
-    parser = Navigation.makeParser (matcher.match << dehash << .hash)
-    init flags maybeRoute = let (state, cmd) = c.init flags maybeRoute in urlUpdate maybeRoute state
+    parser = Navigation.makeParser (matcher.match << getPath config)
+    init' flags route = urlUpdate route (init flags)
   in
     Navigation.programWithFlags parser
     {
-      init = init
+      init = init'
     , update = update
     , urlUpdate = urlUpdate
     , view = render'
-    , subscriptions = \_ -> Sub.none
+    , subscriptions = c.subscriptions
     }

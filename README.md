@@ -152,6 +152,6 @@ see [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/exampl
 - [x] Check the possibility to replace router cache with Automaton
 - [ ] Improve perfomance on specific functions
 - [ ] Query string parameters support
-
-- why not to use route combinator API instead of string parsing?
-- actions and messages?
+- [ ] Consider route combinator API instead of string parsing
+- [ ] Clean types, response?
+- [ ] Check with subscriptions and flags

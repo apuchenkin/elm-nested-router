@@ -7,9 +7,9 @@ import App.Layout exposing (..)
 
 import Router
 import Router.Types  exposing (Router, RouterConfig (..), RouteConfig, Constraint (..))
-import Router.Helpers exposing (doNothing)
+import Router.Helpers exposing (doNothing, noFx)
 
-config : Route -> RouteConfig flags Route State
+config : Route -> RouteConfig Route State
 config route = case route of
   Home -> {
       segment = "",
@@ -57,13 +57,18 @@ initialState = {
 
 -- init: flags -> Maybe (Route route) -> (state, Cmd (Action state))
 main : Program Never
-main = Router.dispatch <| RouterConfig {
-    init = \_ _ -> (initialState, Cmd.none)
-  , html5 = False
+main = Router.dispatch
+  (\_ -> initialState)
+  (RouterConfig {
+    html5 = False
   , removeTrailingSlash = True
-  , onTransition = \_ _ _ -> doNothing
-  , fallbackAction = \_ -> doNothing
+  , transition = \r _ to -> case to of
+      Nothing -> r.redirect (Home, Dict.empty)
+      Just rr -> let
+        _ = (Debug.log "onTransition" rr)
+        in doNothing
   , layout = layout
   , routes = routes
   , routeConfig = config
-  }
+  , subscriptions = \_ -> Sub.none
+  })

@@ -6,7 +6,7 @@ import App.Actions exposing (State)
 import App.Routes as Route exposing (Route)
 import Router.Types exposing (Router, Action)
 
-footer : Router flags Route State -> Html (Action State)
+footer : Router Route State -> Html (Action State)
 footer router =
   let
     about    = Html.a (router.bindForward (Route.Static "about",    Dict.empty) []) [Html.text "About"]
@@ -16,7 +16,7 @@ footer router =
     about, sep, contacts
   ]
 
-layout : Router flags Route State -> State -> Dict String (Html (Action State)) -> Html (Action State)
+layout : Router Route State -> State -> Dict String (Html (Action State)) -> Html (Action State)
 layout router _ parsed =
   let
     defaultHeader = Html.header [] [Html.text "Default header"]

@@ -31,8 +31,6 @@ type alias Post = {
   text: Maybe String
 }
 
-type Msg = Foo | Bar
-
 getCategory : State -> Maybe String
 getCategory state =
   let
@@ -58,7 +56,7 @@ decodePosts = Json.list decodePost
 execute : Task Never (Action State) -> Cmd (Action State)
 execute task = Task.perform (always doNothing) (identity) task
 
-loadCategories : Router flags Route State -> Action State
+loadCategories : Router Route State -> Action State
 loadCategories router state =
   let
     fetch = Task.toMaybe <| Http.get decodeCategories "data/categories.json"
@@ -70,11 +68,10 @@ loadCategories router state =
         action = Maybe.withDefault update <| flip Maybe.map categoryParam <| \category ->
           update `chainAction` (loadPosts router)
       in Task.succeed <| action
-    act = Foo
 
   in Response (state, execute task)
 
-loadPosts : Router flags Route State -> Action State
+loadPosts : Router Route State -> Action State
 loadPosts router state =
   let
     category = getCategory state
