@@ -1,4 +1,4 @@
-module Test.Mock.Data where
+module Test.Mock.Data exposing (..)
 
 import Html exposing (Html)
 import Dict exposing (Dict)
@@ -6,8 +6,6 @@ import Dict exposing (Dict)
 import Router.Helpers  exposing (noFx, doNothing)
 import Router.Types    exposing (..)
 import Router.Matcher as Matcher exposing (Matcher)
-import Router.Functions exposing (dependencies)
-
 import Test.Mock.Router exposing (..)
 
 type Route = Home | Page | Subpage | NotFound
@@ -59,7 +57,7 @@ init = {
     sum = 0
   }
 
-layout : Router Route State -> State -> Dict String Html -> Html
+layout : Router Route State -> State -> Dict String (Html (Action State)) -> (Html (Action State))
 layout _ _ parsed =
   let fallback = Html.text "error"
   in Maybe.withDefault (Maybe.withDefault (Maybe.withDefault fallback
@@ -69,16 +67,13 @@ layout _ _ parsed =
 
 routerConfig : RouterConfig Route State
 routerConfig = RouterConfig {
-    init = init
-  , html5 = True
+    html5 = True
   , removeTrailingSlash = True
-  , fallbackAction = always doNothing
   , layout = layout
-  , onTransition = \_ _ _ -> doNothing
+  , transition = \_ _ _ -> doNothing
   , routes = routes
   , routeConfig = config
-  , inits = []
-  , inputs = []
+  , subscriptions = always Sub.none
   }
 ------------ actions ----------------------
 noAction : Action State
@@ -124,6 +119,3 @@ router = routerMock routerConfig
 
 matcher : Matcher Route State
 matcher = Matcher.matcher routerConfig
-
-deps : Router.Functions.Dependencies Route State
-deps = dependencies router matcher
