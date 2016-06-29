@@ -7,6 +7,6 @@ import ElmTest      exposing (Test, suite)
 
 testSuite : Test
 testSuite = suite "Router" [
-    -- Test.Router.Matcher.testSuite,
-    -- Test.Router.Functions.testSuite
+    Test.Router.Matcher.testSuite,
+    Test.Router.Functions.testSuite
   ]

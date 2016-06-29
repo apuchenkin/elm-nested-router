@@ -4,10 +4,10 @@ import Dict
 import Html
 import ElmTest exposing (..)
 
-import Router     exposing (..)
+-- import Router     exposing (..)
 import Router.Types     exposing (..)
 import Router.Helpers   exposing (noFx, combineActions)
-import Router.Functions exposing (..)
+-- import Router.Functions exposing (..)
 import Router.Matcher   as Matcher
 
 import Test.Mock.Data exposing (..)
