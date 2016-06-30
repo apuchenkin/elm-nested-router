@@ -149,7 +149,6 @@ filterParent getParent route routes =
 match' : (String -> List String) -> (route -> RouteConfig route state) -> List route -> URL -> Maybe (Route route)
 match' unwrap getConfig routes url =
   let
-    _ = Debug.log "match" url
     (roots, pool) = filterParent (.parent << getConfig) Nothing routes
   in matchInternal unwrap getConfig roots pool url
 

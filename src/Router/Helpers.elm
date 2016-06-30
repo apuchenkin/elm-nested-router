@@ -42,4 +42,4 @@ runAction action response =
   Folds actions for a handlers into a single action
 -}
 combineActions : List (Action state) -> Action state
-combineActions actions state = List.foldl runAction (doNothing state) actions
+combineActions actions state = List.foldl runAction (Response <| noFx state) actions

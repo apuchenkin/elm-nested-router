@@ -15,7 +15,7 @@ import Html             exposing (Html)
 import Router.Matcher      as Matcher exposing (Matcher)
 import Router.Types        exposing (..)
 import Router.Functions    exposing (..)
-import Router.Helpers      exposing (combineActions)
+import Router.Helpers      exposing (combineActions, noFx)
 
 {-| Initial state for router. Fed this into your application state -}
 initialState : RouterState route
@@ -25,7 +25,11 @@ initialState = {
   }
 
 runAction : Action state -> state -> (state, ActionEffects state)
-runAction action state = let (Response res) = action state in res
+runAction action state =
+  let
+    -- _ = Debug.log "run:" <| toString action
+    (Response res) = action state
+  in res
 
 getPath : RouterConfig route state -> Location -> URL
 getPath config location =
@@ -101,7 +105,7 @@ constructor config matcher =
   }
 
 {-| Launches the router -}
-dispatch : (flags -> (WithRouter route state)) -> RouterConfig route (WithRouter route state) -> Program flags -- flags
+dispatch : (flags -> (WithRouter route state, Cmd (Action (WithRouter route state)))) -> RouterConfig route (WithRouter route state) -> Program flags -- flags
 dispatch init config =
   let
     (RouterConfig c) = config
@@ -109,18 +113,20 @@ dispatch init config =
     router = constructor config matcher
 
     getHandlers = createHandlers router matcher
-    render' state = render router (List.map getHandlers << matcher.traverse) state
-
-    update action state = runAction action state
-    urlUpdate route state = runAction (transition router matcher getHandlers route) state
+    render' = render router <| List.map getHandlers << matcher.traverse
+    urlUpdate route = runAction (transition router matcher getHandlers route)
 
     parser = Navigation.makeParser (matcher.match << getPath config)
-    init' flags route = urlUpdate route (init flags)
+    init' flags route =
+      let
+        (state, cmd) = init flags
+        (state', cmd') = urlUpdate route state
+      in (state', Cmd.batch [cmd, cmd'])
   in
     Navigation.programWithFlags parser
     {
       init = init'
-    , update = update
+    , update = runAction
     , urlUpdate = urlUpdate
     , view = render'
     , subscriptions = c.subscriptions
