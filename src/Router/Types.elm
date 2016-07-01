@@ -1,20 +1,19 @@
-module Router.Types where
+module Router.Types exposing (..)
+
 {-| Router types
 
 # URL parts
 @docs URL, RawURL, RawSegment, Param, Constraint, Route, RouteConfig, RouteParams
 
 # Actions and handlers
-@docs WithRouter, Handler, Action, ActionEffects, Response, Transition
+@docs WithRouter, Handler, Action, Commands, Response, Transition
 
 # Router
-@docs Router, RouterConfig, RouterResult, RouterState
+@docs Router, RouterConfig, RouterState
 -}
 
 import Dict           exposing (Dict)
 import Html           exposing (Html)
-import Task           exposing (Task)
-import Effects        exposing (Effects, Never)
 
 -----------------------------------------
 -- Route mather related types
@@ -54,13 +53,13 @@ type alias Route route = (route, RouteParams)
 -----------------------------------------
 
 {-| An action result - a modified state combined with side effects -}
-type Response state = Response (state, ActionEffects state)
+type Response state = Response (state, Commands state)
 
 {-| `Action` represents function that prforms something with application state, and might contain side efects -}
 type alias Action state = state -> Response state
 
 {-| Helper to get rid of brackets -}
-type alias ActionEffects state = Effects (Action state)
+type alias Commands state = Cmd (Action state)
 
 {-|
   A `Handler` is a piece of functionality binded to specific route
@@ -68,7 +67,7 @@ type alias ActionEffects state = Effects (Action state)
   * `actions` &mdash; A set of necessary to perform actions
 -}
 type alias Handler state = {
-    view: state -> Dict String Html -> Dict String Html
+    view: state -> Dict String (Html (Action state)) -> Dict String (Html (Action state))
   , actions: List (Action state)
   }
 
@@ -129,35 +128,28 @@ type alias RouterState route = {
 type alias WithRouter route state = { state | router : RouterState route}
 
 {-| A transition from route A to route B -}
-type alias Transition route state = Maybe (Route route) -> Route route -> Action state
+type alias Transition route state = Maybe (Route route) -> Maybe (Route route) -> Action state
 
 {-|
   `RouterConfig` is configuration for the router:
 
-  * `init` &mdash; Initial application state
   * `html5` &mdash; Use html5 pushState.
   * `removeTrailingSlash` &mdash; Trailing slashes will be removed from matched and builded urls
-  * `fallback` &mdash; A fallback route is used when url matching fails
   * `layout` &mdash; Main rendered function that combines named views gathered from Handlers in a single HTML
-  * `onTransition` &mdash; An action that should be executed on every router transition
+  * `transition` &mdash; An action that should be executed on every router transition
   * `routeConfig` &mdash; A mapping between route and route configuration
   * `routes` &mdash; A list of routes available for routing
-  * `inits` &mdash; A list of signals that should run for inititialisation of state
-  * `inputs` &mdash; A list of signals utilized in application in runtime
+  * `subscriptions` &mdash; A list of subscriptions (see: [elm-lang/html](http://package.elm-lang.org/packages/elm-lang/html/1.1.0/Html-App) for details)
 -}
 type RouterConfig route state = RouterConfig {
-    init: state
-  , html5: Bool
+    html5: Bool
   , removeTrailingSlash: Bool
-  , fallback: Route route
-  , layout: Router route state -> state -> Dict String Html -> Html
-  , onTransition: Router route state -> Transition route state
+  , layout: Router route state -> state -> Dict String (Html (Action state)) -> (Html (Action state))
+  , transition: Router route state -> Transition route state
   , routeConfig: route -> RouteConfig route state
   , routes: List route
-  , inits: List (Signal.Signal (Action state))
-  , inputs: List (Signal.Signal (Action state))
+  , subscriptions : state -> Sub (Action state)
   }
-
 
 {-|
   A `Router` is a provider of following functions:
@@ -169,30 +161,13 @@ type RouterConfig route state = RouterConfig {
   * `redirect` &mdash; Redirects to provided `Route`
   * `match` &mdash; Performs attempt to match provided URL.
 
-  Router also provide it's `config` and `address`
+  Router also provide it's `config`
 -}
 type alias Router route state = {
     config : RouterConfig route state
-  , address: Signal.Address (Action state)
-  , bindForward : Route route -> List Html.Attribute -> List Html.Attribute
+  , bindForward : Route route -> List (Html.Attribute (Action state)) -> List (Html.Attribute (Action state))
   , buildUrl : Route route -> URL
   , forward : Route route -> Action state
   , redirect : Route route -> Action state
   , match : String -> Maybe (Route route)
-  }
-
-{-|
-  A `RouterResult` is a combination of resulting signals:
-
-  * `html` &mdash; a signal of `Html` representing the current visual
-    representation of your app. This should be fed into `main`.
-  * `state` &mdash; a signal representing the central state of your application.
-  * `tasks` &mdash; a signal of tasks that need to get run. Your app is going
-    to be producing tasks in response to all sorts of events, so this needs to
-    be hooked up to a `port` to ensure they get run.
--}
-type alias RouterResult state =
-  { html : Signal Html
-  , state : Signal state
-  , tasks : Signal (Task Never ())
   }

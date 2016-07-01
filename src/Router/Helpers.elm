@@ -1,44 +1,51 @@
-module Router.Helpers where
+module Router.Helpers exposing (
+  noFx,
+  doNothing,
+  performTask,
+  chainAction,
+  combineActions
+  )
 
 {-| A set of utility functions
-@docs singleton, noFx, combineParams, chainAction, doNothing, memoFallback
+@docs noFx, doNothing, performTask, chainAction, combineActions
 -}
 
-import Effects
-import Dict
-import Memo
-import Router.Types exposing (ActionEffects, Response (..), Action, RouteParams, Route)
+import Task exposing (Task)
+import Router.Types exposing (Commands, Response (Response), Action)
 
-{-| Wraps something in a list -}
-singleton : a -> List a
-singleton action = [ action ]
-
-{-| An action without effects -}
-noFx : state -> (state, ActionEffects state)
-noFx state = (state, Effects.none)
+{-| An action without side effects -}
+noFx : state -> (state, Commands state)
+noFx state = (state, Cmd.none)
 
 {-| An empty action -}
 doNothing : Action state
 doNothing state = Response <| noFx state
 
-{-| Combine route wit a provided params -}
-combineParams : RouteParams -> Route route -> Route route
-combineParams dict (route, params) = (route, Dict.union params dict)
+{-| Creates a commnd to perform the task -}
+performTask : Task Never (Action state) -> Cmd (Action state)
+performTask task = Task.perform (always doNothing) identity task
 
 {-| Combines two action together -}
 chainAction : Action state -> Action state -> Action state
 chainAction action1 action2 state =
   let
-    (Response (state', effects)) = action1 state
-    (Response (state'', effects')) = action2 state'
-  in Response (state'', Effects.batch [effects, effects'])
+    (Response (state', cmd)) = action1 state
+    (Response (state'', cmd')) = action2 state'
+  in Response (state'', Cmd.batch [cmd, cmd'])
 
-{-| Performs function memoization with a fallback -}
-memoFallback : (comparable  -> b) -> List comparable  -> comparable  -> b
-memoFallback fun args =
-  let
-    memoized = Memo.memo fun args
-  in
-    \arg -> case memoized arg of
-      Just val -> val
-      Nothing -> fun arg
+{-| @Private
+  Runs the action for the specified state and initial commannds
+ -}
+runAction : Action state -> Response state -> Response state
+runAction action response =
+    let
+      (Response (state, cmd)) = response
+      (Response (state', cmd')) = action state
+    in
+      Response (state', Cmd.batch [cmd, cmd'])
+
+{-| @Private
+  Folds actions for a handlers into a single action
+-}
+combineActions : List (Action state) -> Action state
+combineActions actions state = List.foldl runAction (Response <| noFx state) actions

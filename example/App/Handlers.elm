@@ -1,9 +1,9 @@
-module App.Handlers where
+module App.Handlers exposing (..)
 
 import Dict
 import Html exposing (Html)
 import Html.Attributes as Attr
-import Router.Types exposing (Router, Handler)
+import Router.Types exposing (Router, Handler, Action)
 
 import App.Routes as Route exposing (Route)
 import App.Actions exposing (..)
@@ -36,11 +36,11 @@ notFoundHandler router =
       actions = []
     }
 
-homeLink : Router Route State -> Html
+homeLink : Router Route State -> Html (Action State)
 homeLink router =
     Html.a (router.bindForward (Route.Home, Dict.empty) []) [Html.text "Home"]
 
-categoryLink : Router Route State -> Category -> Html
+categoryLink : Router Route State -> Category -> Html (Action State)
 categoryLink router category =
   let
     params = [("category", category.id)]
@@ -48,7 +48,7 @@ categoryLink router category =
   in
     Html.a (router.bindForward (Route.Category, Dict.fromList params) attributes) [Html.text category.title]
 
-postLink : Router Route State -> State -> Post -> Html
+postLink : Router Route State -> State -> Post -> Html (Action State)
 postLink router state post =
   let
     params = Dict.fromList [("postId", toString post.id)]
@@ -57,7 +57,7 @@ postLink router state post =
     Html.a (router.bindForward (Route.Post, Dict.union params state.router.params) attributes) [Html.text post.title]
 
 -- can be easily lazified
-renderCategories : Router Route State -> List Category -> Html
+renderCategories : Router Route State -> List Category -> Html (Action State)
 renderCategories router categories = Html.div [Attr.class "categories"] [
     Html.h2 [] [Html.text "Categories"],
     Html.ul []
@@ -66,7 +66,7 @@ renderCategories router categories = Html.div [Attr.class "categories"] [
       ]
 
 -- can be easily lazified
-renderPosts : Router Route State -> State -> List Post -> Html
+renderPosts : Router Route State -> State -> List Post -> Html (Action State)
 renderPosts router state posts = Html.div [Attr.class "posts"] [
     Html.h2 [] [Html.text "Posts"],
     Html.ul []
