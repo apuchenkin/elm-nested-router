@@ -55,10 +55,10 @@ initialState = {
   , post        = Nothing
   }
 
--- init: flags -> Maybe (Route route) -> (state, Cmd (Action state))
+
 main : Program Never
 main = Router.dispatch
-  (\_ -> initialState)
+  (always <| noFx initialState)
   (RouterConfig {
     html5 = False
   , removeTrailingSlash = True
@@ -70,5 +70,5 @@ main = Router.dispatch
   , layout = layout
   , routes = routes
   , routeConfig = config
-  , subscriptions = \_ -> Sub.none
+  , subscriptions = always Sub.none
   })

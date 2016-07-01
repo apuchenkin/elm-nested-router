@@ -8,9 +8,12 @@ Inspired by [angular-ui-router](https://github.com/angular-ui/ui-router) and [Ra
 ## Example
 
 To create a routeable application we have to keep `Router` state (Current route and params) in application state.
-In order to do this we create our application state with a helper `WithRouter`:
+In order to do this we create our application state by using a helper `WithRouter`:
 
 ```elm
+import Router
+import Router.Types exposing (WithRouter)
+
 -- We use `WithRouter` to define application state
 type alias State = WithRouter Route
   {
@@ -19,7 +22,7 @@ type alias State = WithRouter Route
     post: Maybe Post
   }
 
--- construct initialState with blanks
+-- construct initialState with initial values
 initialState : State
 initialState = {
     router      = Router.initialState
@@ -35,7 +38,7 @@ type Route = Home | NotFound | Static String | Category | Post
 
 -- Route list that is required by router.
 -- Note that routes which registered first have higher priority to be matched. So when you have concurrent routes, order of this list is important.
-routes : Forest Route
+routes : List Route
 routes = [
     NotFound
   , Static "about"  
@@ -97,7 +100,7 @@ routeConfig route = case route of
 Each handler provides named views: `Dict String Html` - these HTML parts are finally combined and rendered in application layout:
 
 ```elm
-layout : Router Route State -> State -> Dict String Html -> Html
+layout : Router Route State -> State -> Dict String (Html (Action State)) -> Html (Action State)
 layout router _ views =
   let
     defaultHeader = Html.header [] [Html.text "Default header"]
@@ -110,28 +113,26 @@ layout router _ views =
   ]
 ```
 
-Finally we launch Router and feed its output to application ports:
+Finally we launch Router:
 
 ```elm
-result : RouterResult State
-result = Router.runRouter <| RouterConfig {
-    init      = initialState
-  , html5     = True
+
+main : Program Never
+main = Router.dispatch
+  (always <| noFx initialState)
+  (RouterConfig {
+    html5 = False
   , removeTrailingSlash = True
-  , onTransition = \_ _ _ -> doNothing
-  , fallback  = (NotFound, Dict.empty)
-  , layout    = layout
-  , routes    = routes
-  , routeConfig  = routeConfig
-  , inits     = []
-  , inputs    = []
-  }
-
-main : Signal Html
-main = result.html
-
-port tasks : Signal (Task Never ())
-port tasks = result.tasks
+  , transition = \router _ to -> case to of
+      Nothing -> router.redirect (Home, Dict.empty)
+      Just route -> let
+        _ = (Debug.log "onTransition" route)
+        in doNothing
+  , layout = layout
+  , routes = routes
+  , routeConfig = config
+  , subscriptions = always Sub.none
+  })
 ```
 
 see [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/example) ([Live demo](http://apuchenkin.github.io/elm-nested-router/example)) and [Tests](https://github.com/apuchenkin/elm-nested-router/tree/master/test/Test) for more details.
@@ -152,6 +153,3 @@ see [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/exampl
 - [x] Check the possibility to replace router cache with Automaton
 - [ ] Improve perfomance on specific functions
 - [ ] Query string parameters support
-- [ ] Consider route combinator API instead of string parsing
-- [ ] Clean types, response?
-- [ ] Check with subscriptions and flags

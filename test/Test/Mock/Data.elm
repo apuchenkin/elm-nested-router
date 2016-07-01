@@ -6,6 +6,7 @@ import Dict exposing (Dict)
 import Router.Helpers  exposing (noFx, doNothing)
 import Router.Types    exposing (..)
 import Router.Matcher as Matcher exposing (Matcher)
+import Router.Functions exposing (createHandlers)
 import Test.Mock.Router exposing (..)
 
 type Route = Home | Page | Subpage | NotFound
@@ -119,3 +120,6 @@ router = routerMock routerConfig
 
 matcher : Matcher Route State
 matcher = Matcher.matcher routerConfig
+
+getHandlers : Route -> Handler (WithRouter Route { str : String, sum : Int })
+getHandlers = createHandlers router matcher

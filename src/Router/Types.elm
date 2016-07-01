@@ -6,7 +6,7 @@ module Router.Types exposing (..)
 @docs URL, RawURL, RawSegment, Param, Constraint, Route, RouteConfig, RouteParams
 
 # Actions and handlers
-@docs WithRouter, Handler, Action, ActionEffects, Response, Transition
+@docs WithRouter, Handler, Action, Commands, Response, Transition
 
 # Router
 @docs Router, RouterConfig, RouterState
@@ -53,13 +53,13 @@ type alias Route route = (route, RouteParams)
 -----------------------------------------
 
 {-| An action result - a modified state combined with side effects -}
-type Response state = Response (state, ActionEffects state)
+type Response state = Response (state, Commands state)
 
 {-| `Action` represents function that prforms something with application state, and might contain side efects -}
 type alias Action state = state -> Response state
 
 {-| Helper to get rid of brackets -}
-type alias ActionEffects state = Cmd (Action state)
+type alias Commands state = Cmd (Action state)
 
 {-|
   A `Handler` is a piece of functionality binded to specific route
@@ -133,16 +133,13 @@ type alias Transition route state = Maybe (Route route) -> Maybe (Route route) -
 {-|
   `RouterConfig` is configuration for the router:
 
-  * `init` &mdash; Initial application state
   * `html5` &mdash; Use html5 pushState.
   * `removeTrailingSlash` &mdash; Trailing slashes will be removed from matched and builded urls
-  * `fallback` &mdash; A fallback route is used when url matching fails
   * `layout` &mdash; Main rendered function that combines named views gathered from Handlers in a single HTML
-  * `onTransition` &mdash; An action that should be executed on every router transition
+  * `transition` &mdash; An action that should be executed on every router transition
   * `routeConfig` &mdash; A mapping between route and route configuration
   * `routes` &mdash; A list of routes available for routing
-  * `inits` &mdash; A list of signals that should run for inititialisation of state
-  * `inputs` &mdash; A list of signals utilized in application in runtime
+  * `subscriptions` &mdash; A list of subscriptions (see: [elm-lang/html](http://package.elm-lang.org/packages/elm-lang/html/1.1.0/Html-App) for details)
 -}
 type RouterConfig route state = RouterConfig {
     html5: Bool
@@ -164,7 +161,7 @@ type RouterConfig route state = RouterConfig {
   * `redirect` &mdash; Redirects to provided `Route`
   * `match` &mdash; Performs attempt to match provided URL.
 
-  Router also provide it's `config` and `address`
+  Router also provide it's `config`
 -}
 type alias Router route state = {
     config : RouterConfig route state

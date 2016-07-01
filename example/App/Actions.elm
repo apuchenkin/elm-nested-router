@@ -6,7 +6,7 @@ import Task exposing (Task)
 
 import Json.Decode  as Json exposing ((:=))
 import Router.Types exposing (WithRouter, Action, Response (..), Router)
-import Router.Helpers exposing (noFx, chainAction, doNothing)
+import Router.Helpers exposing (noFx, chainAction, doNothing, performTask)
 
 import App.Routes as Routes exposing (Route)
 
@@ -53,9 +53,6 @@ decodePost = Json.object3 Post
 decodePosts : Json.Decoder (List Post)
 decodePosts = Json.list decodePost
 
-execute : Task Never (Action State) -> Cmd (Action State)
-execute task = Task.perform (always doNothing) (identity) task
-
 loadCategories : Router Route State -> Action State
 loadCategories router state =
   let
@@ -69,7 +66,7 @@ loadCategories router state =
           update `chainAction` (loadPosts router)
       in Task.succeed <| action
 
-  in Response (state, execute task)
+  in Response (state, performTask task)
 
 loadPosts : Router Route State -> Action State
 loadPosts router state =
@@ -79,7 +76,7 @@ loadPosts router state =
       let fetch = Task.toMaybe <| Http.get decodePosts ("data/category/" ++ c ++ ".json")
       in fetch `Task.andThen` \posts -> Task.succeed <| updatePosts <| Maybe.withDefault [] posts
 
-  in Response (state, Maybe.withDefault Cmd.none <| Maybe.map execute fetchTask)
+  in Response (state, Maybe.withDefault Cmd.none <| Maybe.map performTask fetchTask)
 
 loadPost : Action State
 loadPost state =
@@ -89,7 +86,7 @@ loadPost state =
       let fetch = Task.toMaybe <| Http.get decodePost ("data/post/" ++ pid ++ ".json")
       in fetch `Task.andThen` \post -> Task.succeed <| updatePost post
 
-  in Response (state, Maybe.withDefault Cmd.none <| Maybe.map execute task)
+  in Response (state, Maybe.withDefault Cmd.none <| Maybe.map performTask task)
 
 updatePosts : List Post -> Action State
 updatePosts posts state = Response <| noFx {state | posts = posts}

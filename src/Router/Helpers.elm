@@ -1,42 +1,48 @@
 module Router.Helpers exposing (
   noFx,
   doNothing,
+  performTask,
   chainAction,
   combineActions
   )
 
 {-| A set of utility functions
-@docs noFx, doNothing, chainAction, combineActions
+@docs noFx, doNothing, performTask, chainAction, combineActions
 -}
 
-import Router.Types exposing (ActionEffects, Response (Response), Action)
+import Task exposing (Task)
+import Router.Types exposing (Commands, Response (Response), Action)
 
-{-| An action without effects -}
-noFx : state -> (state, ActionEffects state)
+{-| An action without side effects -}
+noFx : state -> (state, Commands state)
 noFx state = (state, Cmd.none)
 
 {-| An empty action -}
 doNothing : Action state
 doNothing state = Response <| noFx state
 
+{-| Creates a commnd to perform the task -}
+performTask : Task Never (Action state) -> Cmd (Action state)
+performTask task = Task.perform (always doNothing) identity task
+
 {-| Combines two action together -}
 chainAction : Action state -> Action state -> Action state
 chainAction action1 action2 state =
   let
-    (Response (state', effects)) = action1 state
-    (Response (state'', effects')) = action2 state'
-  in Response (state'', Cmd.batch [effects, effects'])
+    (Response (state', cmd)) = action1 state
+    (Response (state'', cmd')) = action2 state'
+  in Response (state'', Cmd.batch [cmd, cmd'])
 
 {-| @Private
-  Runs the action for the specified state and initial effects
+  Runs the action for the specified state and initial commannds
  -}
-runAction : Action state -> Response state -> Response state -- (state, ActionEffects state)
+runAction : Action state -> Response state -> Response state
 runAction action response =
     let
-      (Response (state, effects)) = response
-      (Response (state', effects')) = action state
+      (Response (state, cmd)) = response
+      (Response (state', cmd')) = action state
     in
-      Response (state', Cmd.batch [effects, effects'])
+      Response (state', Cmd.batch [cmd, cmd'])
 
 {-| @Private
   Folds actions for a handlers into a single action
