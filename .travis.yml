@@ -5,6 +5,9 @@ install:
   - npm install -g elm
   - npm install -g elm-test
   - elm-package install -y
-  - pushd test && elm-package install -y && popd
+  - pushd test && elm-package install -y
+  - elm-make TestRunner.elm --output test.js
+  - popd
 script:
-  - cd test && elm-test TestRunner.elm
+  # - cd test && elm-test TestRunner.elm
+  - node test/test.js
