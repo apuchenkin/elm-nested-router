@@ -1,17 +1,41 @@
-module Router.Matcher where
+module Router.Matcher exposing (..)
 
 import Regex
 import String
 import List.Extra
-import Dict               exposing (Dict)
 
+import Dict           exposing (Dict)
+import Memo           exposing (memo)
 import Combine        exposing (Parser, many1, parse, many, while, between, end, rec, manyTill)
 import Combine.Char   exposing (char, noneOf, anyChar)
 import Combine.Infix  exposing ((<$>), (*>), (<*), (<*>), (<|>))
 import Combine.Num
 
 import Router.Types    exposing (..)
-import Router.Helpers  exposing (singleton, combineParams, memoFallback)
+
+{-| @Private
+  Wraps something in a list -}
+singleton : a -> List a
+singleton action = [ action ]
+
+{-| @Private
+  Combine route wit a provided params -}
+combineParams : RouteParams -> Route route -> Route route
+combineParams dict (route, params) = (route, Dict.union params dict)
+
+{-| @Private
+  Performs function memoization with a fallback -}
+memoFallback : (comparable -> b) -> List comparable -> comparable -> b
+memoFallback fun args =
+  let
+    memoized = memo fun args
+  in
+    \arg -> case memoized arg of
+      Just val -> val
+      Nothing -> fun arg
+
+hash : Char
+hash = '#'
 
 paramChar : Char
 paramChar = ':'

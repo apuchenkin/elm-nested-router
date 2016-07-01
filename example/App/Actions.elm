@@ -1,13 +1,12 @@
-module App.Actions where
+module App.Actions exposing (..)
 
 import Http
 import Dict exposing (Dict)
 import Task exposing (Task)
-import Effects exposing (Never)
 
 import Json.Decode  as Json exposing ((:=))
 import Router.Types exposing (WithRouter, Action, Response (..), Router)
-import Router.Helpers exposing (noFx, chainAction)
+import Router.Helpers exposing (noFx, chainAction, doNothing, performTask)
 
 import App.Routes as Routes exposing (Route)
 
@@ -67,17 +66,17 @@ loadCategories router state =
           update `chainAction` (loadPosts router)
       in Task.succeed <| action
 
-  in Response (state, Effects.task task)
+  in Response (state, performTask task)
 
 loadPosts : Router Route State -> Action State
 loadPosts router state =
   let
     category = getCategory state
-    fetch = flip Maybe.map category <| \c ->
+    fetchTask = flip Maybe.map category <| \c ->
       let fetch = Task.toMaybe <| Http.get decodePosts ("data/category/" ++ c ++ ".json")
       in fetch `Task.andThen` \posts -> Task.succeed <| updatePosts <| Maybe.withDefault [] posts
 
-  in Response (state, Maybe.withDefault Effects.none <| Maybe.map Effects.task fetch)
+  in Response (state, Maybe.withDefault Cmd.none <| Maybe.map performTask fetchTask)
 
 loadPost : Action State
 loadPost state =
@@ -87,7 +86,7 @@ loadPost state =
       let fetch = Task.toMaybe <| Http.get decodePost ("data/post/" ++ pid ++ ".json")
       in fetch `Task.andThen` \post -> Task.succeed <| updatePost post
 
-  in Response (state, Maybe.withDefault Effects.none <| Maybe.map Effects.task task)
+  in Response (state, Maybe.withDefault Cmd.none <| Maybe.map performTask task)
 
 updatePosts : List Post -> Action State
 updatePosts posts state = Response <| noFx {state | posts = posts}

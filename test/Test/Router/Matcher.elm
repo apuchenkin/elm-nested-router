@@ -1,4 +1,4 @@
-module Test.Router.Matcher where
+module Test.Router.Matcher exposing (..)
 
 import Dict exposing (Dict)
 import ElmTest exposing (..)
