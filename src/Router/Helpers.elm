@@ -31,21 +31,10 @@ chainAction action1 action2 state =
   let
     (Response (state', cmd)) = action1 state
     (Response (state'', cmd')) = action2 state'
-  in Response (state'', Cmd.batch [cmd, cmd'])
-
-{-| @Private
-  Runs the action for the specified state and initial commannds
- -}
-runAction : Action state -> Response state -> Response state
-runAction action response =
-    let
-      (Response (state, cmd)) = response
-      (Response (state', cmd')) = action state
-    in
-      Response (state', Cmd.batch [cmd, cmd'])
+  in Response (state'', Cmd.batch [cmd', cmd])
 
 {-| @Private
   Folds actions for a handlers into a single action
 -}
 combineActions : List (Action state) -> Action state
-combineActions actions state = List.foldl runAction (Response <| noFx state) actions
+combineActions actions = List.foldr chainAction doNothing actions

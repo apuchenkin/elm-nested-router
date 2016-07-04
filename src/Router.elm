@@ -49,9 +49,9 @@ dispatch init config =
 
     getHandlers = createHandlers router matcher
     render' = render router <| List.map getHandlers << matcher.traverse
-    urlUpdate route = runAction (transition router matcher getHandlers route)
+    urlUpdate route = runAction <| transition router matcher getHandlers route
 
-    parser = Navigation.makeParser (matcher.match << getPath config)
+    parser = Navigation.makeParser <| matcher.match << getPath config
     init' flags route =
       let
         (state, cmd) = init flags
