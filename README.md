@@ -137,7 +137,7 @@ main = Router.dispatch
 
 see [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/example) ([Live demo](http://apuchenkin.github.io/elm-nested-router/example)) and [Tests](https://github.com/apuchenkin/elm-nested-router/tree/master/test/Test) for more details.
 
-[Advanced example](https://github.com/apuchenkin/aws.photo.service/tree/master/client)
+[Advanced example](https://github.com/apuchenkin/aws.photo.service/tree/elm/client)
 
 ### Currently supports
 - [x] HTML5 push state
