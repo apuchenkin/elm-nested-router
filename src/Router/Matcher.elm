@@ -5,9 +5,10 @@ import String
 import List.Extra
 import Dict exposing (Dict)
 import Memo exposing (memo)
-import Combine exposing (Parser, many1, parse, many, while, between, end, rec, manyTill)
+import Combine exposing (Parser, many1, parse, many, while, between, end, manyTill,
+    (<$>), (*>), (<*), (<*>), (<|>)
+    )
 import Combine.Char exposing (char, noneOf, anyChar)
-import Combine.Infix exposing ((<$>), (*>), (<*), (<*>), (<|>))
 import Combine.Num
 import Router.Types exposing (..)
 
