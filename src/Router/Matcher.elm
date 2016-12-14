@@ -75,17 +75,17 @@ rd =
     ']'
 
 
-stringParser : Parser String
+stringParser : Parser s String
 stringParser =
     String.fromList <$> many1 (noneOf [ '/', paramChar, '#', '?', ld, rd ])
 
 
-paramParser : Parser String
+paramParser : Parser s String
 paramParser =
     char paramChar *> stringParser
 
 
-paramsParser : Parser (List String)
+paramsParser : Parser s (List String)
 paramsParser =
     many <| while ((/=) paramChar) *> paramParser <* while ((/=) paramChar)
 
