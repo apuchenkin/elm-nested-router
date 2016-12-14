@@ -129,7 +129,7 @@ unwrap raw =
                 _ ->
                     Debug.crash "result = case matches of _"
     in
-        List.reverse <| List.sortBy String.length <| List.Extra.dropDuplicates <| result
+        List.reverse <| List.sortBy String.length <| List.Extra.unique <| result
 
 
 
