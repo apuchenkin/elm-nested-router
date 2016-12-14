@@ -33,7 +33,7 @@ doNothing state =
 -}
 performTask : Task Never (Action state) -> Cmd (Action state)
 performTask task =
-    Task.perform (always doNothing) identity task
+    Task.perform (always doNothing) (identity task)
 
 
 {-| Combines two action together
