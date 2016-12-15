@@ -92,11 +92,11 @@ paramsParser =
 
 getParams : String -> List Param
 getParams string =
-    case Tuple.first <| parse paramsParser string of
+    case parse paramsParser string of
         Err _ ->
             Debug.crash "getParams : String -> List String"
 
-        Ok param ->
+        Ok (_, _, param) ->
             param
 
 
