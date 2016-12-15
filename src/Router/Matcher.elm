@@ -5,9 +5,22 @@ import String
 import List.Extra
 import Dict exposing (Dict)
 import Memo exposing (memo)
-import Combine exposing (Parser, many1, parse, many, while, between, end, manyTill,
-    (<$>), (*>), (<*), (<*>), (<|>)
-    )
+import Combine
+    exposing
+        ( Parser
+        , many1
+        , parse
+        , many
+        , while
+        , between
+        , end
+        , manyTill
+        , (<$>)
+        , (*>)
+        , (<*)
+        , (<*>)
+        , (<|>)
+        )
 import Combine.Char exposing (char, noneOf, anyChar)
 import Combine.Num
 import Router.Types exposing (..)
@@ -96,7 +109,7 @@ getParams string =
         Err _ ->
             Debug.crash "getParams : String -> List String"
 
-        Ok (_, _, param) ->
+        Ok ( _, _, param ) ->
             param
 
 

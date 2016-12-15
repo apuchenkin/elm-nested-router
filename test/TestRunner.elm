@@ -1,8 +1,9 @@
 module Main exposing (..)
 
-import ElmTest  exposing (runSuite)
-
+import ElmTest exposing (runSuite)
 import Test.Router
 
+
 main : Program Never
-main = runSuite Test.Router.testSuite
+main =
+    runSuite Test.Router.testSuite
