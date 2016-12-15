@@ -1,7 +1,7 @@
 module Test.Router.Matcher exposing (..)
 
 import Dict exposing (Dict)
-import ElmTest exposing (..)
+import Legacy.ElmTest exposing (..)
 import Router.Matcher exposing (..)
 import Test.Mock.Data exposing (..)
 

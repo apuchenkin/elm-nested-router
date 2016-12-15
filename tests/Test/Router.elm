@@ -3,7 +3,7 @@ module Test.Router exposing (..)
 import Test.Router.Matcher
 import Test.Router.Functions
 import Test.Router.Helpers
-import ElmTest exposing (Test, suite)
+import Legacy.ElmTest exposing (Test, suite)
 
 
 testSuite : Test

@@ -2,7 +2,7 @@ module Test.Router.Functions exposing (..)
 
 import Dict
 import Html
-import ElmTest exposing (..)
+import Legacy.ElmTest exposing (..)
 import Router.Types exposing (..)
 import Router.Functions exposing (..)
 import Router.Matcher as Matcher

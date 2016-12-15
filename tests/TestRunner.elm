@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import ElmTest exposing (runSuite)
+import Legacy.ElmTest exposing (runSuite)
 import Test.Router
 
 

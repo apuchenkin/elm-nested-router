@@ -1,6 +1,6 @@
 module Test.Router.Helpers exposing (..)
 
-import ElmTest exposing (..)
+import Legacy.ElmTest exposing (..)
 import Router.Types exposing (..)
 import Router.Helpers exposing (..)
 import Test.Mock.Data exposing (..)
