@@ -1,12 +1,14 @@
-module Test.Router.Matcher exposing (..)
+module Tests.Router.Matcher exposing (..)
+
+import Expect
 
 import Dict exposing (Dict)
-import ElmTest exposing (..)
+import Test exposing (..)
 import Router.Matcher exposing (..)
-import Test.Mock.Data exposing (..)
+import Tests.Mock.Data exposing (..)
 
 testSuite : Test
-testSuite = suite "Mather" [
+testSuite = describe "Mather" [
     testUnwrap
   , testParseUrlParams
   , testMatch
@@ -20,194 +22,196 @@ testSuite = suite "Mather" [
 
 {-| Private -}
 testUnwrap : Test
-testUnwrap = suite "unwrap"
+testUnwrap = describe "unwrap"
   [
     test "non-wrapped0"
-      <| assertEqual ["/url"]
+      <| \_ -> Expect.equal ["/url"]
       <| unwrap "/url"
   , test "non-wrapped1"
-      <| flip assertEqual ["static/static2"]
+      <| \_ -> flip Expect.equal ["static/static2"]
       <| unwrap "static/static2"
   , test "non-wrapped2"
-      <| flip assertEqual ["static/:static2"]
+      <| \_ -> flip Expect.equal ["static/:static2"]
       <| unwrap "static/:static2"
   , test "non-wrapped3"
-      <| flip assertEqual [":static/static2"]
+      <| \_ -> flip Expect.equal [":static/static2"]
       <| unwrap ":static/static2"
 
   , test "wrapped1"
-      <| assertEqual ["test", ""]
+      <| \_ -> Expect.equal ["test", ""]
       <| unwrap "[test]"
   , test "wrapped2"
-      <| assertEqual ["/:test", ""]
+      <| \_ -> Expect.equal ["/:test", ""]
       <| unwrap "[/:test]"
   , test "wrapped3"
-      <| assertEqual ["/path/test", "/path"]
+      <| \_ -> Expect.equal ["/path/test", "/path"]
       <| unwrap "/path[/test]"
   , test "wrapped4"
-      <| assertEqual ["/:substring/:string", "/:string"]
+      <| \_ -> Expect.equal ["/:substring/:string", "/:string"]
       <| unwrap "[/:substring]/:string"
 
   , test "two-wrapped"
-      <| assertEqual ["/:string/:substring", "/:string", ""]
+      <| \_ -> Expect.equal ["/:string/:substring", "/:string", ""]
       <| unwrap "[/:string[/:substring]]"
   , test "two-wrapped"
-      <| assertEqual ["/path/:string/:substring", "/path/:string", "/path"]
+      <| \_ -> Expect.equal ["/path/:string/:substring", "/path/:string", "/path"]
       <| unwrap "/path[/:string[/:substring]]"
   , test "two-wrapped"
-      <| assertEqual ["/path/:string/:substring/sub", "/path/:string/sub", "/path/sub"]
+      <| \_ -> Expect.equal ["/path/:string/:substring/sub", "/path/:string/sub", "/path/sub"]
       <| unwrap "/path[/:string[/:substring]]/sub"
   , test "two-wrapped"
-      <| assertEqual ["/path/:string/:substring", "/path/:substring", "/path/:string", "/path"]
+      <| \_ -> Expect.equal ["/path/:string/:substring", "/path/:substring", "/path/:string", "/path"]
       <| unwrap "/path[/:string][/:substring]"
   ]
 
 {-| Private -}
 testParseUrlParams : Test
-testParseUrlParams = suite "parseUrlParams"
+testParseUrlParams = describe "parseUrlParams"
   [
     test "plain"
-      <| assertEqual (Ok Dict.empty, "")
+      <| \_ -> Expect.equal (Ok (Dict.empty, ""))
       <| parseUrlParams "/url" Dict.empty "/url"
   , test "empty"
-      <| assertEqual (Ok Dict.empty, "")
+      <| \_ -> Expect.equal (Ok (Dict.empty, ""))
       <| parseUrlParams "" Dict.empty ""
   , test "empty2"
-      <| assertEqual (Ok Dict.empty, "/url")
+      <| \_ -> Expect.equal (Ok (Dict.empty, "/url"))
       <| parseUrlParams "" Dict.empty "/url"
   , test "param"
-      <| assertEqual (Ok (Dict.fromList [("param","value")]), "")
+      <| \_ -> Expect.equal (Ok ((Dict.fromList [("param","value")]), ""))
       <| parseUrlParams "/:param" Dict.empty "/value"
   , test "combined1"
-      <| assertEqual (Ok (Dict.fromList [("param","value")]), "")
+      <| \_ -> Expect.equal (Ok ((Dict.fromList [("param","value")]), ""))
       <| parseUrlParams "/path/:param" Dict.empty "/path/value"
   , test "combined2"
-      <| assertEqual (Ok (Dict.fromList [("path","value")]), "")
+      <| \_ -> Expect.equal (Ok ((Dict.fromList [("path","value")]), ""))
       <| parseUrlParams "/:path/param" Dict.empty "/value/param"
   , test "combined3"
-      <| assertEqual (Ok (Dict.fromList [("path","value1"), ("param","value2")]), "")
+      <| \_ -> Expect.equal (Ok ((Dict.fromList [("path","value1"), ("param","value2")]), ""))
       <| parseUrlParams "/:path/:param" Dict.empty "/value1/value2"
   , test "fail"
-      <| assertEqual (Err (["expected \"/url\""]),"/path")
-      <| parseUrlParams "/url" Dict.empty "/path"
+      <| \_ -> Expect.true "expected to fail"
+      <| case parseUrlParams "/url" Dict.empty "/path" of
+        Ok _ -> False
+        Err _ -> True
   ]
 
 testMatch : Test
-testMatch = suite "match"
+testMatch = describe "match"
   [
     test "match Home"
-      <| assertEqual (Just (Home, Dict.empty))
+      <| \_ -> Expect.equal (Just (Home, Dict.empty))
       <| match config routes "/"
   , test "match Page"
-      <| assertEqual (Just (Page, (Dict.fromList [("category","B")])))
+      <| \_ -> Expect.equal (Just (Page, (Dict.fromList [("category","B")])))
       <| match config routes "/B"
   , test "no match Page by constraint"
-      <| assertEqual Nothing
+      <| \_ -> Expect.equal Nothing
       <| match config routes "/D"
   , test "match NotFound"
-      <| assertEqual (Just (NotFound, Dict.empty))
+      <| \_ -> Expect.equal (Just (NotFound, Dict.empty))
       <| match config routes "/404"
   , test "match Page with optional params"
-      <| assertEqual (Just (Page, (Dict.fromList [("category","A"),("subcategory","param2")])))
+      <| \_ -> Expect.equal (Just (Page, (Dict.fromList [("category","A"),("subcategory","param2")])))
       <| match config routes "/A/param2"
   , test "match Subpage without optional params"
-      <| assertEqual (Just (Subpage, Dict.fromList [("category","C"),("item","3")]))
+      <| \_ -> Expect.equal (Just (Subpage, Dict.fromList [("category","C"),("item","3")]))
       <| match config routes "/C/item/3"
   , test "no-match Page without optional params"
-      <| assertEqual Nothing
+      <| \_ -> Expect.equal Nothing
       <| match config routes "/C/item/item3"
   , test "match Subpage"
-      <| assertEqual (Just (Subpage, Dict.fromList [("category","A"),("subcategory","param2"),("item","4")]))
+      <| \_ -> Expect.equal (Just (Subpage, Dict.fromList [("category","A"),("subcategory","param2"),("item","4")]))
       <| match config routes "/A/param2/item/4"
   , test "no-match by pattern"
-      <| assertEqual (Nothing)
+      <| \_ -> Expect.equal (Nothing)
       <| match config routes "/B/param2/param3"
   , test "no-match by pattern"
-      <| assertEqual (Nothing)
+      <| \_ -> Expect.equal (Nothing)
       <| match config routes "/C/param2/item/4/4"
   ]
 
 testBuildUrl : Test
-testBuildUrl = suite "buildUrl"
+testBuildUrl = describe "buildUrl"
   [
     test "home"
-      <| assertEqual "/"
+      <| \_ -> Expect.equal "/"
       <| buildUrl (.segment << config) (.parent << config) (Home, Dict.empty)
   , test "category"
-      <| assertEqual "/param"
+      <| \_ -> Expect.equal "/param"
       <| buildUrl (.segment << config) (.parent << config) (Page, (Dict.fromList [("category","param")]))
   , test "subcategory"
-      <| assertEqual "/param/param2"
+      <| \_ -> Expect.equal "/param/param2"
       <| buildUrl (.segment << config) (.parent << config) (Page, (Dict.fromList [("category","param"),("subcategory","param2")]))
   , test "subcategory"
-      <| assertEqual "/param/param2"
+      <| \_ -> Expect.equal "/param/param2"
       <| buildUrl (.segment << config) (.parent << config) (Page, (Dict.fromList [("subcategory","param2"),("category","param")]))
   , test "item"
-      <| assertEqual "/param/item/123"
+      <| \_ -> Expect.equal "/param/item/123"
       <| buildUrl (.segment << config) (.parent << config) (Subpage, (Dict.fromList [("category","param"),("item","123")]))
   ]
 
 testReversible : Test
-testReversible = suite "reversible"
+testReversible = describe "reversible"
   [
     test "match"
-      <| assertEqual (Just "/")
+      <| \_ -> Expect.equal (Just "/")
       <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/")
   , test "fail by constraint"
-      <| assertEqual Nothing
+      <| \_ -> Expect.equal Nothing
       <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/param")
   , test "equal with constraint"
-      <| assertEqual (Just "/A")
+      <| \_ -> Expect.equal (Just "/A")
       <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/A")
   , test "match 404"
-      <| assertEqual (Just "/404")
+      <| \_ -> Expect.equal (Just "/404")
       <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/404")
   , test "match with optional param"
-      <| assertEqual (Just "/A/subcategory")
+      <| \_ -> Expect.equal (Just "/A/subcategory")
       <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/A/subcategory")
   , test "match Subpage without optional param"
-      <| assertEqual (Just "/B/item/3")
+      <| \_ -> Expect.equal (Just "/B/item/3")
       <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/B/item/3")
   , test "match Subpage with optional param"
-      <| assertEqual (Just "/C/subcategory/item/4")
+      <| \_ -> Expect.equal (Just "/C/subcategory/item/4")
       <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/C/subcategory/item/4")
   ]
 
 testGetPath : Test
-testGetPath = suite "getPath" [
+testGetPath = describe "getPath" [
     test "mapParams"
-      <| assertEqual [Home, Page, Subpage]
+      <| \_ -> Expect.equal [Home, Page, Subpage]
       <| getPath (.parent << config) Subpage
   , test "mapParams"
-      <| assertEqual [Home, Page]
+      <| \_ -> Expect.equal [Home, Page]
       <| getPath (.parent << config) Page
   , test "mapParams"
-      <| assertEqual [Home]
+      <| \_ -> Expect.equal [Home]
       <| getPath (.parent << config) Home
   ]
 
 testMapParams : Test
 testMapParams =
   let params = Dict.fromList [("category","param"),("subcategory","param2"),("item","4")]
-  in suite "mapParams" [
+  in describe "mapParams" [
     test "mapParams"
-      <| assertEqual [(Home, Dict.empty), (Page, Dict.fromList [("category","param"),("subcategory","param2")]), (Subpage, Dict.fromList [("item","4")])]
-      <| mapParams Test.Mock.Data.matcher [Home, Page, Subpage] params
+      <| \_ -> Expect.equal [(Home, Dict.empty), (Page, Dict.fromList [("category","param"),("subcategory","param2")]), (Subpage, Dict.fromList [("item","4")])]
+      <| mapParams Tests.Mock.Data.matcher [Home, Page, Subpage] params
   ]
 
 testRemoveTrailingSlash : Test
-testRemoveTrailingSlash = suite "removeTrailingSlash" [
+testRemoveTrailingSlash = describe "removeTrailingSlash" [
     test "slash is removed"
-      <| assertEqual "/url/with/trailing/slash"
+      <| \_ -> Expect.equal "/url/with/trailing/slash"
       <| removeTrailingSlash "/url/with/trailing/slash/"
   , test "no slash"
-      <| assertEqual "/url/without/trailing/slash"
+      <| \_ -> Expect.equal "/url/without/trailing/slash"
       <| removeTrailingSlash "/url/without/trailing/slash"
   , test "empty"
-      <| assertEqual ""
+      <| \_ -> Expect.equal ""
       <| removeTrailingSlash ""
   , test "just slash"
-      <| assertEqual ""
+      <| \_ -> Expect.equal ""
       <| removeTrailingSlash "/"
   ]
 
@@ -215,25 +219,25 @@ testRemoveTrailingSlash = suite "removeTrailingSlash" [
 testRouteDiff : Test
 testRouteDiff =
   let
-    routeDiff' = routeDiff Test.Mock.Data.matcher
-  in suite "routeDiff"
+    routeDiff_ = routeDiff Tests.Mock.Data.matcher
+  in describe "routeDiff"
   [
     test "length"
-      <| assertEqual 1
-      <| List.length <| routeDiff' Nothing (Home, Dict.empty)
+      <| \_ -> Expect.equal 1
+      <| List.length <| routeDiff_ Nothing (Home, Dict.empty)
   , test "length"
-      <| assertEqual 3
-      <| List.length <| routeDiff' Nothing (Subpage, Dict.empty)
+      <| \_ -> Expect.equal 3
+      <| List.length <| routeDiff_ Nothing (Subpage, Dict.empty)
   , test "no transition - no handlers"
-      <| assertEqual 0
-      <| List.length <| routeDiff' (Just (Home, Dict.empty)) (Home, Dict.empty)
+      <| \_ -> Expect.equal 0
+      <| List.length <| routeDiff_ (Just (Home, Dict.empty)) (Home, Dict.empty)
   , test "unmatched params has no effects"
-      <| assertEqual 0
-      <| List.length <| routeDiff' (Just (Home, Dict.empty)) (Home, Dict.fromList [("param1", "value1")])
+      <| \_ -> Expect.equal 0
+      <| List.length <| routeDiff_ (Just (Home, Dict.empty)) (Home, Dict.fromList [("param1", "value1")])
   , test "matched params does matter"
-      <| assertEqual 1
-      <| List.length <| routeDiff' (Just (Page, Dict.fromList [("category", "bar")])) (Page, Dict.fromList [("category", "foo")])
+      <| \_ -> Expect.equal 1
+      <| List.length <| routeDiff_ (Just (Page, Dict.fromList [("category", "bar")])) (Page, Dict.fromList [("category", "foo")])
   , test "matched params does matter"
-      <| assertEqual 2
-      <| List.length <| routeDiff' (Just (Subpage, Dict.fromList [("category", "bar")])) (Subpage, Dict.fromList [("category", "foo")])
+      <| \_ -> Expect.equal 2
+      <| List.length <| routeDiff_ (Just (Subpage, Dict.fromList [("category", "bar")])) (Subpage, Dict.fromList [("category", "foo")])
   ]

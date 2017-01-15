@@ -1,4 +1,4 @@
-module Test.Mock.Data exposing (..)
+module Tests.Mock.Data exposing (..)
 
 import Html exposing (Html)
 import Dict exposing (Dict)
@@ -7,7 +7,7 @@ import Router.Helpers  exposing (noFx, doNothing)
 import Router.Types    exposing (..)
 import Router.Matcher as Matcher exposing (Matcher)
 import Router.Functions exposing (createHandlers)
-import Test.Mock.Router exposing (..)
+import Tests.Mock.Router exposing (..)
 
 type Route = Home | Page | Subpage | NotFound
 

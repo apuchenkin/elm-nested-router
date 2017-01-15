@@ -1,4 +1,4 @@
-module Test.Mock.Router exposing (..)
+module Tests.Mock.Router exposing (..)
 
 import Dict
 import Html             exposing (Html)

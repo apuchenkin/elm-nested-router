@@ -56,9 +56,9 @@ initialState = {
   }
 
 
-main : Program Never
+main : Program Never State (Router.Types.Action State)
 main = Router.dispatch
-  (always <| noFx initialState)
+  (noFx initialState)
   (RouterConfig {
     html5 = False
   , removeTrailingSlash = True
@@ -66,7 +66,7 @@ main = Router.dispatch
       Nothing -> r.redirect (Home, Dict.empty)
       Just rr -> let
         _ = (Debug.log "onTransition" rr)
-        in doNothing
+      in doNothing
   , layout = layout
   , routes = routes
   , routeConfig = config
