@@ -23,15 +23,15 @@ doNothing state = Response <| noFx state
 
 {-| Creates a commnd to perform the task -}
 performTask : Task Never (Action state) -> Cmd (Action state)
-performTask task = Task.perform (always doNothing) identity task
+performTask = Task.perform identity
 
 {-| Combines two action together -}
 chainAction : Action state -> Action state -> Action state
 chainAction action1 action2 state =
   let
-    (Response (state', cmd)) = action1 state
-    (Response (state'', cmd')) = action2 state'
-  in Response (state'', Cmd.batch [cmd', cmd])
+    (Response (state_new, cmd)) = action1 state
+    (Response (state_fin, cmd_new)) = action2 state_new
+  in Response (state_fin, Cmd.batch [cmd_new, cmd])
 
 {-| @Private
   Folds actions for a handlers into a single action

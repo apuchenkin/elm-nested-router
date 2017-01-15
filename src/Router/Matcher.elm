@@ -6,9 +6,8 @@ import List.Extra
 
 import Dict           exposing (Dict)
 import Memo           exposing (memo)
-import Combine        exposing (Parser, many1, parse, many, while, between, end, rec, manyTill)
+import Combine        exposing (Parser, many1, parse, many, while, between, end, manyTill, (<$>), (*>), (<*), (<*>), (<|>))
 import Combine.Char   exposing (char, noneOf, anyChar)
-import Combine.Infix  exposing ((<$>), (*>), (<*), (<*>), (<|>))
 import Combine.Num
 
 import Router.Types    exposing (..)
@@ -48,19 +47,19 @@ ld = '['
 rd : Char
 rd = ']'
 
-stringParser : Parser String
+stringParser : Parser s String
 stringParser = String.fromList <$> many1 (noneOf [ '/', paramChar, '#', '?', ld, rd ])
 
-paramParser : Parser String
+paramParser : Parser s String
 paramParser = char paramChar *> stringParser
 
-paramsParser : Parser (List String)
+paramsParser : Parser s (List String)
 paramsParser = many <| while ((/=) paramChar) *> paramParser <* while ((/=) paramChar)
 
 getParams : String -> List Param
-getParams string = case fst <| parse paramsParser string of
+getParams string = case parse paramsParser string of
   Err _     -> Debug.crash "getParams : String -> List String"
-  Ok param  -> param
+  Ok (_,_,param)  -> param
 
 {-| @Private
   Unwraps string that contains brackets to a list of strings without brackets
@@ -78,7 +77,7 @@ unwrap raw =
         _ -> [raw]
       _ -> Debug.crash "result = case matches of _"
 
-  in List.reverse <| List.sortBy String.length <| List.Extra.dropDuplicates <| result
+  in List.reverse <| List.sortBy String.length <| List.Extra.unique <| result
 
 -- TODO: check perfomance without regexp
 parseUrlParams : RawURL -> Dict String Constraint -> URL -> (Result (List String) RouteParams, String)
@@ -102,14 +101,17 @@ parseUrlParams raw constraints url =
       Just v  -> v
 
     parsers = List.map2 (\p1 p2 -> p1 *> p2) sringParsers paramParsers
-    parser = (List.foldr (\p pacc -> p `Combine.andThen` (\r -> (++) r <$> pacc))
+    parser = (List.foldr (\p pacc -> p |> Combine.andThen (\r -> (++) r <$> pacc))
        (singleton <$> last)
        (List.map (Combine.map singleton) parsers)
        ) -- <* Combine.end
 
-    (result, context) = Combine.parse parser url
+    (_,context, result) = case Combine.parse parser url of
+      Err _ -> Debug.crash "List.Extra.last sringParsers"
+      Ok v  -> v
+
     zipValues values = Dict.fromList <| List.map2 (,) params values
-  in (Result.map zipValues result, context.input)
+  in (Result.map zipValues <| Result.Ok result, context.input)
 
 matchInternal : (String -> List String) -> (route -> RouteConfig route state) -> List route -> List route -> URL -> Maybe (Route route)
 matchInternal unwrap getConfig routes pool url = List.foldl (\route match ->
@@ -119,24 +121,24 @@ matchInternal unwrap getConfig routes pool url = List.foldl (\route match ->
       let
         config = getConfig route
         raws = unwrap config.segment
-      in List.foldl (\raw match' ->
-        case match' of
-          Just _ -> match'
+      in List.foldl (\raw match ->
+        case match of
+          Just _ -> match
           Nothing -> let
-              (result, url') = parseUrlParams raw config.constraints url
+              (result, url_part) = parseUrlParams raw config.constraints url
             in
               case result of
               Err _       -> Nothing
               Ok  dict    ->
                 let matchChildren route =
                   let
-                    (childrens, pool') = filterParent (.parent << getConfig) (Just route) pool
-                    child = matchInternal unwrap getConfig childrens pool' url'
+                    (childrens, pool_new) = filterParent (.parent << getConfig) (Just route) pool
+                    child = matchInternal unwrap getConfig childrens pool_new url_part
                     childRoute = Maybe.map (combineParams dict) child
                   in childRoute
                 in case config.bypass of
                 True -> matchChildren route
-                False -> case String.isEmpty url' of
+                False -> case String.isEmpty url_part of
                   True  -> Just (route, dict)
                   False -> matchChildren route
       ) Nothing raws
@@ -146,14 +148,14 @@ filterParent : (route -> Maybe route) -> Maybe route -> List route -> (List rout
 filterParent getParent route routes =
   List.foldl (\r (a,b) -> if getParent r == route then (a ++ [r], b) else (a, b ++ [r])) ([],[]) routes
 
-match' : (String -> List String) -> (route -> RouteConfig route state) -> List route -> URL -> Maybe (Route route)
-match' unwrap getConfig routes url =
+match_cache : (String -> List String) -> (route -> RouteConfig route state) -> List route -> URL -> Maybe (Route route)
+match_cache unwrap getConfig routes url =
   let
     (roots, pool) = filterParent (.parent << getConfig) Nothing routes
   in matchInternal unwrap getConfig roots pool url
 
 match : (route -> RouteConfig route state) -> List route -> URL -> Maybe (Route route)
-match getConfig routes url = match' unwrap getConfig routes url
+match getConfig routes url = match_cache unwrap getConfig routes url
 
 -- TODO: check perfomance without regexp
 buildRawUrl : List RawURL -> Route route -> URL
@@ -161,14 +163,14 @@ buildRawUrl raws (route, params) =
   let
     urls = List.map (\raw -> Dict.foldl (\param value string -> Regex.replace
             (Regex.AtMost 1)
-            (Regex.regex <| paramChar `String.cons` param)
+            (Regex.regex <| (String.cons paramChar param))
             (always value)
             string
           ) raw params
       ) raws
-    urls' = List.filter (not << String.contains (String.fromChar paramChar)) urls
+    u = List.filter (not << String.contains (String.fromChar paramChar)) urls
 
-  in case List.head urls' of
+  in case List.head u of
     Nothing -> Debug.crash <| "not enough params to build URL: " ++ toString route
     Just url -> url
 
@@ -218,21 +220,20 @@ routeDiff matcher from to =
     getConfig = matcher.getConfig
     getParent = .parent << getConfig
 
-    fromRoute = Maybe.map fst from
-    fromParams = Maybe.withDefault Dict.empty <| Maybe.map snd from
-    toRoute = fst to
-    toParams = snd to
+    fromRoute = Maybe.map Tuple.first from
+    fromParams = Maybe.withDefault Dict.empty <| Maybe.map Tuple.second from
+    toRoute = Tuple.first to
+    toParams = Tuple.second to
 
     fromPath = Maybe.withDefault [] <| Maybe.map matcher.traverse fromRoute
     toPath = matcher.traverse toRoute
     path = List.map2 (,) fromPath toPath
 
-    fromPath' = mapParams matcher fromPath fromParams
-    toPath'   = mapParams matcher toPath toParams
-
     commons = List.length
       <| List.Extra.takeWhile (uncurry (==))
-      <| List.map2 (,) fromPath' toPath'
+      <| List.map2 (,)
+        (mapParams matcher fromPath fromParams)
+        (mapParams matcher toPath toParams)
 
   in List.drop commons toPath
 
@@ -255,7 +256,7 @@ matcher (RouterConfig config) =
     getParent = .parent << config.routeConfig
     segments = List.map getSegment routes
 
-    urls = List.map composeUrl' routes
+    urls = List.map composeUrl_cache routes
     sids = List.map toString routes
     dict = Dict.fromList <| List.map2 (,) sids routes
     stringToRoute sid = case Dict.get sid dict of
@@ -265,23 +266,23 @@ matcher (RouterConfig config) =
     composeUrl    = memoFallback (\sid -> composeRawUrl getSegment getParent (stringToRoute sid)) sids
     getConfig     = memoFallback (\sid -> config.routeConfig (stringToRoute sid)) sids
     traverse      = memoFallback (\sid -> getPath getParent (stringToRoute sid)) sids
-    unwrap'       = memoFallback unwrap (urls ++ segments)
+    unwrap_cache  = memoFallback unwrap (urls ++ segments)
     routeParams   = memoFallback (getParams << getSegment << stringToRoute) sids
 
-    composeUrl' = composeUrl << toString
-    getConfig' = getConfig << toString
-    traverse' = traverse << toString
-    routeParams' = routeParams << toString
-    buildUrl' route =
-      let raws = unwrap' <| composeUrl' (fst route)
+    composeUrl_cache = composeUrl << toString
+    getConfig_cache = getConfig << toString
+    traverse_cache = traverse << toString
+    routeParams_cache = routeParams << toString
+    buildUrl_cache route =
+      let raws = unwrap_cache <| composeUrl_cache (Tuple.first route)
       in buildRawUrl raws route
   in
     {
-      getConfig = getConfig'
-    , buildUrl = buildUrl'
-    , match = match' unwrap' getConfig' routes
-    , traverse = traverse'
-    , routeParams = routeParams'
+      getConfig = getConfig_cache
+    , buildUrl = buildUrl_cache
+    , match = match_cache unwrap_cache getConfig_cache routes
+    , traverse = traverse_cache
+    , routeParams = routeParams_cache
     , stringToRoute = stringToRoute
     , sids = sids
     }

@@ -41,17 +41,17 @@ transition router matcher getHandlers to state =
   let
     (RouterConfig config) = router.config
     rs = state.router
-    toRoute = Maybe.map fst to
-    toParams = Maybe.withDefault Dict.empty <| Maybe.map snd to
+    toRoute = Maybe.map Tuple.first to
+    toParams = Maybe.withDefault Dict.empty <| Maybe.map Tuple.second to
     from  = Maybe.map (\r -> (r, rs.params)) rs.route
-    state' = { state | router = { rs | route = toRoute, params = toParams }}
+    state_new = { state | router = { rs | route = toRoute, params = toParams }}
 
     diff = Maybe.withDefault [] <| Maybe.map (Matcher.routeDiff matcher from) to
     handlers = List.map getHandlers diff
     onTransition = config.transition router from to
     actions  = List.map (combineActions << .actions) handlers
   in
-    combineActions (onTransition :: actions) state'
+    combineActions (onTransition :: actions) state_new
 
 createHandlers :
     Router route (WithRouter route state) ->

@@ -32,7 +32,7 @@ getPath config location =
       (RouterConfig c) = config
       urlPath = if c.html5
         then location.pathname
-        else Maybe.withDefault "/" <| Maybe.map snd <| String.uncons location.hash
+        else Maybe.withDefault "/" <| Maybe.map Tuple.second <| String.uncons location.hash
     in
       if c.removeTrailingSlash then Matcher.removeTrailingSlash urlPath else urlPath
 
@@ -42,9 +42,8 @@ buildUrl routerConfig matcher route =
   let
     (RouterConfig config) = routerConfig
     url = matcher.buildUrl route
-    url' = if config.removeTrailingSlash then Matcher.removeTrailingSlash url else url
-    url'' = if config.html5 then url' else String.cons Matcher.hash url'
-  in url''
+    url_new = if config.removeTrailingSlash then Matcher.removeTrailingSlash url else url
+  in if config.html5 then url_new else String.cons Matcher.hash url_new
 
 {-| binds forward action to existing HTML attributes. Exposed by `Router` -}
 bindForward : RouterConfig route state -> Matcher route state -> Route route -> List (Html.Attribute (Action state)) -> List (Html.Attribute (Action state))
