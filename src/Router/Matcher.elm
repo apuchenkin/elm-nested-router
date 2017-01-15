@@ -80,7 +80,7 @@ unwrap raw =
   in List.reverse <| List.sortBy String.length <| List.Extra.unique <| result
 
 -- TODO: check perfomance without regexp
-parseUrlParams : RawURL -> Dict String Constraint -> URL -> (Result (List String) RouteParams, String)
+parseUrlParams : RawURL -> Dict String Constraint -> URL -> Result (Combine.ParseErr ()) (RouteParams, String)
 parseUrlParams raw constraints url =
   let
     params = getParams raw
@@ -106,12 +106,10 @@ parseUrlParams raw constraints url =
        (List.map (Combine.map singleton) parsers)
        ) -- <* Combine.end
 
-    (_,context, result) = case Combine.parse parser url of
-      Err _ -> Debug.crash "List.Extra.last sringParsers"
-      Ok v  -> v
+    res = Combine.parse parser url
 
-    zipValues values = Dict.fromList <| List.map2 (,) params values
-  in (Result.map zipValues <| Result.Ok result, context.input)
+    zipValues (_, stream, values) = (Dict.fromList <| List.map2 (,) params values, stream.input)
+  in (Result.map zipValues res)
 
 matchInternal : (String -> List String) -> (route -> RouteConfig route state) -> List route -> List route -> URL -> Maybe (Route route)
 matchInternal unwrap getConfig routes pool url = List.foldl (\route match ->
@@ -124,12 +122,9 @@ matchInternal unwrap getConfig routes pool url = List.foldl (\route match ->
       in List.foldl (\raw match ->
         case match of
           Just _ -> match
-          Nothing -> let
-              (result, url_part) = parseUrlParams raw config.constraints url
-            in
-              case result of
-              Err _       -> Nothing
-              Ok  dict    ->
+          Nothing ->  case parseUrlParams raw config.constraints url of
+              Err _ -> Nothing
+              Ok (dict, url_part) ->
                 let matchChildren route =
                   let
                     (childrens, pool_new) = filterParent (.parent << getConfig) (Just route) pool

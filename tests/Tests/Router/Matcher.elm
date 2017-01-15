@@ -69,29 +69,31 @@ testParseUrlParams : Test
 testParseUrlParams = describe "parseUrlParams"
   [
     test "plain"
-      <| \_ -> Expect.equal (Ok Dict.empty, "")
+      <| \_ -> Expect.equal (Ok (Dict.empty, ""))
       <| parseUrlParams "/url" Dict.empty "/url"
   , test "empty"
-      <| \_ -> Expect.equal (Ok Dict.empty, "")
+      <| \_ -> Expect.equal (Ok (Dict.empty, ""))
       <| parseUrlParams "" Dict.empty ""
   , test "empty2"
-      <| \_ -> Expect.equal (Ok Dict.empty, "/url")
+      <| \_ -> Expect.equal (Ok (Dict.empty, "/url"))
       <| parseUrlParams "" Dict.empty "/url"
   , test "param"
-      <| \_ -> Expect.equal (Ok (Dict.fromList [("param","value")]), "")
+      <| \_ -> Expect.equal (Ok ((Dict.fromList [("param","value")]), ""))
       <| parseUrlParams "/:param" Dict.empty "/value"
   , test "combined1"
-      <| \_ -> Expect.equal (Ok (Dict.fromList [("param","value")]), "")
+      <| \_ -> Expect.equal (Ok ((Dict.fromList [("param","value")]), ""))
       <| parseUrlParams "/path/:param" Dict.empty "/path/value"
   , test "combined2"
-      <| \_ -> Expect.equal (Ok (Dict.fromList [("path","value")]), "")
+      <| \_ -> Expect.equal (Ok ((Dict.fromList [("path","value")]), ""))
       <| parseUrlParams "/:path/param" Dict.empty "/value/param"
   , test "combined3"
-      <| \_ -> Expect.equal (Ok (Dict.fromList [("path","value1"), ("param","value2")]), "")
+      <| \_ -> Expect.equal (Ok ((Dict.fromList [("path","value1"), ("param","value2")]), ""))
       <| parseUrlParams "/:path/:param" Dict.empty "/value1/value2"
   , test "fail"
-      <| \_ -> Expect.equal (Err (["expected \"/url\""]),"/path")
-      <| parseUrlParams "/url" Dict.empty "/path"
+      <| \_ -> Expect.true "expected to fail"
+      <| case parseUrlParams "/url" Dict.empty "/path" of
+        Ok _ -> False
+        Err _ -> True
   ]
 
 testMatch : Test

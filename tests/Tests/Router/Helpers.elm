@@ -56,10 +56,10 @@ testChainAction = describe "chainAction"
       <| let (Response (result,_)) = (succ |> chainAction succ) init in result.sum
   , test "append order"
       <| \_ -> Expect.equal "AB"
-      <| let (Response (result,_)) = (append "A" |> chainAction (append "B")) init in result.str
+      <| let (Response (result,_)) = (append "B" |> chainAction (append "A")) init in result.str
   , test "combined"
       <| \_ -> Expect.equal "BA"
-      <| let (Response (result,_)) = (append "B" |> chainAction (append "A")) init in result.str
+      <| let (Response (result,_)) = (append "A" |> chainAction (append "B")) init in result.str
   , test "combineActions"
       <| \_ -> Expect.equal (let (Response (result,_)) = (combineActions [succ, succ]) init in result)
       <| let (Response (result,_)) = (succ |> chainAction succ) init in result
