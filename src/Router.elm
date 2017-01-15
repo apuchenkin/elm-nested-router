@@ -40,7 +40,9 @@ constructor config matcher =
 {-| Launches the router.
   Provide `init` function and router config as parameters
  -}
-dispatch : (flags -> (WithRouter route state, Cmd (Action (WithRouter route state)))) -> RouterConfig route (WithRouter route state) -> Program flags (WithRouter route state) (Action (WithRouter route state))-- flags
+dispatch : (flags -> (WithRouter route state, Cmd (Action (WithRouter route state))))
+    -> RouterConfig route (WithRouter route state)
+    -> Program flags (WithRouter route state) (Action (WithRouter route state))
 dispatch init config =
   let
     (RouterConfig c) = config
@@ -49,16 +51,19 @@ dispatch init config =
 
     getHandlers = createHandlers router matcher
     render_view = render router <| List.map getHandlers << matcher.traverse
+
     urlUpdate route =  transition router matcher getHandlers route
 
-    parser = urlUpdate << matcher.match << getPath config
-    init_mod flags route =
+    updateAction : Location -> Action (WithRouter route state)
+    updateAction = urlUpdate << matcher.match << getPath config
+
+    init_mod flags location =
       let
         (state, cmd) = init flags
-        (state_new, cmd_new) = runAction parser state
+        (state_new, cmd_new) = runAction (updateAction location) state
       in (state_new, Cmd.batch [cmd, cmd_new])
   in
-    Navigation.programWithFlags parser
+    Navigation.programWithFlags updateAction
     {
       init = init_mod
     , update = runAction
