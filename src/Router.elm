@@ -37,13 +37,49 @@ constructor config matcher =
   , match = matchRoute matcher
   }
 
+
 {-| Launches the router.
   Provide `init` function and router config as parameters
  -}
-dispatch : (flags -> (WithRouter route state, Cmd (Action (WithRouter route state))))
+dispatch : (WithRouter route state, Cmd (Action (WithRouter route state)))
+    -> RouterConfig route (WithRouter route state)
+    -> Program Never (WithRouter route state) (Action (WithRouter route state))
+dispatch init config =
+  let
+    (RouterConfig c) = config
+    matcher = Matcher.matcher config
+    router = constructor config matcher
+
+    getHandlers = createHandlers router matcher
+    render_view = render router <| List.map getHandlers << matcher.traverse
+
+    urlUpdate route =  transition router matcher getHandlers route
+
+    updateAction : Location -> Action (WithRouter route state)
+    updateAction = urlUpdate << matcher.match << getPath config
+
+    init_mod location =
+      let
+        (state, cmd) = init
+        (state_new, cmd_new) = runAction (updateAction location) state
+      in (state_new, Cmd.batch [cmd, cmd_new])
+
+    args = {
+      init = init_mod
+    , update = runAction
+    , view = render_view
+    , subscriptions = c.subscriptions
+    }
+
+  in Navigation.program updateAction args
+
+{-| Launches the router.
+  Provide `init` function and router config as parameters
+ -}
+dispatchWithFlags : (flags -> (WithRouter route state, Cmd (Action (WithRouter route state))))
     -> RouterConfig route (WithRouter route state)
     -> Program flags (WithRouter route state) (Action (WithRouter route state))
-dispatch init config =
+dispatchWithFlags init config =
   let
     (RouterConfig c) = config
     matcher = Matcher.matcher config
@@ -62,11 +98,12 @@ dispatch init config =
         (state, cmd) = init flags
         (state_new, cmd_new) = runAction (updateAction location) state
       in (state_new, Cmd.batch [cmd, cmd_new])
-  in
-    Navigation.programWithFlags updateAction
-    {
+
+    args = {
       init = init_mod
     , update = runAction
     , view = render_view
     , subscriptions = c.subscriptions
     }
+
+  in Navigation.programWithFlags updateAction args

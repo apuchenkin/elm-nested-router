@@ -110,7 +110,7 @@ postHandler router =
       let
         category = getCategory state
         title = Maybe.withDefault "" <| Maybe.map (.title) state.post
-        text =  Maybe.withDefault "" <| state.post &> \post -> post.text
+        text =  Maybe.withDefault "" <| (state.post |> Maybe.andThen (\post -> post.text))
       in Dict.fromList [
         ("header", Html.header [] [homeLink router, Html.text " >> ", Html.text <| Maybe.withDefault "error" <| getCategory state])
       , ("post",  Html.div [Attr.class "post"] [Html.h1 [] [Html.text title], Html.text text])
