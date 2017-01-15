@@ -8,10 +8,16 @@
     ],
     "exposed-modules": [],
     "dependencies": {
-        "apuchenkin/elm-nested-router": "3.0.0 <= v < 4.0.0",
-        "elm-lang/core": "4.0.0 <= v < 5.0.0",
-        "elm-lang/html": "1.0.0 <= v < 2.0.0",
-        "evancz/elm-http": "3.0.0 <= v < 4.0.0"
+        "apuchenkin/elm-nested-router": "3.0.0 <= v < 5.0.0",
+        "elm-lang/core": "5.0.0 <= v < 6.0.0",
+        "elm-lang/html": "2.0.0 <= v < 3.0.0",
+        "elm-lang/http": "1.0.0 <= v < 2.0.0"
     },
-    "elm-version": "0.17.0 <= v < 0.18.0"
+    "dependency-sources": {
+      "apuchenkin/elm-nested-router": {
+        "url": "git@github.com:apuchenkin/elm-nested-router",
+        "ref": "18"
+      }
+    },
+    "elm-version": "0.18.0 <= v < 0.19.0"
 }
