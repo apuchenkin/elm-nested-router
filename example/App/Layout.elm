@@ -2,11 +2,12 @@ module App.Layout exposing (..)
 
 import Dict exposing (Dict)
 import Html exposing (Html)
-import App.Actions exposing (State)
+import App.Actions exposing (State, Msg)
 import App.Routes as Route exposing (Route)
-import Router.Types exposing (Router, Action)
+import Router.Types exposing (Router)
+import Router.Types as Router
 
-footer : Router Route State -> Html (Action State)
+footer : Router Route State Msg -> Html (Router.Msg Route Msg)
 footer router =
   let
     about    = Html.a (router.bindForward (Route.Static "about",    Dict.empty) []) [Html.text "About"]
@@ -16,7 +17,7 @@ footer router =
     about, sep, contacts
   ]
 
-layout : Router Route State -> State -> Dict String (Html (Action State)) -> Html (Action State)
+layout : Router Route State Msg -> State -> Dict String (Html (Router.Msg Route Msg)) -> Html (Router.Msg Route Msg)
 layout router _ parsed =
   let
     defaultHeader = Html.header [] [Html.text "Default header"]

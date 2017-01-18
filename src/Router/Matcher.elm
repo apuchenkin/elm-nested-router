@@ -111,7 +111,7 @@ parseUrlParams raw constraints url =
     zipValues (_, stream, values) = (Dict.fromList <| List.map2 (,) params values, stream.input)
   in (Result.map zipValues res)
 
-matchInternal : (String -> List String) -> (route -> RouteConfig route state) -> List route -> List route -> URL -> Maybe (Route route)
+matchInternal : (String -> List String) -> (route -> RouteConfig route state msg) -> List route -> List route -> URL -> Maybe (Route route)
 matchInternal unwrap getConfig routes pool url = List.foldl (\route match ->
   case match of
     Just _ -> match
@@ -143,13 +143,13 @@ filterParent : (route -> Maybe route) -> Maybe route -> List route -> (List rout
 filterParent getParent route routes =
   List.foldl (\r (a,b) -> if getParent r == route then (a ++ [r], b) else (a, b ++ [r])) ([],[]) routes
 
-match_cache : (String -> List String) -> (route -> RouteConfig route state) -> List route -> URL -> Maybe (Route route)
+match_cache : (String -> List String) -> (route -> RouteConfig route state msg) -> List route -> URL -> Maybe (Route route)
 match_cache unwrap getConfig routes url =
   let
     (roots, pool) = filterParent (.parent << getConfig) Nothing routes
   in matchInternal unwrap getConfig roots pool url
 
-match : (route -> RouteConfig route state) -> List route -> URL -> Maybe (Route route)
+match : (route -> RouteConfig route state msg) -> List route -> URL -> Maybe (Route route)
 match getConfig routes url = match_cache unwrap getConfig routes url
 
 -- TODO: check perfomance without regexp
@@ -194,7 +194,7 @@ getPath : (route -> Maybe route) -> route -> List route
 getPath getParent route = List.reverse <| getPathInternal getParent route []
 
 -- Maps a list of route params over list of routes
-mapParams : Matcher route state -> List route -> RouteParams -> List (Route route)
+mapParams : Matcher route state msg -> List route -> RouteParams -> List (Route route)
 mapParams matcher routes params = flip List.map routes <| \route ->
   (route, Dict.filter (\param _ -> List.member param (matcher.routeParams route)) params)
 
@@ -209,7 +209,7 @@ removeTrailingSlash url = if hasTrailingSlash url then String.dropRight 1 url el
 {-| @Private
   Returns a set of handlers applicable to transtition between "from" and "to" routes.
 -}
-routeDiff : Matcher route state -> Maybe (Route route) -> Route route -> List route
+routeDiff : Matcher route state msg -> Maybe (Route route) -> Route route -> List route
 routeDiff matcher from to =
   let
     getConfig = matcher.getConfig
@@ -232,8 +232,8 @@ routeDiff matcher from to =
 
   in List.drop commons toPath
 
-type alias Matcher route state = {
-    getConfig: route -> RouteConfig route state
+type alias Matcher route state msg = {
+    getConfig: route -> RouteConfig route state msg
   , buildUrl: Route route -> URL
   , match: URL -> Maybe (Route route)
   , traverse: route -> List route
@@ -243,7 +243,7 @@ type alias Matcher route state = {
   }
 
 -- matcher creates an object that provides a memoized versions of Matcher functions
-matcher : RouterConfig route state -> Matcher route state
+matcher : RouterConfig route state msg -> Matcher route state msg
 matcher (RouterConfig config) =
   let
     routes = config.routes

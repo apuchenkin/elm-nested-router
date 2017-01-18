@@ -1,15 +1,16 @@
 import Dict     exposing (Dict)
 
-import App.Routes exposing (..)
+import App.Routes as Route exposing (..)
 import App.Handlers exposing (..)
-import App.Actions exposing (State)
+import App.Actions exposing (..)
 import App.Layout exposing (..)
 
 import Router
 import Router.Types  exposing (Router, RouterConfig (..), RouteConfig, Constraint (..))
-import Router.Helpers exposing (doNothing, noFx)
+import Router.Helpers exposing (noFx)
+import Router.Types as Router
 
-config : Route -> RouteConfig Route State
+config : Route -> RouteConfig Route State Msg
 config route = case route of
   Home -> {
       segment = "",
@@ -42,7 +43,7 @@ config route = case route of
   Post -> {
       segment = "/post/:postId",
       bypass = False,
-      parent = Just Category,
+      parent = Just Route.Category,
       constraints = Dict.fromList [("postId", Int)],
       handler = postHandler
     }
@@ -55,18 +56,26 @@ initialState = {
   , post        = Nothing
   }
 
+update msg = case msg of
+  LoadCategories -> loadCategories
+  LoadPosts -> loadPosts
+  LoadPost -> loadPost
+  UpdateCategories categories  -> updateCategories categories
+  UpdatePosts posts -> updatePosts posts
+  UpdatePost post -> updatePost post
 
-main : Program Never State (Router.Types.Action State)
+-- main : Program Never State (Router.Types.Action State)
 main = Router.dispatch
   (noFx initialState)
   (RouterConfig {
     html5 = False
   , removeTrailingSlash = True
-  , transition = \r _ to -> case to of
-      Nothing -> r.redirect (Home, Dict.empty)
-      Just rr -> let
-        _ = (Debug.log "onTransition" rr)
-      in doNothing
+  , update = update
+  -- , transition = \r _ to -> case to of
+  --     Nothing -> r.redirect (Home, Dict.empty)
+  --     Just rr -> let
+  --       _ = (Debug.log "onTransition" rr)
+  --     in doNothing
   , layout = layout
   , routes = routes
   , routeConfig = config

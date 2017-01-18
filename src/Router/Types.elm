@@ -3,10 +3,10 @@ module Router.Types exposing (..)
 {-| Router types
 
 # URL parts
-@docs URL, RawURL, RawSegment, Param, Constraint, Route, RouteConfig, RouteParams
+@docs URL, RawURL, RawSegment, Param, Constraint, Route, RouteConfig, RouteParams, Msg
 
 # Actions and handlers
-@docs WithRouter, Handler, Action, Commands, Response, Transition
+@docs WithRouter, Handler, Action
 
 # Router
 @docs Router, RouterConfig, RouterState
@@ -14,6 +14,7 @@ module Router.Types exposing (..)
 
 import Dict           exposing (Dict)
 import Html           exposing (Html)
+import Navigation
 
 -----------------------------------------
 -- Route mather related types
@@ -52,23 +53,17 @@ type alias Route route = (route, RouteParams)
 -- Handler related types
 -----------------------------------------
 
-{-| An action result - a modified state combined with side effects -}
-type Response state = Response (state, Commands state)
-
 {-| `Action` represents function that prforms something with application state, and might contain side efects -}
-type alias Action state = state -> Response state
-
-{-| Helper to get rid of brackets -}
-type alias Commands state = Cmd (Action state)
+type alias Action state msg = state -> (state, Cmd msg)
 
 {-|
   A `Handler` is a piece of functionality binded to specific route
   * `view` &mdash; Function that describes how to render application state to map of named views
   * `actions` &mdash; A set of necessary to perform actions
 -}
-type alias Handler state = {
-    view: state -> Dict String (Html (Action state)) -> Dict String (Html (Action state))
-  , actions: List (Action state)
+type alias Handler route state msg = {
+    view: state -> Dict String (Html (Msg route msg)) -> Dict String (Html (Msg route msg))
+  , actions: List msg
   }
 
 {-|
@@ -110,12 +105,12 @@ type alias Handler state = {
   "mark" and "joe" will be stored as `author` param, and "1" as `postId`
   Everything enclosed by brackets considered as optional.
 -}
-type alias RouteConfig route state = {
+type alias RouteConfig route state msg = {
     segment: RawSegment
   , parent: Maybe route
   , bypass: Bool
   , constraints: Dict Param Constraint
-  , handler: Router route state -> Handler state
+  , handler: Router route state msg -> Handler route state msg
   }
 
 {-| A state of router -}
@@ -127,8 +122,11 @@ type alias RouterState route = {
 {-| Type extension for the application state -}
 type alias WithRouter route state = { state | router : RouterState route}
 
-{-| A transition from route A to route B -}
-type alias Transition route state = Maybe (Route route) -> Maybe (Route route) -> Action state
+-- {-| A transition from route A to route B -}
+-- type alias Transition route msg = Maybe (Route route) -> Maybe (Route route) -> Cmd msg
+
+{-| A state of router -}
+type Msg route msg = AppMsg msg | Transition Navigation.Location | Forward (Route route) | Redirect (Route route)
 
 {-|
   `RouterConfig` is configuration for the router:
@@ -141,14 +139,15 @@ type alias Transition route state = Maybe (Route route) -> Maybe (Route route) -
   * `routes` &mdash; A list of routes available for routing
   * `subscriptions` &mdash; A list of subscriptions (see: [elm-lang/html](http://package.elm-lang.org/packages/elm-lang/html/1.1.0/Html-App) for details)
 -}
-type RouterConfig route state = RouterConfig {
+type RouterConfig route state msg = RouterConfig {
     html5: Bool
   , removeTrailingSlash: Bool
-  , layout: Router route state -> state -> Dict String (Html (Action state)) -> (Html (Action state))
-  , transition: Router route state -> Transition route state
-  , routeConfig: route -> RouteConfig route state
+  , update : msg -> Action state (Msg route msg)
+  , layout: Router route state msg -> state -> Dict String (Html (Msg route msg)) -> (Html (Msg route msg))
+  -- , transition: Router route state msg -> Transition route msg
+  , routeConfig: route -> RouteConfig route state msg
   , routes: List route
-  , subscriptions : state -> Sub (Action state)
+  , subscriptions : state -> Sub (Msg route msg)
   }
 
 {-|
@@ -163,11 +162,11 @@ type RouterConfig route state = RouterConfig {
 
   Router also provide it's `config`
 -}
-type alias Router route state = {
-    config : RouterConfig route state
-  , bindForward : Route route -> List (Html.Attribute (Action state)) -> List (Html.Attribute (Action state))
+type alias Router route state msg = {
+    config : RouterConfig route state msg
+  , bindForward : Route route -> List (Html.Attribute (Msg route msg)) -> List (Html.Attribute (Msg route msg))
   , buildUrl : Route route -> URL
-  , forward : Route route -> Action state
-  , redirect : Route route -> Action state
+  , forward : Route route -> Cmd (Msg route msg)
+  , redirect : Route route -> Cmd (Msg route msg)
   , match : String -> Maybe (Route route)
   }

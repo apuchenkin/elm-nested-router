@@ -23,10 +23,10 @@ import Router.Types        exposing (..)
 {-| @Private
   Preforms attempt to match provided url to a route by a given routes configuration
   -}
-matchRoute : Matcher route state -> String -> Maybe (Route route)
+matchRoute : Matcher route state msg -> String -> Maybe (Route route)
 matchRoute matcher url = matcher.match url
 
-getPath : RouterConfig route state -> Location -> URL
+getPath : RouterConfig route state msg -> Location -> URL
 getPath config location =
     let
       (RouterConfig c) = config
@@ -37,7 +37,7 @@ getPath config location =
       if c.removeTrailingSlash then Matcher.removeTrailingSlash urlPath else urlPath
 
 {-| Decomposes Route to string. Exposed by `Router` -}
-buildUrl : RouterConfig route state -> Matcher route state -> Route route -> String
+buildUrl : RouterConfig route state msg -> Matcher route state msg -> Route route -> String
 buildUrl routerConfig matcher route =
   let
     (RouterConfig config) = routerConfig
@@ -46,30 +46,20 @@ buildUrl routerConfig matcher route =
   in if config.html5 then url_new else String.cons Matcher.hash url_new
 
 {-| binds forward action to existing HTML attributes. Exposed by `Router` -}
-bindForward : RouterConfig route state -> Matcher route state -> Route route -> List (Html.Attribute (Action state)) -> List (Html.Attribute (Action state))
+bindForward : RouterConfig route state msg -> Matcher route state msg -> Route route -> List (Html.Attribute (Msg route msg)) -> List (Html.Attribute (Msg route msg))
 bindForward config matcher route attrs =
   let
     options = {stopPropagation = True, preventDefault = True}
-    action = forward config matcher route
+    -- action = forward config matcher route
   in
     Attr.href (buildUrl config matcher route)
-    :: onWithOptions "click" options (Json.succeed action)
+    :: onWithOptions "click" options (Json.succeed <| Forward route)
     :: attrs
 
 {-| Preforms a transition to provided `Route`. Exposed by `Router` -}
-forward : RouterConfig route state -> Matcher route state -> Route route -> Action state
-forward routerConfig matcher route state =
-  let
-    -- (RouterConfig config) = routerConfig
-    url = buildUrl routerConfig matcher route
-    msg = Navigation.newUrl url
-  in Response (state, msg)
+forward : RouterConfig route state msg -> Matcher route state msg -> Route route -> Cmd (Msg route msg)
+forward routerConfig matcher route = Navigation.newUrl <| buildUrl routerConfig matcher route
 
 {-| Redirects to provided `Route`. Exposed by `Router` -}
-redirect : RouterConfig route state -> Matcher route state -> Route route -> Action state
-redirect routerConfig matcher route state =
-  let
-    -- (RouterConfig config) = routerConfig
-    url = buildUrl routerConfig matcher route
-    msg = Navigation.modifyUrl url
-  in Response (state, msg)
+redirect : RouterConfig route state msg -> Matcher route state msg -> Route route -> Cmd (Msg route msg)
+redirect routerConfig matcher route = Navigation.modifyUrl <| buildUrl routerConfig matcher route
