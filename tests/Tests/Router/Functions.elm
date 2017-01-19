@@ -5,7 +5,6 @@ import Html
 import Test exposing (..)
 import Expect
 
-import Router.Types     exposing (..)
 import Router.Functions exposing (..)
 import Router.Matcher   as Matcher
 
@@ -23,13 +22,13 @@ testRunAction = describe "runAction"
   [
     test "noAction"
       <| \_ -> Expect.equal init
-      <| let (r,_) = runAction noAction init in r
+      <| let (r,_) = noAction init in r
   , test "succ"
       <| \_ -> Expect.equal 1
-      <| let (r,_) = runAction succ init in r.sum
+      <| let (r,_) = succ init in r.sum
   , test "succ"
       <| \_ -> Expect.equal "foo"
-      <| let (r,_) = runAction (append "foo") init in r.str
+      <| let (r,_) = (append "foo") init in r.str
   ]
 
 -- render : Router route (WithRouter route state) -> Html -> (WithRouter route state) ->  Html
@@ -63,26 +62,26 @@ testTransition =
   [
     test "route setted"
       <| \_ -> Expect.equal (Just Home)
-      <| let (Response (result,_)) = transition_ (Just (Home, Dict.empty)) init in result.router.route
+      <| let (result,_) = transition_ (Just (Home, Dict.empty)) init in result.router.route
   , test "route setted"
       <| \_ -> Expect.equal (Just Page)
-      <| let (Response (result,_)) = transition_ (Just (Page, Dict.empty)) (state_ NotFound) in result.router.route
+      <| let (result,_) = transition_ (Just (Page, Dict.empty)) (state_ NotFound) in result.router.route
   , test "params setted"
       <| \_ -> Expect.equal (Dict.fromList [("param1", "value1")])
-      <| let (Response (result,_)) = transition_ (Just (Subpage, Dict.fromList [("param1", "value1")])) init in result.router.params
+      <| let (result,_) = transition_ (Just (Subpage, Dict.fromList [("param1", "value1")])) init in result.router.params
   , test "route actions"
       <| \_ -> Expect.equal 1
-      <| let (Response (result,_)) = transition_ (Just (Page, Dict.empty)) init in result.sum
+      <| let (result,_) = transition_ (Just (Page, Dict.empty)) init in result.sum
   , test "route actions"
       <| \_ -> Expect.equal (2,"foo")
-      <| let (Response (result,_)) = transition_ (Just (Subpage, Dict.empty)) init in (result.sum, result.str)
+      <| let (result,_) = transition_ (Just (Subpage, Dict.empty)) init in (result.sum, result.str)
   , test "route actions"
       <| \_ -> Expect.equal (1,"foo")
-      <| let (Response (result,_)) = transition_ (Just (Subpage, Dict.empty)) (state_ Page) in (result.sum, result.str)
+      <| let (result,_) = transition_ (Just (Subpage, Dict.empty)) (state_ Page) in (result.sum, result.str)
   , test "route actions"
       <| \_ -> Expect.equal (0,"")
-      <| let (Response (result,_)) = transition_ (Just (Subpage, Dict.empty)) (state_ Subpage) in (result.sum, result.str)
+      <| let (result,_) = transition_ (Just (Subpage, Dict.empty)) (state_ Subpage) in (result.sum, result.str)
   , test "notFound"
       <| \_ -> Expect.equal Nothing
-      <| let (Response (result,_)) = transition_ Nothing (state_ Subpage) in result.router.route
+      <| let (result,_) = transition_ Nothing (state_ Subpage) in result.router.route
   ]

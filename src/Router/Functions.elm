@@ -9,7 +9,7 @@ import Router.Types        exposing (..)
 -- import Navigation
 
 
--- runAction : Action state -> state -> (state, Cmd msg)
+-- runAction : Action state msg -> state -> (state, Cmd msg)
 -- runAction action state =
 --   let
 --     (Response res) = action state

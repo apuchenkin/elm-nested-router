@@ -41,7 +41,7 @@ type Route = Home | NotFound | Static String | Category | Post
 routes : List Route
 routes = [
     NotFound
-  , Static "about"  
+  , Static "about"
   , Static "contacts"
   , Home
   , Category
@@ -140,16 +140,16 @@ see [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/exampl
 [Advanced example](https://github.com/apuchenkin/aws.photo.service/tree/elm/client)
 
 ### Currently supports
-- [x] HTML5 push state
-- [x] Route params
-- [x] Params constraints (String, Int, Enum, Regexp)
-- [x] Optional params
-- [x] Named views
+-   [x] HTML5 push state
+-   [x] Route params
+-   [x] Params constraints (String, Int, Enum, Regexp)
+-   [x] Optional params
+-   [x] Named views
 
 ### Future thoughts
-- [x] Drop dependencies on libs
-- [x] Better handling for trailing slashes
-- [x] Greedy matcher config (matches first found route or latest one / bypass route config)
-- [x] Check the possibility to replace router cache with Automaton
-- [ ] Improve perfomance on specific functions
-- [ ] Query string parameters support
+-   [x] Drop dependencies on libs
+-   [x] Better handling for trailing slashes
+-   [x] Greedy matcher config (matches first found route or latest one / bypass route config)
+-   [x] Check the possibility to replace router cache with Automaton
+-   [ ] Improve perfomance on specific functions
+-   [ ] Query string parameters support

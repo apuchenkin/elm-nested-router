@@ -3,8 +3,9 @@ module Tests.Mock.Data exposing (..)
 import Html exposing (Html)
 import Dict exposing (Dict)
 
-import Router.Helpers  exposing (noFx, doNothing)
+import Router.Helpers  exposing (noFx)
 import Router.Types    exposing (..)
+import Router.Types as Router
 import Router.Matcher as Matcher exposing (Matcher)
 import Router.Functions exposing (createHandlers)
 import Tests.Mock.Router exposing (..)
@@ -20,7 +21,7 @@ type alias State = WithRouter Route
     sum: Int
   }
 
-config : Route -> RouteConfig Route State
+config : Route -> RouteConfig Route State Msg
 config route = case route of
     Home -> {
       segment = "/"
@@ -58,7 +59,7 @@ init = {
     sum = 0
   }
 
-layout : Router Route State -> State -> Dict String (Html (Action State)) -> (Html (Action State))
+layout : Router Route State Msg -> State -> Dict String (Html (Router.Msg Route Msg)) -> (Html (Router.Msg Route Msg))
 layout _ _ parsed =
   let fallback = Html.text "error"
   in Maybe.withDefault (Maybe.withDefault (Maybe.withDefault fallback
@@ -66,60 +67,69 @@ layout _ _ parsed =
     <| Dict.get "handlerB" parsed)
     <| Dict.get "handlerC" parsed
 
-routerConfig : RouterConfig Route State
+routerConfig : RouterConfig Route State Msg
 routerConfig = RouterConfig {
     html5 = True
   , removeTrailingSlash = True
   , layout = layout
-  , transition = \_ _ _ -> doNothing
+  , update = update
+  -- , transition = \_ _ _ -> doNothing
   , routes = routes
   , routeConfig = config
   , subscriptions = always Sub.none
   }
 ------------ actions ----------------------
-noAction : Action State
-noAction state = Response <| noFx state
 
-succ : Action State
-succ state = Response <| noFx {state | sum = state.sum + 1}
+type Msg = NoOp | Succ | Append String
 
-append : String -> Action State
-append string state = Response <| noFx {state | str = state.str ++ string}
+noAction : Action State (Router.Msg Route Msg)
+noAction state = noFx state
 
+succ : Action State (Router.Msg Route Msg)
+succ state = noFx {state | sum = state.sum + 1}
+
+append : String -> Action State (Router.Msg Route Msg)
+append string state = noFx {state | str = state.str ++ string}
+
+update : Msg -> Action State (Router.Msg Route Msg)
+update msg = case msg of
+  NoOp -> noAction
+  Succ -> succ
+  Append s -> append s
 ------------ handlers ----------------------
 
 -- only text html can be tested due to bug (toString(null))
 
-handlerA : Handler State
+handlerA : Handler Route State Msg
 handlerA = {
     view = \state _ -> Dict.fromList [("handlerA", Html.text "handlerA")],
     actions = [
-      noAction
+      NoOp
     ]
   }
 
-handlerB : Handler State
+handlerB : Handler Route State Msg
 handlerB = {
     view = \state _ -> Dict.fromList [("handlerB", Html.text <| toString state.sum)],
     actions = [
-      succ
+      Succ
     ]
   }
 
-handlerC : Handler State
+handlerC : Handler Route State Msg
 handlerC = {
     view = \state _ -> Dict.fromList [("handlerC", Html.text state.str)],
     actions = [
-      succ,
-      append "foo"
+      Succ,
+      Append "foo"
     ]
   }
 
-router : Router Route State
+router : Router Route State Msg
 router = routerMock routerConfig
 
-matcher : Matcher Route State
+matcher : Matcher Route State Msg
 matcher = Matcher.matcher routerConfig
 
-getHandlers : Route -> Handler (WithRouter Route { str : String, sum : Int })
+getHandlers : Route -> Handler Route State Msg
 getHandlers = createHandlers router matcher

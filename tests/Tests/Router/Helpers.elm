@@ -2,8 +2,6 @@ module Tests.Router.Helpers exposing (..)
 
 import Test exposing (..)
 import Expect
-
-import Router.Types     exposing (..)
 import Router.Helpers   exposing (..)
 
 import Tests.Mock.Data exposing (..)
@@ -11,10 +9,9 @@ import Tests.Mock.Data exposing (..)
 testSuite : Test
 testSuite = describe "Helpers" [
     testNoFx
-  , testDoNothing
   , testPerformTask
   , testChainAction
-  , testCombineActions
+  , testFoldActions
   ]
 --
 testNoFx : Test
@@ -28,17 +25,6 @@ testNoFx = describe "noFx"
       <| noFx Nothing
   ]
 
-testDoNothing : Test
-testDoNothing = describe "doNothing"
-  [
-    test "1"
-      <| \_ -> Expect.equal (Response <| (1, Cmd.none))
-      <| doNothing 1
-  , test "noFx"
-      <| \_ -> Expect.equal (Response <| noFx Nothing)
-      <| doNothing Nothing
-  ]
-
 testPerformTask : Test
 testPerformTask = test "covered" <| \_ -> Expect.pass
 
@@ -47,41 +33,41 @@ testChainAction = describe "chainAction"
   [
     test "noAction"
       <| \_ -> Expect.equal init
-      <| let (Response (result,_)) = (noAction |> chainAction noAction) init in result
+      <| let (result,_) = (noAction |> chainAction noAction) init in result
   , test "one succ"
       <| \_ -> Expect.equal 1
-      <| let (Response (result,_)) = (succ |> chainAction noAction) init in result.sum
+      <| let (result,_) = (succ |> chainAction noAction) init in result.sum
   , test "two succ"
       <| \_ -> Expect.equal 2
-      <| let (Response (result,_)) = (succ |> chainAction succ) init in result.sum
+      <| let (result,_) = (succ |> chainAction succ) init in result.sum
   , test "append order"
       <| \_ -> Expect.equal "AB"
-      <| let (Response (result,_)) = (append "B" |> chainAction (append "A")) init in result.str
+      <| let (result,_) = (append "B" |> chainAction (append "A")) init in result.str
   , test "combined"
       <| \_ -> Expect.equal "BA"
-      <| let (Response (result,_)) = (append "A" |> chainAction (append "B")) init in result.str
+      <| let (result,_) = (append "A" |> chainAction (append "B")) init in result.str
   , test "combineActions"
-      <| \_ -> Expect.equal (let (Response (result,_)) = (combineActions [succ, succ]) init in result)
-      <| let (Response (result,_)) = (succ |> chainAction succ) init in result
+      <| \_ -> Expect.equal (let (result,_) = (foldActions [succ, succ]) init in result)
+      <| let (result,_) = (succ |> chainAction succ) init in result
   ]
 
-testCombineActions : Test
-testCombineActions = describe "combineActions"
+testFoldActions : Test
+testFoldActions = describe "foldActions"
   [
     test "noAction"
       <| \_ -> Expect.equal init
-      <| let (Response (result,_)) = (combineActions [noAction, noAction, noAction]) init in result
+      <| let (result,_) = (foldActions [noAction, noAction, noAction]) init in result
   , test "one succ"
       <| \_ -> Expect.equal 1
-      <| let (Response (result,_)) = (combineActions [succ, noAction]) init in result.sum
+      <| let (result,_) = (foldActions [succ, noAction]) init in result.sum
   , test "two succ"
       <| \_ -> Expect.equal 2
-      <| let (Response (result,_)) = (combineActions [succ, succ]) init in result.sum
+      <| let (result,_) = (foldActions [succ, succ]) init in result.sum
   , test "append order"
       <| \_ -> Expect.equal "ABC"
-      <| let (Response (result,_)) = (combineActions [append "A", append "B", append "C"]) init in result.str
+      <| let (result,_) = (foldActions [append "A", append "B", append "C"]) init in result.str
   , test "combined"
       <| \_ -> Expect.true "expected true"
-      <| let (Response (result,_)) = (combineActions [succ, append "A", succ, append "B"]) init
+      <| let (result,_) = (foldActions [succ, append "A", succ, append "B"]) init
       in result.str == "AB" && result.sum == 2
   ]
