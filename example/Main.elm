@@ -71,11 +71,12 @@ main = Router.dispatch
     html5 = False
   , removeTrailingSlash = True
   , update = update
-  -- , transition = \r _ to -> case to of
-  --     Nothing -> r.redirect (Home, Dict.empty)
-  --     Just rr -> let
-  --       _ = (Debug.log "onTransition" rr)
-  --     in doNothing
+  , onTransition = \r _ to -> []
+    -- case to of
+    --   Nothing -> r.redirect (Home, Dict.empty)
+    --   Just rr -> let
+    --     _ = (Debug.log "onTransition" rr)
+    --   in doNothing
   , layout = layout
   , routes = routes
   , routeConfig = config

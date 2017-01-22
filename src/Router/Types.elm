@@ -6,7 +6,7 @@ module Router.Types exposing (..)
 @docs URL, RawURL, RawSegment, Param, Constraint, Route, RouteConfig, RouteParams, Msg
 
 # Actions and handlers
-@docs WithRouter, Handler, Action
+@docs WithRouter, Handler, Action, Transition
 
 # Router
 @docs Router, RouterConfig, RouterState
@@ -122,8 +122,8 @@ type alias RouterState route = {
 {-| Type extension for the application state -}
 type alias WithRouter route state = { state | router : RouterState route}
 
--- {-| A transition from route A to route B -}
--- type alias Transition route msg = Maybe (Route route) -> Maybe (Route route) -> Cmd msg
+{-| A transition from route A to route B -}
+type alias Transition route msg = Maybe (Route route) -> Maybe (Route route) -> List msg
 
 {-| A state of router -}
 type Msg route msg = AppMsg msg | Transition Navigation.Location | Forward (Route route) | Redirect (Route route)
@@ -144,7 +144,7 @@ type RouterConfig route state msg = RouterConfig {
   , removeTrailingSlash: Bool
   , update : msg -> Action state (Msg route msg)
   , layout: Router route state msg -> state -> Dict String (Html (Msg route msg)) -> (Html (Msg route msg))
-  -- , transition: Router route state msg -> Transition route msg
+  , onTransition: Router route state msg -> Transition route msg
   , routeConfig: route -> RouteConfig route state msg
   , routes: List route
   , subscriptions : state -> Sub (Msg route msg)

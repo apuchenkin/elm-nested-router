@@ -3,17 +3,10 @@ module Router.Functions exposing (..)
 import Dict
 import Html             exposing (Html)
 
--- import Router.Helpers      exposing (noFx)
+import Router.Helpers      exposing (foldActions)
 import Router.Matcher      as Matcher exposing (Matcher)
 import Router.Types        exposing (..)
--- import Navigation
-
-
--- runAction : Action state msg -> state -> (state, Cmd msg)
--- runAction action state =
---   let
---     (Response res) = action state
---   in res
+import Router.Navigation   exposing (..)
 
 {-| @Private
   Renders handlers for current route
@@ -31,7 +24,22 @@ render router getHandlers state =
       htmlParts   = List.foldr (\view parsed -> Dict.union parsed <| view state parsed) Dict.empty views
     in config.layout router state htmlParts
 
+update :
+  Router route (WithRouter route state) msg ->
+  Matcher route (WithRouter route state) msg ->
+  (route -> Handler route (WithRouter route state) msg) ->
+  (Msg route msg) -> Action (WithRouter route state) (Msg route msg)
+update router matcher getHandlers msg =
+  let
+    (RouterConfig config) = router.config
+    urlUpdate =  transition router matcher getHandlers
+    updateAction = urlUpdate << matcher.match << getPath router.config
 
+  in case msg of
+    Transition location -> updateAction location
+    Forward route -> \state -> (state, forward router.config matcher route)
+    Redirect route -> \state -> (state, redirect router.config matcher route)
+    AppMsg appMsg -> config.update appMsg
 
 {-| @Private
   Sets provided route ro the state and return state transition from previous route to new one
@@ -40,7 +48,8 @@ transition :
   Router route (WithRouter route state) msg ->
   Matcher route (WithRouter route state) msg ->
   (route -> Handler route (WithRouter route state) msg) ->
-  Maybe (Route route) -> (WithRouter route state) -> (WithRouter route state, Cmd (Msg route msg))
+  Maybe (Route route) ->
+  Action (WithRouter route state) (Msg route msg)
 transition router matcher getHandlers to state =
   let
     (RouterConfig config) = router.config
@@ -52,14 +61,11 @@ transition router matcher getHandlers to state =
 
     diff = Maybe.withDefault [] <| Maybe.map (Matcher.routeDiff matcher from) to
     handlers = List.map getHandlers diff
-    -- onTransition = config.transition router from to
-    msgs  = List.concat <| List.map .actions handlers
+    onTransition = config.onTransition router from to
+    msgs  = onTransition ++ (List.concat <| List.map .actions handlers)
+    actions = List.map config.update msgs
 
-  in List.foldl (\msg (s, c) ->
-    let (s_, c_) = config.update msg s
-    in (s_, Cmd.batch [c, c_])
-    ) (state_new, Cmd.none) msgs
-    -- state_new ! (onTransition :: actions)
+  in foldActions actions state_new
 
 createHandlers :
     Router route (WithRouter route state) msg ->
