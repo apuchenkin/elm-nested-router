@@ -9,11 +9,12 @@ import Router
 import Router.Types  exposing (Router, RouterConfig (..), RouteConfig, Constraint (..))
 import Router.Helpers exposing (noFx)
 import Router.Types as Router
+import UrlParser exposing (..)
 
 config : Route -> RouteConfig Route State Msg
 config route = case route of
   Home -> {
-      segment = "",
+      segment = s "",
       bypass = False,
       parent = Nothing,
       constraints = Dict.empty,
