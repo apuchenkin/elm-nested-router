@@ -6,32 +6,59 @@ import Expect
 import Test exposing (..)
 import Dict
 import Matcher.Matcher as Matcher
+import Matcher.Segments as Segments exposing ((</>))
 
--- type R = Home | Category String | Post
---
--- homeR : Matcher.RouteConfig R state msg
--- homeR = {
---     route = Home
---   , parent = Nothing
---   , segment = Matcher.end
---   , render = \s v -> v
---   }
---
--- routes : List (Matcher.RouteConfig R state msg)
--- routes = [homeR]
+type Route = Home | Category String | Post
+
+routeConfig : Matcher.GetConfig Route
+routeConfig route = case route of
+  Home -> {
+    parent = Nothing
+  , segment = Segments.end
+  }
+  Category "bear" -> {
+    parent = Just Home
+  , segment = Segments.static "category" </> Segments.static "bear"
+  }
+  Category "tiger" -> {
+    parent = Just Home
+  , segment = Segments.static "category" </> Segments.static "tiger"
+  }
+  Category category -> {
+    parent = Just Home
+  , segment = Segments.static "category" </> Segments.string "category"
+  }
+  Post -> {
+    parent = Just (Category "bear")
+  , segment = Segments.static "post" </> Segments.int "post"
+  }
+
+routes : List Route
+routes = [Home, Category "bear", Category "tiger", Category "test", Post]
 
 testSuite : Test
 testSuite = describe "Mather" [
-    -- testToString
+    testMatch
   ]
 
--- testToString : Test
--- testToString = describe "toString" [
---   test "term"
---     <| \_ -> Expect.equal ""
---     <| Matcher.toString Dict.empty Matcher.Terminator
---   ]
-
+testMatch : Test
+testMatch = describe "match" [
+    test "match home"
+      <| \_ -> Expect.equal (Just {route = Home, arguments = Dict.empty})
+      <| Matcher.match routeConfig routes "/"
+  , test "match category bear"
+      <| \_ -> Expect.equal (Just {route = Category "bear", arguments = Dict.empty})
+      <| Matcher.match routeConfig routes "/category/bear"
+  , test "match category tiger"
+      <| \_ -> Expect.equal (Just {route = Category "tiger", arguments = Dict.empty})
+      <| Matcher.match routeConfig routes "/category/tiger"
+  , test "match category"
+      <| \_ -> Expect.equal (Just {route = Category "test", arguments = Dict.fromList [("category", "category-name")]})
+      <| Matcher.match routeConfig routes "/category/category-name"
+  , test "match post"
+      <| \_ -> Expect.equal (Just {route = Post, arguments = Dict.fromList [("post", "42")]})
+      <| Matcher.match routeConfig routes "/category/bear/post/42"
+  ]
 
 -- testMatch : Test
 -- testMatch = describe "match"

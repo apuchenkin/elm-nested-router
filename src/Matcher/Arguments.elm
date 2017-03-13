@@ -47,9 +47,9 @@ slash = '/'
 stringParser : Parser s String
 stringParser = String.fromList <$> many1 (noneOf [ slash, '#', '?' ])
 
-getParser : Constraint -> Parser s String
+getParser : Constraint -> Parser s Arguments
 getParser constraint = case constraint of
-  Int name -> toString <$> Combine.Num.int
-  String name -> stringParser
-  Enum name options -> Combine.choice <| List.map Combine.string options
-  Regex name reg -> Combine.regex reg
+  Int name -> Dict.singleton name << toString <$> Combine.Num.int
+  String name -> Dict.singleton name <$> stringParser
+  Enum name options -> Dict.singleton name <$> (Combine.choice <| List.map Combine.string options)
+  Regex name reg -> Dict.singleton name <$> Combine.regex reg
