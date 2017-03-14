@@ -55,7 +55,19 @@ testParseSuccess = describe "parse" [
 
 testToString : Test
 testToString = describe "toString" [
-  test "term"
-    <| \_ -> Expect.equal ""
-    <| Segments.toString Dict.empty Segments.end
+    test "toString end"
+      <| \_ -> Expect.equal ""
+      <| Segments.toString Dict.empty Segments.end
+  , test "toString static"
+      <| \_ -> Expect.equal "test"
+      <| Segments.toString Dict.empty
+      <| Segments.static "test"
+  , test "toString int"
+      <| \_ -> Expect.equal "1"
+      <| Segments.toString (Dict.fromList [("test", "1")])
+      <| Segments.int "test"
+  , test "toString int"
+      <| \_ -> Expect.equal "test"
+      <| Segments.toString (Dict.fromList [("test", "test")])
+      <| Segments.int "test"
   ]

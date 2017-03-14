@@ -1,22 +1,20 @@
 module Matcher.Arguments exposing (..)
 
 import Dict exposing (Dict)
-import Combine exposing (Parser, many1, (<$>))
+import Combine exposing (Parser, many1, (<$>), (<*))
 import Combine.Char exposing (noneOf)
 import Combine.Num
 
 type alias Name = String
 
-{-| A constraint of route parameter type -}
-type Constraint = Int Name | String Name | Enum Name (List String) | Regex Name String
-
 {-| Dynamic route parameter name -}
 type alias Argument = String
 
--- type Argument = IntArgument | StringArgument
-
 {-| A map of route param names and values -}
 type alias Arguments = Dict Name Argument
+
+{-| A constraint of route parameter type -}
+type Constraint = Int Name | String Name | Enum Name (List String) | Regex Name String
 
 int : Name -> Constraint
 int = Int
@@ -30,17 +28,6 @@ enum = Enum
 regex : Name -> String -> Constraint
 regex = Regex
 
-constraintToString : Arguments -> Constraint -> String
-constraintToString args constraint =
-  let argument = case constraint of
-    Int name -> Dict.get name args
-    String name -> Dict.get name args
-    Enum name _ -> Dict.get name args
-    Regex name _ -> Dict.get name args
-  in case argument of
-    Just value -> value
-    Nothing -> Debug.crash "toString:Constraint no arguments"
-
 slash : Char
 slash = '/'
 
@@ -52,6 +39,19 @@ query = '?'
 
 stringParser : Parser s String
 stringParser = String.fromList <$> many1 (noneOf [ slash, hash, query ])
+
+constraintToString : Arguments -> Constraint -> String
+constraintToString args constraint =
+  let argument = case constraint of
+    Int name -> Dict.get name args
+    String name -> Dict.get name args
+    Enum name _ -> Dict.get name args
+    Regex name _ -> Dict.get name args
+  in case argument of
+    Nothing -> Debug.crash "toString:Constraint no arguments"
+    Just value -> case Combine.parse (getParser constraint <* Combine.end) value of
+      Ok _ -> value
+      Err _ -> Debug.crash "toString:Constraint no arguments"
 
 getParser : Constraint -> Parser s Arguments
 getParser constraint = case constraint of

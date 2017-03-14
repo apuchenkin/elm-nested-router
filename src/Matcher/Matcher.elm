@@ -1,14 +1,11 @@
 module Matcher.Matcher exposing (..)
 
 import Dict exposing (Dict)
--- import Html exposing (Html)
 
 import Matcher.Arguments as Arguments exposing (Arguments)
 import Matcher.Segments as Segments
 
 type alias URL = String
-
--- type alias View msg = Dict String (Html msg)
 
 {-| combined abstract route type with params -}
 type alias Route route = {
@@ -35,7 +32,7 @@ matchOne : GetConfig route -> List route -> URL -> route -> Maybe (Route route)
 matchOne getConfig routes url route =
   let
     config = getConfig route
-    result = Segments.parse url config.segment
+    result = Segments.parse config.segment url
   in case result of
     Err _ -> Nothing
     Ok (_, stream, arguments) ->
@@ -60,5 +57,7 @@ match : GetConfig route -> Sitemap route -> URL -> Maybe (Route route)
 match getConfig sitemap url = matchChilds getConfig sitemap Nothing url
 
 buildURL : GetConfig route -> Route route -> URL
-buildURL getConfig route = ""
--- buildURL getConfig (route, arguments) = (.segment << getConfig) route
+buildURL getConfig {route, arguments} = Segments.toString arguments <| (.segment << getConfig) route
+
+route : route -> Arguments -> Route route
+route route arguments = { route = route, arguments = arguments }

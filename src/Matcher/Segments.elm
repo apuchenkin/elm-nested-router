@@ -37,11 +37,11 @@ combine s1 s2 = Sequence [s1, s2]
 infixl 8 </>
 
 toString : Arguments -> Segment -> String
-toString args segment = case segment of
+toString arguments segment = case segment of
   Terminator -> ""
   Static string -> string
-  Argument constraint -> Arguments.constraintToString args constraint
-  Sequence list -> List.foldl (++) "" (List.map (toString args) list)
+  Argument constraint -> Arguments.constraintToString arguments constraint
+  Sequence list -> List.foldl (++) "" (List.map (toString arguments) list)
 
 slashParser : Parser s ()
 slashParser = Combine.skip <| Combine.Char.char Arguments.slash
@@ -61,5 +61,6 @@ getParser segment = case segment of
     (getParser head)
     (List.map getParser tail)
 
-parse : String -> Segment -> Result (Combine.ParseErr ()) (Combine.ParseOk () Arguments)
-parse url segment = Combine.parse (getParser segment <* Combine.optional () slashParser) url
+parse : Segment -> String -> Result (Combine.ParseErr ()) (Combine.ParseOk () Arguments)
+parse segment = Combine.parse
+  <| getParser segment <* Combine.optional () slashParser
