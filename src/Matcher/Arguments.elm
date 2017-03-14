@@ -1,7 +1,7 @@
 module Matcher.Arguments exposing (..)
 
 import Dict exposing (Dict)
-import Combine exposing (Parser, many1, parse, many, while, between, end, manyTill, (<$>), (*>), (<*), (<*>), (<|>))
+import Combine exposing (Parser, many1, (<$>))
 import Combine.Char exposing (noneOf)
 import Combine.Num
 
@@ -44,8 +44,14 @@ constraintToString args constraint =
 slash : Char
 slash = '/'
 
+hash : Char
+hash = '#'
+
+query : Char
+query = '?'
+
 stringParser : Parser s String
-stringParser = String.fromList <$> many1 (noneOf [ slash, '#', '?' ])
+stringParser = String.fromList <$> many1 (noneOf [ slash, hash, query ])
 
 getParser : Constraint -> Parser s Arguments
 getParser constraint = case constraint of

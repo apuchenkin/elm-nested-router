@@ -1,21 +1,20 @@
 module Matcher.Matcher exposing (..)
 
 import Dict exposing (Dict)
-import Html exposing (Html)
--- import Msg exposing (Msg (..))
+-- import Html exposing (Html)
 
-import Matcher.Arguments as Arguments
+import Matcher.Arguments as Arguments exposing (Arguments)
 import Matcher.Segments as Segments
 
 type alias URL = String
 
-type alias View msg = Dict String (Html msg)
+-- type alias View msg = Dict String (Html msg)
 
 {-| combined abstract route type with params -}
 type alias Route route = {
     route: route
-  , arguments: Arguments.Arguments
-  -- , query: Arguments.Arguments
+  , arguments: Arguments
+  -- , query: Arguments
   }
 
 type alias RouteConfig route = {
@@ -37,16 +36,13 @@ matchOne getConfig routes url route =
   let
     config = getConfig route
     result = Segments.parse url config.segment
-    -- _ = Debug.crash <| toString <| result
   in case result of
     Err _ -> Nothing
     Ok (_, stream, arguments) ->
       let
         childMatch = matchChilds getConfig routes (Just route) stream.input
-        -- _ = Debug.crash <| toString <| childMatch
-        _ = Debug.log <| toString childMatch
       in case childMatch of
-        Just match -> childMatch
+        Just match -> Just { route = match.route, arguments = Dict.union arguments match.arguments }
         Nothing -> case stream.input of
           "" -> Just {
             route = route

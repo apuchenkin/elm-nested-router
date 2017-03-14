@@ -2,13 +2,14 @@ module Matcher.Segments exposing (..)
 
 import Matcher.Arguments as Arguments exposing (Name, Arguments)
 
-import Combine exposing (Parser, many1, parse, many, while, between, end, manyTill, (<$>), (*>), (<*), (<*>), (<|>), (>>=))
-import Combine.Char
 import Dict
+import Combine exposing (Parser, (<$>), (*>), (<*), (<*>), (<|>))
+import Combine.Char
 
 type Segment = Terminator | Static String | Argument Arguments.Constraint | Sequence (List Segment)
 
 -- TODO: Add Optional?
+-- TODO: Use `end` as bypass?
 
 end : Segment
 end = Terminator
@@ -45,20 +46,20 @@ toString args segment = case segment of
 slashParser : Parser s ()
 slashParser = Combine.skip <| Combine.Char.char Arguments.slash
 
+terminatorParser : Parser s ()
+terminatorParser = slashParser <|> Combine.end
+
 getParser : Segment -> Parser s Arguments
 getParser segment = case segment of
-  Terminator -> always Dict.empty <$> Combine.choice [
-      slashParser
-    , Combine.end
-  ]
+  Terminator -> always Dict.empty <$> terminatorParser
   Static string -> always Dict.empty <$> Combine.string string
   Argument constraint -> Arguments.getParser constraint
   Sequence [] -> Combine.fail "empty sequence"
   Sequence (head::tail) -> List.foldl (\parser2 parser ->
-    parser <* getParser Terminator
-    >>= (\r -> Dict.union r <$> parser2))
-   (getParser head)
-   (List.map getParser tail)
+      Dict.union <$> parser <* terminatorParser <*> parser2
+    )
+    (getParser head)
+    (List.map getParser tail)
 
 parse : String -> Segment -> Result (Combine.ParseErr ()) (Combine.ParseOk () Arguments)
 parse url segment = Combine.parse (getParser segment <* Combine.optional () slashParser) url
