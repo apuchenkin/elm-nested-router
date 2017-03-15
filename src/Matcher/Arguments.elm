@@ -47,16 +47,16 @@ getName constraint = case constraint of
     Enum name _ -> name
     Regex name _ -> name
 
-toString : Arguments -> Constraint -> String
+toString : Arguments -> Constraint -> Result String String
 toString arguments constraint =
   let
     name = getName constraint
     argument = Dict.get name arguments
   in case argument of
-    Nothing -> Debug.crash <| "missed argument: " ++ name
+    Nothing -> Err <| "missed argument: " ++ name
     Just value -> case Combine.parse (getParser constraint <* Combine.end) value of
-      Ok _ -> value
-      Err _ -> Debug.crash <| "wrong argument: " ++ name
+      Ok _ -> Ok value
+      Err _ -> Err <| "wrong argument: " ++ name
 
 getParser : Constraint -> Parser s Arguments
 getParser constraint = case constraint of

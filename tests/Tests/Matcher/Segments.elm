@@ -55,39 +55,47 @@ testParseSuccess = describe "parse" [
 
 testToString : Test
 testToString = describe "toString" [
-    test "toString end"
-      <| \_ -> Expect.equal ""
+    test "end"
+      <| \_ -> Expect.equal (Just "")
       <| Segments.toString Dict.empty Segments.end
-  , test "toString static"
-      <| \_ -> Expect.equal "test"
+  , test "static"
+      <| \_ -> Expect.equal (Just "test")
       <| Segments.toString Dict.empty
       <| Segments.static "test"
-  , test "toString int"
-      <| \_ -> Expect.equal "1"
+  , test "int"
+      <| \_ -> Expect.equal (Just "1")
       <| Segments.toString (Dict.fromList [("test", "1")])
       <| Segments.int "test"
-  , test "toString string"
-      <| \_ -> Expect.equal "test"
+  , test "string"
+      <| \_ -> Expect.equal (Just "test")
       <| Segments.toString (Dict.fromList [("test", "test")])
       <| Segments.string "test"
-  , test "toString enum"
-      <| \_ -> Expect.equal "lion"
+  , test "enum"
+      <| \_ -> Expect.equal (Just "lion")
       <| Segments.toString (Dict.fromList [("animal", "lion")])
       <| Segments.enum "animal" ["tiger", "lion"]
-  , test "toString sequence"
-      <| \_ -> Expect.equal "animal"
+  , test "sequence"
+      <| \_ -> Expect.equal (Just "animal")
       <| Segments.toString Dict.empty
       <| Segments.static "animal" </> Segments.end
-  , test "toString sequence 2"
-      <| \_ -> Expect.equal "animal/bear"
+  , test "sequence 2"
+      <| \_ -> Expect.equal (Just "animal/bear")
       <| Segments.toString Dict.empty
       <| Segments.static "animal" </> Segments.static "bear" </> Segments.end
-  , test "toString sequence 3"
-      <| \_ -> Expect.equal "animal/lion"
+  , test "sequence 3"
+      <| \_ -> Expect.equal (Just "animal/lion")
       <| Segments.toString (Dict.fromList [("animal", "lion")])
       <| Segments.static "animal" </> Segments.string "animal"
-  , test "toString sequence 3"
-      <| \_ -> Expect.equal "animal/tiger/post/12"
+  , test "sequence 3"
+      <| \_ -> Expect.equal (Just "animal/tiger/post/12")
       <| Segments.toString (Dict.fromList [("animal", "tiger"), ("postId", "12")])
       <| Segments.static "animal" </> Segments.string "animal" </> Segments.static "post" </> Segments.int "postId"
+  , test "optional"
+      <| \_ -> Expect.equal (Just "animal/tiger/post/12")
+      <| Segments.toString (Dict.fromList [("animal", "tiger"), ("postId", "12")])
+      <| Segments.static "animal" </> Segments.string "animal" </> Segments.maybe (Segments.static "post" </> Segments.int "postId")
+  , test "optional 2"
+      <| \_ -> Expect.equal (Just "animal/tiger")
+      <| Segments.toString (Dict.fromList [("animal", "tiger")])
+      <| Segments.static "animal" </> Segments.string "animal" </> Segments.maybe (Segments.static "post" </> Segments.int "postId")
   ]

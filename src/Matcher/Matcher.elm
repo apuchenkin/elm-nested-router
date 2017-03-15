@@ -59,7 +59,7 @@ match getConfig sitemap url = matchChilds getConfig sitemap Nothing url
 composeURL : GetConfig route -> Route route -> URL
 composeURL getConfig {route, arguments} = let
     config = getConfig route
-    url = Segments.toString arguments config.segment
+    url = Maybe.withDefault "/" <| Segments.toString arguments config.segment
   in case config.parent of
     Nothing -> url
     Just parent -> String.concat
