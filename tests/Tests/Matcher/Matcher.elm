@@ -42,9 +42,10 @@ routes = [Home, Category "bear", Category "tiger", Category "animal", Post, Arti
 
 testSuite : Test
 testSuite = describe "Mather" [
-    testMatch,
-    testMatchFail
-    -- testBuildUrl
+    testMatch
+  , testMatchFail
+  , testBuildUrl
+  , testReversible
   ]
 
 testMatch : Test
@@ -122,35 +123,45 @@ testBuildUrl = describe "buildUrl"
       <| \_ -> Expect.equal "/category/lion"
       <| Matcher.buildURL routeConfig <| Matcher.route (Category "animal") (Dict.fromList [("category", "lion")])
   , test "buildURL post"
-      <| \_ -> Expect.equal "/category/bear/post/lion"
-      <| Matcher.buildURL routeConfig <| Matcher.route Post (Dict.fromList [("post", "lion")])
+      <| \_ -> Expect.equal "/category/bear/post/1"
+      <| Matcher.buildURL routeConfig <| Matcher.route Post (Dict.fromList [("post", "1")])
   , test "buildURL article"
-      <| \_ -> Expect.equal "/category/animal/article/lion"
-      <| Matcher.buildURL routeConfig <| Matcher.route Post (Dict.fromList [("category", "animal"), ("animal", "lion")])
+      <| \_ -> Expect.equal "/category/animal/article/penguin"
+      <| Matcher.buildURL routeConfig <| Matcher.route Article (Dict.fromList [("category", "animal"), ("animal", "penguin")])
   ]
 
--- testReversible : Test
--- testReversible = describe "reversible"
---   [
---     test "match"
---       <| \_ -> Expect.equal (Just "/")
---       <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/")
---   , test "fail by constraint"
---       <| \_ -> Expect.equal Nothing
---       <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/param")
---   , test "equal with constraint"
---       <| \_ -> Expect.equal (Just "/A")
---       <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/A")
---   , test "match 404"
---       <| \_ -> Expect.equal (Just "/404")
---       <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/404")
---   , test "match with optional param"
---       <| \_ -> Expect.equal (Just "/A/subcategory")
---       <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/A/subcategory")
---   , test "match Subpage without optional param"
---       <| \_ -> Expect.equal (Just "/B/item/3")
---       <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/B/item/3")
---   , test "match Subpage with optional param"
---       <| \_ -> Expect.equal (Just "/C/subcategory/item/4")
---       <| Maybe.map (buildUrl (.segment << config) (.parent << config)) <| (match config routes "/C/subcategory/item/4")
---   ]
+testReversible : Test
+testReversible = let
+    home = Matcher.route Home Dict.empty
+    bear = Matcher.route (Category "bear") Dict.empty
+    tiger = Matcher.route (Category "tiger") Dict.empty
+    animal = Matcher.route (Category "animal") (Dict.fromList [("category", "lion")])
+    post = Matcher.route Post (Dict.fromList [("post", "1")])
+    article = Matcher.route Article (Dict.fromList [("category", "animal"), ("animal", "penguin")])
+  in describe "reversible"
+  [
+    test "home"
+      <| \_ -> Expect.equal (Just home)
+      <| Matcher.match routeConfig routes
+      <| Matcher.buildURL routeConfig home
+  , test "bear"
+      <| \_ -> Expect.equal (Just bear)
+      <| Matcher.match routeConfig routes
+      <| Matcher.buildURL routeConfig bear
+  , test "tiger"
+      <| \_ -> Expect.equal (Just tiger)
+      <| Matcher.match routeConfig routes
+      <| Matcher.buildURL routeConfig tiger
+  , test "animal"
+      <| \_ -> Expect.equal (Just animal)
+      <| Matcher.match routeConfig routes
+      <| Matcher.buildURL routeConfig animal
+  , test "post"
+      <| \_ -> Expect.equal (Just post)
+      <| Matcher.match routeConfig routes
+      <| Matcher.buildURL routeConfig post
+  , test "article"
+      <| \_ -> Expect.equal (Just article)
+      <| Matcher.match routeConfig routes
+      <| Matcher.buildURL routeConfig article
+  ]

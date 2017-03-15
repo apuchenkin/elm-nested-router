@@ -3,7 +3,7 @@ module Matcher.Matcher exposing (..)
 import Dict exposing (Dict)
 
 import Matcher.Arguments as Arguments exposing (Arguments)
-import Matcher.Segments as Segments
+import Matcher.Segments as Segments exposing ((</>))
 
 type alias URL = String
 
@@ -56,8 +56,19 @@ matchChilds getConfig sitemap parent url = List.head
 match : GetConfig route -> Sitemap route -> URL -> Maybe (Route route)
 match getConfig sitemap url = matchChilds getConfig sitemap Nothing url
 
+composeURL : GetConfig route -> Route route -> URL
+composeURL getConfig {route, arguments} = let
+    config = getConfig route
+    url = Segments.toString arguments config.segment
+  in case config.parent of
+    Nothing -> url
+    Just parent -> String.concat
+      <| List.intersperse "/"
+      <| List.filter (not << String.isEmpty)
+      <| [composeURL getConfig { route = parent, arguments = arguments }, url]
+
 buildURL : GetConfig route -> Route route -> URL
-buildURL getConfig {route, arguments} = Segments.toString arguments <| (.segment << getConfig) route
+buildURL getConfig route = String.cons Arguments.slash <| composeURL getConfig route
 
 route : route -> Arguments -> Route route
 route route arguments = { route = route, arguments = arguments }

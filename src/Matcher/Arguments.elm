@@ -40,22 +40,27 @@ query = '?'
 stringParser : Parser s String
 stringParser = String.fromList <$> many1 (noneOf [ slash, hash, query ])
 
-constraintToString : Arguments -> Constraint -> String
-constraintToString args constraint =
-  let argument = case constraint of
-    Int name -> Dict.get name args
-    String name -> Dict.get name args
-    Enum name _ -> Dict.get name args
-    Regex name _ -> Dict.get name args
+getName : Constraint -> String
+getName constraint = case constraint of
+    Int name -> name
+    String name -> name
+    Enum name _ -> name
+    Regex name _ -> name
+
+toString : Arguments -> Constraint -> String
+toString arguments constraint =
+  let
+    name = getName constraint
+    argument = Dict.get name arguments
   in case argument of
-    Nothing -> Debug.crash "toString:Constraint no arguments"
+    Nothing -> Debug.crash <| "missed argument: " ++ name
     Just value -> case Combine.parse (getParser constraint <* Combine.end) value of
       Ok _ -> value
-      Err _ -> Debug.crash "toString:Constraint no arguments"
+      Err _ -> Debug.crash <| "wrong argument: " ++ name
 
 getParser : Constraint -> Parser s Arguments
 getParser constraint = case constraint of
-  Int name -> Dict.singleton name << toString <$> Combine.Num.int
+  Int name -> Dict.singleton name << Basics.toString <$> Combine.Num.int
   String name -> Dict.singleton name <$> stringParser
   Enum name options -> Dict.singleton name <$> (Combine.choice <| List.map Combine.string options)
   Regex name reg -> Dict.singleton name <$> Combine.regex reg

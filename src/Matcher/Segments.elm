@@ -40,8 +40,10 @@ toString : Arguments -> Segment -> String
 toString arguments segment = case segment of
   Terminator -> ""
   Static string -> string
-  Argument constraint -> Arguments.constraintToString arguments constraint
-  Sequence list -> List.foldl (++) "" (List.map (toString arguments) list)
+  Argument constraint -> Arguments.toString arguments constraint
+  Sequence list -> String.concat <| List.intersperse "/"
+    <| List.filter (not << String.isEmpty)
+    <| List.map (toString arguments) list
 
 slashParser : Parser s ()
 slashParser = Combine.skip <| Combine.Char.char Arguments.slash
