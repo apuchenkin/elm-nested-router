@@ -8,7 +8,7 @@ import Dict
 import Matcher.Matcher as Matcher
 import Matcher.Segments as Segments exposing ((</>))
 
-type Route = Home | Category String | Post | Article
+type Route = Home | Category String | Post | Article String
 
 routeConfig : Matcher.GetConfig Route
 routeConfig route = case route of
@@ -32,13 +32,14 @@ routeConfig route = case route of
     parent = Just (Category "bear")
   , segment = Segments.static "post" </> Segments.int "post"
   }
-  Article -> {
-    parent = Just (Category "animal")
+  Article category -> {
+    parent = Just <| Category category
   , segment = Segments.static "article" </> Segments.enum "animal" ["lion", "penguin"]
   }
 
+
 routes : List Route
-routes = [Home, Category "bear", Category "tiger", Category "animal", Post, Article]
+routes = [Home, Category "bear", Category "tiger", Category "animal", Post, Article "animal"]
 
 testSuite : Test
 testSuite = describe "Mather" [
@@ -81,10 +82,10 @@ testMatch = describe "match" [
       <| \_ -> Expect.equal (Just {route = Post, arguments = Dict.fromList [("post", "12")]})
       <| Matcher.match routeConfig routes "/category/bear/post/12/"
   , test "match article"
-      <| \_ -> Expect.equal (Just {route = Article, arguments = Dict.fromList [("category", "animals"), ("animal", "penguin")]})
+      <| \_ -> Expect.equal (Just {route = Article "animal", arguments = Dict.fromList [("category", "animals"), ("animal", "penguin")]})
       <| Matcher.match routeConfig routes "/category/animals/article/penguin"
   , test "match article"
-      <| \_ -> Expect.equal (Just {route = Article, arguments = Dict.fromList [("category", "bear"), ("animal", "lion")]})
+      <| \_ -> Expect.equal (Just {route = Article "animal", arguments = Dict.fromList [("category", "bear"), ("animal", "lion")]})
       <| Matcher.match routeConfig routes "/category/bear/article/lion/"
   ]
 
@@ -110,24 +111,24 @@ testMatchFail = describe "match" [
 testBuildUrl : Test
 testBuildUrl = describe "buildUrl"
   [
-    test "buildURL home"
+    test "home"
       <| \_ -> Expect.equal "/"
       <| Matcher.buildURL routeConfig <| Matcher.route Home Dict.empty
-  , test "buildURL category bear"
+  , test "category bear"
       <| \_ -> Expect.equal "/category/bear"
       <| Matcher.buildURL routeConfig <| Matcher.route (Category "bear") Dict.empty
-  , test "buildURL category tiger"
+  , test "category tiger"
       <| \_ -> Expect.equal "/category/tiger"
       <| Matcher.buildURL routeConfig <| Matcher.route (Category "tiger") Dict.empty
-  , test "buildURL category animal"
+  , test "category animal"
       <| \_ -> Expect.equal "/category/lion"
       <| Matcher.buildURL routeConfig <| Matcher.route (Category "animal") (Dict.fromList [("category", "lion")])
-  , test "buildURL post"
+  , test "post"
       <| \_ -> Expect.equal "/category/bear/post/1"
       <| Matcher.buildURL routeConfig <| Matcher.route Post (Dict.fromList [("post", "1")])
-  , test "buildURL article"
+  , test "article"
       <| \_ -> Expect.equal "/category/animal/article/penguin"
-      <| Matcher.buildURL routeConfig <| Matcher.route Article (Dict.fromList [("category", "animal"), ("animal", "penguin")])
+      <| Matcher.buildURL routeConfig <| Matcher.route (Article "animal") (Dict.fromList [("category", "animal"), ("animal", "penguin")])
   ]
 
 testReversible : Test
@@ -137,7 +138,7 @@ testReversible = let
     tiger = Matcher.route (Category "tiger") Dict.empty
     animal = Matcher.route (Category "animal") (Dict.fromList [("category", "lion")])
     post = Matcher.route Post (Dict.fromList [("post", "1")])
-    article = Matcher.route Article (Dict.fromList [("category", "animal"), ("animal", "penguin")])
+    article = Matcher.route (Article "animal") (Dict.fromList [("category", "animal"), ("animal", "penguin")])
   in describe "reversible"
   [
     test "home"
