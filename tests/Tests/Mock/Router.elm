@@ -7,11 +7,6 @@ import Router.Matcher as Matcher
 import Router.Types        exposing (..)
 
 -- import Response as R
-initialState : RouterState route
-initialState = {
-    route = Nothing
-  , params = Dict.empty
-  }
 
 bindForwardMock : RouterConfig route (WithRouter route state) msg -> Route route -> List (Html.Attribute (Msg route msg)) -> List (Html.Attribute (Msg route msg))
 bindForwardMock config route attrs = attrs

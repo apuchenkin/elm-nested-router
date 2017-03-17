@@ -21,50 +21,6 @@ testSuite = describe "Mather" [
   ]
 
 {-| Private -}
-testUnwrap : Test
-testUnwrap = describe "unwrap"
-  [
-    test "non-wrapped0"
-      <| \_ -> Expect.equal ["/url"]
-      <| unwrap "/url"
-  , test "non-wrapped1"
-      <| \_ -> flip Expect.equal ["static/static2"]
-      <| unwrap "static/static2"
-  , test "non-wrapped2"
-      <| \_ -> flip Expect.equal ["static/:static2"]
-      <| unwrap "static/:static2"
-  , test "non-wrapped3"
-      <| \_ -> flip Expect.equal [":static/static2"]
-      <| unwrap ":static/static2"
-
-  , test "wrapped1"
-      <| \_ -> Expect.equal ["test", ""]
-      <| unwrap "[test]"
-  , test "wrapped2"
-      <| \_ -> Expect.equal ["/:test", ""]
-      <| unwrap "[/:test]"
-  , test "wrapped3"
-      <| \_ -> Expect.equal ["/path/test", "/path"]
-      <| unwrap "/path[/test]"
-  , test "wrapped4"
-      <| \_ -> Expect.equal ["/:substring/:string", "/:string"]
-      <| unwrap "[/:substring]/:string"
-
-  , test "two-wrapped"
-      <| \_ -> Expect.equal ["/:string/:substring", "/:string", ""]
-      <| unwrap "[/:string[/:substring]]"
-  , test "two-wrapped"
-      <| \_ -> Expect.equal ["/path/:string/:substring", "/path/:string", "/path"]
-      <| unwrap "/path[/:string[/:substring]]"
-  , test "two-wrapped"
-      <| \_ -> Expect.equal ["/path/:string/:substring/sub", "/path/:string/sub", "/path/sub"]
-      <| unwrap "/path[/:string[/:substring]]/sub"
-  , test "two-wrapped"
-      <| \_ -> Expect.equal ["/path/:string/:substring", "/path/:substring", "/path/:string", "/path"]
-      <| unwrap "/path[/:string][/:substring]"
-  ]
-
-{-| Private -}
 testParseUrlParams : Test
 testParseUrlParams = describe "parseUrlParams"
   [

@@ -18,6 +18,7 @@ type alias RouteConfig route = {
   }
 
 type alias Sitemap route = List route
+
 type alias GetConfig route = route -> RouteConfig route
 
 isChild : GetConfig route -> Maybe route -> route -> Bool
@@ -31,13 +32,26 @@ parents getConfig routes route = case (.parent << getConfig) route of
   Nothing -> []
   Just parent -> parents getConfig routes parent ++ [parent]
 
+hasTrailingSlash : URL -> Bool
+hasTrailingSlash url = case String.right 1 url of
+    "/" -> True
+    _ -> False
+
+removeTrailingSlash : URL -> URL
+removeTrailingSlash url = if hasTrailingSlash url then String.dropRight 1 url else url
+
+removeLeadingSlash : URL -> URL
+removeLeadingSlash url = case String.left 1 url of
+    "/" -> String.dropLeft 1 url
+    _ -> url
+
 matchOne : GetConfig route -> List route -> URL -> route -> Maybe (Route route)
 matchOne getConfig routes url route =
   let
     config = getConfig route
     segments = List.map (.segment << getConfig) <| parents getConfig routes route
     segment = List.foldr (</>) Segments.end <| segments ++ [config.segment]
-    result = Segments.parse (String.dropLeft 1 url) segment
+    result = Segments.parse (removeLeadingSlash url) segment
   in case result of
     Err err -> Nothing -- matchChilds getConfig routes (Just route) url
     Ok (_, _, arguments) -> Just {

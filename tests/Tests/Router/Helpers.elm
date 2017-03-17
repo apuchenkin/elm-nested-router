@@ -1,10 +1,10 @@
 module Tests.Router.Helpers exposing (..)
 
-import Test exposing (..)
 import Expect
-import Router.Helpers   exposing (..)
+import Test exposing (..)
 
-import Tests.Mock.Data exposing (..)
+import Router.Helpers   exposing (..)
+import Tests.Mock.Actions exposing (..)
 
 testSuite : Test
 testSuite = describe "Helpers" [
