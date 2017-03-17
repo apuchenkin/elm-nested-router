@@ -3,12 +3,10 @@ module Matcher.Segments exposing (..)
 import Matcher.Arguments as Arguments exposing (Name, Arguments)
 
 import Dict
-import Combine exposing (Parser, (<$>), (*>), (<*), (<*>), (<|>))
+import Combine exposing (Parser, (<$>), (*>), (<*), (<*>), (<|>), (<$))
 import Combine.Char
 
 type Segment = Terminator | Static String | Argument Arguments.Constraint | Sequence (List Segment) | Optional Segment
-
--- TODO: Use `end` as bypass?
 
 end : Segment
 end = Terminator
@@ -32,7 +30,10 @@ maybe : Segment -> Segment
 maybe segment = Optional segment
 
 combine : Segment -> Segment -> Segment
-combine s1 s2 = Sequence [s1, s2]
+combine s1 s2 = case s1 of
+  Terminator -> s2
+  Sequence [s, Terminator] -> Sequence [s, s2]
+  _ -> Sequence [s1, s2]
 
 (</>) : Segment -> Segment -> Segment
 (</>) = combine
@@ -69,19 +70,21 @@ combineResults =
       Ok value -> Result.map ((::) value) acc
   in List.foldr step (Ok [])
 
-getParser : Segment -> Parser s Arguments
+getParser : Segment -> List (Parser error Arguments)
 getParser segment = case segment of
-  Terminator -> always Dict.empty <$> terminatorParser
-  Static string -> always Dict.empty <$> Combine.string string
-  Argument constraint -> Arguments.getParser constraint
-  Optional segment -> getParser segment
-  Sequence [] -> Combine.fail "empty sequence"
-  Sequence (head::tail) -> List.foldl (\parser2 parser ->
-      Dict.union <$> parser <* terminatorParser <*> parser2
-    )
-    (getParser head)
-    (List.map getParser tail)
+  Terminator -> [Dict.empty <$ terminatorParser]
+  Static string -> [Dict.empty <$ Combine.string string]
+  Argument constraint -> [Arguments.getParser constraint]
+  Optional segment -> Combine.succeed Dict.empty :: getParser segment
+  Sequence [] -> [Combine.fail "empty sequence"]
+  Sequence (head::tail) -> List.foldl (\segment parsers ->
+      let starters = case segment of
+        Optional s -> Combine.succeed Dict.empty :: List.map ((*>) terminatorParser) (getParser segment)
+        _ -> List.map ((*>) terminatorParser) (getParser segment)
+      in List.concat <| List.map (\parser -> List.map ((<*>) (Dict.union <$> parser)) starters) parsers
+      )
+      (getParser head)
+      tail
 
-parse : Segment -> String -> Result (Combine.ParseErr ()) (Combine.ParseOk () Arguments)
-parse segment = Combine.parse
-  <| getParser segment <* Combine.optional () slashParser
+parse : String -> Segment -> Result (Combine.ParseErr ()) (Combine.ParseOk () Arguments)
+parse = flip <| Combine.parse << Combine.choice << getParser
