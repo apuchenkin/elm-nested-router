@@ -15,6 +15,7 @@ testSuite = describe "Mather" [
   , testMatchFail
   , testBuildUrl
   , testReversible
+  , testRemoveTrailingSlash
   ]
 
 testParents : Test
@@ -161,4 +162,20 @@ testReversible = let
       <| \_ -> Expect.equal (Just article)
       <| Matcher.match routeConfig routes
       <| Matcher.buildURL routeConfig article
+  ]
+
+testRemoveTrailingSlash : Test
+testRemoveTrailingSlash = describe "removeTrailingSlash" [
+    test "slash is removed"
+      <| \_ -> Expect.equal "/url/with/trailing/slash"
+      <| Matcher.removeTrailingSlash "/url/with/trailing/slash/"
+  , test "no slash"
+      <| \_ -> Expect.equal "/url/without/trailing/slash"
+      <| Matcher.removeTrailingSlash "/url/without/trailing/slash"
+  , test "empty"
+      <| \_ -> Expect.equal ""
+      <| Matcher.removeTrailingSlash ""
+  , test "just slash"
+      <| \_ -> Expect.equal ""
+      <| Matcher.removeTrailingSlash "/"
   ]

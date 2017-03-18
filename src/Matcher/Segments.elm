@@ -44,6 +44,14 @@ joinStrings strings = String.concat
   <| List.intersperse "/"
   <| List.filter (not << String.isEmpty) strings
 
+getConstraints : Segment -> List Arguments.Constraint
+getConstraints segment = case segment of
+  Terminator -> []
+  Static string -> []
+  Argument constraint -> [constraint]
+  Optional segment -> getConstraints segment
+  Sequence list -> List.concat <| List.map (getConstraints) list
+
 toString : Arguments -> Segment -> Result String String
 toString arguments segment =
   case segment of

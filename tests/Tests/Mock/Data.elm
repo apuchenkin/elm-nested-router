@@ -29,10 +29,6 @@ routerConfig = RouterConfig {
   , routeConfig = config
   , subscriptions = always Sub.none
   }
------------- actions ----------------------
-
-
------------- handlers ----------------------
 
 -- only text html can be tested due to bug (toString(null))
 

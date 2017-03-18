@@ -40,7 +40,7 @@ query = '?'
 stringParser : Parser s String
 stringParser = String.fromList <$> many1 (noneOf [ slash, hash, query ])
 
-getName : Constraint -> String
+getName : Constraint -> Name
 getName constraint = case constraint of
     Int name -> name
     String name -> name

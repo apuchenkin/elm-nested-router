@@ -3,7 +3,7 @@ module Router.Types exposing (..)
 {-| Router types
 
 # URL parts
-@docs URL, RawURL, RawSegment, Param, Constraint, Route, RouteConfig, RouteParams, Msg
+@docs Msg
 
 # Actions and handlers
 @docs WithRouter, Handler, Action, Transition
@@ -16,107 +16,27 @@ import Dict           exposing (Dict)
 import Html           exposing (Html)
 import Navigation
 
------------------------------------------
--- Route mather related types
------------------------------------------
+import Matcher.Matcher exposing (GetConfig, Route, URL)
+import Matcher.Arguments exposing (Arguments)
 
-{-| A valid URL:
-```
-"/home/post/1"
-```
--}
-type alias URL = String
-
-{-| Raw URL template:
-```
-"/home/post/:postId"
-```
--}
-type alias RawURL = String
-
-{-| A single segment of `RawURL` template -}
-type alias RawSegment = String
-
-{-| Dynamic route parameter name -}
-type alias Param = String
-
-{-| A map of route param names and values -}
-type alias RouteParams  = Dict Param String
-
-{-| A constraint of route parameter type -}
-type Constraint = Int | String | Enum (List String) | Regex String
-
-{-| combined abstract route type with params -}
-type alias Route route = (route, RouteParams)
-
------------------------------------------
--- Handler related types
------------------------------------------
 
 {-| `Action` represents function that prforms something with application state, and might contain side efects -}
 type alias Action state msg = state -> (state, Cmd msg)
 
 {-|
   A `Handler` is a piece of functionality binded to specific route
-  * `view` &mdash; Function that describes how to render application state to map of named views
+  * `render` &mdash; Function that describes how to render application state to map of named views
   * `actions` &mdash; A set of necessary to perform actions
 -}
 type alias Handler route state msg = {
-    view: state -> Dict String (Html (Msg route msg)) -> Dict String (Html (Msg route msg))
+    render: state -> Dict String (Html (Msg route msg)) -> Dict String (Html (Msg route msg))
   , actions: List msg
-  }
-
-{-|
-  `RouteConfig` is a route configuration
-
-  * `segment` &mdash; URL segment
-
-  Expample:
-```
-"/home",
-"/post/:postId",
-"/author[/:authorId]"
-```
-  * `parent` &mdash; A parent route
-  * `bypass` &mdash; When setted to True - route will not be matched directly, but still can provide actions and views
-  * `constraints` &mdash; A set of constraints applied to route params. (`String`, `Int`, `Enum`, `Regexp`) constraints are supported
-  * `handler` &mdash; A binding to handler.
-
-  **Exapmle of route configuration**:
-```
-  config = {
-    -- "author" and "postId" is dynamic url parts
-    -- "postId" is marked as optional and might me ommited in URL
-    segment = "/page/:author[/:postId]"
-  , parent = Nothing
-    -- setting a parent for route means that full route URL will be combined with it's parent, and actions for route and it's parent will be fired on match
-  , bypass = False
-  , constraints = Dict.fromList [("author", String),("postId", Int)]
-    -- constraints specify that `author` param must be a string,
-    -- and postId an integer
-  , handler = always PostHandler
-  }
-```
-
-  A `config` above will match following URLs:
-```
-"/page/mark/1", "/page/mark", "/page/joe"
-```
-  "mark" and "joe" will be stored as `author` param, and "1" as `postId`
-  Everything enclosed by brackets considered as optional.
--}
-type alias RouteConfig route state msg = {
-    segment: RawSegment
-  , parent: Maybe route
-  , bypass: Bool
-  , constraints: Dict Param Constraint
-  , handler: Router route state msg -> Handler route state msg
   }
 
 {-| A state of router -}
 type alias RouterState route = {
     route: Maybe route
-  , params: RouteParams
+  , params: Arguments
   }
 
 {-| Type extension for the application state -}
@@ -145,7 +65,7 @@ type RouterConfig route state msg = RouterConfig {
   , update : msg -> Action state (Msg route msg)
   , layout: Router route state msg -> state -> Dict String (Html (Msg route msg)) -> (Html (Msg route msg))
   , onTransition: Router route state msg -> Transition route msg
-  , routeConfig: route -> RouteConfig route state msg
+  , routeConfig: GetConfig route
   , routes: List route
   , subscriptions : state -> Sub (Msg route msg)
   }
