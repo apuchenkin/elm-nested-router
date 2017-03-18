@@ -85,6 +85,18 @@ testParseSuccess = describe "parse" [
       <| \_ -> expectOk
       <| parse "category/bear/post/1"
       <| static "category" </> string "param1" </> maybe (int "param2") </> static "post" </> int "param 3"
+  , test "optional"
+      <| \_ -> expectOk
+      <| parse "category/bear"
+      <| maybe (string "param1") </> maybe (string "param2") </> end
+  , test "optional"
+      <| \_ -> expectOk
+      <| parse "category"
+      <| maybe (string "param1") </> maybe (string "param2") </> end
+  , test "optional"
+      <| \_ -> expectOk
+      <| parse ""
+      <| maybe (string "param1") </> maybe (string "param2") </> end
   ]
 
 testToString : Test
