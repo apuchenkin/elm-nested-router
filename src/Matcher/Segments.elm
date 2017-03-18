@@ -6,7 +6,7 @@ import Dict
 import Combine exposing (Parser, (<$>), (*>), (<*), (<*>), (<|>), (<$))
 import Combine.Char
 
-type Segment = Terminator | Static String | Argument Arguments.Constraint | Sequence (List Segment) | Optional Segment
+type Segment = Terminator | Static String | Argument Arguments.Constraint | Sequence Segment Segment | Optional Segment
 
 end : Segment
 end = Terminator
@@ -32,8 +32,8 @@ maybe segment = Optional segment
 combine : Segment -> Segment -> Segment
 combine s1 s2 = case s1 of
   Terminator -> s2
-  Sequence [s, Terminator] -> Sequence [s, s2]
-  _ -> Sequence [s1, s2]
+  Sequence s Terminator -> Sequence s s2
+  _ -> Sequence s1 s2
 
 (</>) : Segment -> Segment -> Segment
 (</>) = combine
@@ -50,7 +50,7 @@ getConstraints segment = case segment of
   Static string -> []
   Argument constraint -> [constraint]
   Optional segment -> getConstraints segment
-  Sequence list -> List.concat <| List.map (getConstraints) list
+  Sequence s1 s2 -> getConstraints s1 ++ getConstraints s2
 
 toString : Arguments -> Segment -> Result String String
 toString arguments segment =
@@ -59,10 +59,10 @@ toString arguments segment =
   Static string -> Ok string
   Argument constraint -> Arguments.toString arguments constraint
   Optional segment -> Ok <| Result.withDefault "" <| toString arguments segment
-  Sequence list -> Result.map joinStrings
+  Sequence s1 s2 -> Result.map joinStrings
     <| Result.mapError (String.concat << List.intersperse "/")
     <| combineResults
-    <| List.map (toString arguments) list
+    <| List.map (toString arguments) [s1, s2]
 
 slashParser : Parser s ()
 slashParser = Combine.skip <| Combine.Char.char Arguments.slash
@@ -84,15 +84,10 @@ getParser segment = case segment of
   Static string -> [Dict.empty <$ Combine.string string]
   Argument constraint -> [Arguments.getParser constraint]
   Optional segment -> Combine.succeed Dict.empty :: getParser segment
-  Sequence [] -> [Combine.fail "empty sequence"]
-  Sequence (head::tail) -> List.foldl (\segment parsers ->
-      let starters = case segment of
-        Optional s -> Combine.succeed Dict.empty :: List.map ((*>) terminatorParser) (getParser segment)
-        _ -> List.map ((*>) terminatorParser) (getParser segment)
-      in List.concat <| List.map (\parser -> List.map ((<*>) (Dict.union <$> parser)) starters) parsers
-      )
-      (getParser head)
-      tail
+  Sequence s1 s2 -> let starters = case s2 of
+      Optional s -> Combine.succeed Dict.empty :: List.map ((*>) terminatorParser) (getParser s2)
+      _ -> List.map ((*>) terminatorParser) (getParser s2)
+    in List.concat <| List.map (\parser -> List.map ((<*>) (Dict.union <$> parser)) starters) (getParser s1)
 
 parse : String -> Segment -> Result (Combine.ParseErr ()) (Combine.ParseOk () Arguments)
 parse = flip <| Combine.parse << Combine.choice << getParser
