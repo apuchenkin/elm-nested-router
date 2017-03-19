@@ -27,6 +27,10 @@ routeConfig parent segment = {
   , parent = parent
   }
 
+(//>) : Maybe route -> Segments.Segment -> RouteConfig route
+(//>) = routeConfig
+infixl 6 //>
+
 isChild : GetConfig route -> Maybe route -> route -> Bool
 isChild getConfig parent child = parent == (.parent << getConfig) child
 

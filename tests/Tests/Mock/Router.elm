@@ -7,7 +7,7 @@ import Matcher.Matcher as Matcher
 import Router.Types as Router
 import Tests.Mock.Actions exposing (..)
 import Tests.Mock.Routes exposing (..)
-import Tests.Mock.Handlers as Handlers
+import Tests.Mock.RouteConfig exposing (routeConfig)
 
 -- import Response as R
 
@@ -51,7 +51,7 @@ routerConfig = Router.RouterConfig {
   , update = update
   , onTransition = \_ _ _ -> []
   , routes = routes
-  , routeConfig = Handlers.routeConfig
+  , routeConfig = routeConfig
   , subscriptions = always Sub.none
   }
 

@@ -5,7 +5,11 @@ import Dict
 import Test exposing (..)
 import Matcher.Matcher as Matcher
 import Matcher.Utils exposing (..)
+import Tests.Mock.RouteConfig exposing (..)
 import Tests.Mock.Routes exposing (..)
+
+config : Matcher.GetConfig Route
+config = .route << routeConfig
 
 testSuite : Test
 testSuite = describe "Arguments" [
@@ -15,26 +19,30 @@ testSuite = describe "Arguments" [
   ]
 
 testTraverse : Test
-testTraverse = describe "traverse" [
+testTraverse = let
+    traverse_ = traverse config routes
+  in describe "traverse" [
     test "Category bear"
       <| \_ -> Expect.equal [Home, Category "bear"]
-      <| traverse routeConfig routes
+      <| traverse_
       <| Category "bear"
   , test "post"
       <| \_ -> Expect.equal [Home, Category "bear", Post]
-      <| traverse routeConfig routes Post
+      <| traverse_ Post
   , test "article"
       <| \_ -> Expect.equal [Home, Category "animal", Article "animal"]
-      <| traverse routeConfig routes
+      <| traverse_
       <| Article "animal"
   , test "home"
       <| \_ -> Expect.equal [Home]
-      <| traverse routeConfig routes Home
+      <| traverse_ Home
   ]
 
 testMapArguments : Test
 testMapArguments =
-  let arguments = Dict.fromList [("category","param"), ("subcategory","param2"), ("post","4"), ("animal", "lion")]
+  let
+    arguments = Dict.fromList [("category","param"), ("subcategory","param2"), ("post","4"), ("animal", "lion")]
+    mapArguments_ = flip (mapArguments config) arguments
   in describe "mapArguments" [
     test "mapArguments"
       <| \_ -> Expect.equal [
@@ -42,26 +50,26 @@ testMapArguments =
         Matcher.route (Category "bear") Dict.empty,
         Matcher.route Post <| Dict.fromList [("post", "4")]
       ]
-      <| mapArguments routeConfig [Home, Category "bear", Post] arguments
+      <| mapArguments_ [Home, Category "bear", Post]
   , test "mapArguments"
       <| \_ -> Expect.equal [
         Matcher.route Home Dict.empty,
         Matcher.route (Category "animal")<| Dict.fromList [("category", "param"), ("subcategory", "param2")]
       ]
-      <| mapArguments routeConfig [Home, Category "animal"] arguments
+      <| mapArguments_ [Home, Category "animal"]
   , test "mapArguments"
       <| \_ -> Expect.equal [
         Matcher.route Home Dict.empty,
         Matcher.route (Category "animal") <| Dict.fromList [("category", "param"), ("subcategory", "param2")],
         Matcher.route (Article "animal") <| Dict.fromList [("animal", "lion")]
       ]
-      <| mapArguments routeConfig [Home, Category "animal", Article "animal"] arguments
+      <| mapArguments_ [Home, Category "animal", Article "animal"]
   ]
 
 testRouteDiff : Test
 testRouteDiff =
   let
-    diff = routeDiff routeConfig routes
+    diff = routeDiff config routes
   in describe "routeDiff"
   [
     test "Home"

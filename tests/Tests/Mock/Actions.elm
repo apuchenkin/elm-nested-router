@@ -8,13 +8,13 @@ import Router.Types    exposing (Action, WithRouter)
 import Router.Types as Router
 import Router.Helpers  exposing (noFx)
 
+type Msg = NoOp | Succ | Append String
+
 type alias State = WithRouter Route
   {
     str: String,
     sum: Int
   }
-
-type Msg = NoOp | Succ | Append String
 
 init : State
 init = {
