@@ -4,9 +4,9 @@ import Tests.Matcher.Arguments
 import Tests.Matcher.Segments
 import Tests.Matcher.Utils
 import Tests.Matcher.Matcher
--- import Tests.Router.Functions
 import Tests.Router.Helpers
 import Tests.Router.Navigation
+import Tests.Router.Functions
 
 import Test exposing (Test, describe)
 
@@ -18,4 +18,5 @@ testSuite = describe "Router" [
   , Tests.Matcher.Matcher.testSuite
   , Tests.Router.Helpers.testSuite
   , Tests.Router.Navigation.testSuite
+  , Tests.Router.Functions.testSuite
   ]

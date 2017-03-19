@@ -20,7 +20,7 @@ init : State
 init = {
     router = {
       route = Nothing
-    , params = Dict.empty
+    , arguments = Dict.empty
     },
     str = "",
     sum = 0

@@ -6,9 +6,11 @@ import Test exposing (..)
 import Expect
 
 import Router.Functions exposing (..)
-import Router.Matcher   as Matcher
+import Matcher.Matcher as Matcher
 
-import Tests.Mock.Data exposing (..)
+import Tests.Mock.Actions exposing (..)
+import Tests.Mock.Routes exposing (..)
+import Tests.Mock.Router exposing (router)
 
 testSuite : Test
 testSuite = describe "Functions" [
@@ -26,62 +28,60 @@ testRunAction = describe "runAction"
   , test "succ"
       <| \_ -> Expect.equal 1
       <| let (r,_) = succ init in r.sum
-  , test "succ"
+  , test "append"
       <| \_ -> Expect.equal "foo"
       <| let (r,_) = (append "foo") init in r.str
   ]
 
--- render : Router route (WithRouter route state) -> Html -> (WithRouter route state) ->  Html
 testRender : Test
 testRender =
   let
-    render_ = render router (List.map ((\h -> h router) << .handler << config) << Matcher.getPath (.parent << config))
+    render_ = render router
     state_ route = let rs = init.router in {init | router = {rs | route = Just route}}
-  in describe "render"
-  [
+  in describe "render" [
     test "fail render"
       <| \_ -> Expect.equal (toString <| Html.text "error")
       <| toString <| render_ init
   , test "render home"
-      <| \_ -> Expect.equal (toString <| Html.text "handlerA")
+      <| \_ -> Expect.equal (toString <| Html.text "home")
       <| toString <| render_ (state_ Home)
-  , test "render Page"
-      <| \_ -> Expect.equal (toString <| Html.text "0")
-      <| toString <| render_ (state_ Page)
-  , test "render Subpage"
-      <| \_ -> Expect.equal (toString <| Html.text "")
-      <| toString <| render_ (state_ Subpage)
+  , test "render post"
+      <| \_ -> Expect.equal (toString <| Html.text "post")
+      <| toString <| render_ (state_ Post)
+  , test "render article"
+      <| \_ -> Expect.equal (toString <| Html.text "animal")
+      <| toString <| render_ (state_ <| Article "animal")
   ]
 
 testTransition : Test
 testTransition =
   let
    state_ route = let rs = init.router in {init | router = {rs | route = Just route}}
-   transition_ = transition router matcher getHandlers
-  in describe "setRoute"
+   transition_ = transition router
+  in describe "transition"
   [
     test "route setted"
       <| \_ -> Expect.equal (Just Home)
-      <| let (result,_) = transition_ (Just (Home, Dict.empty)) init in result.router.route
+      <| let (result,_) = transition_ (Just <| Matcher.route Home Dict.empty) init in result.router.route
   , test "route setted"
-      <| \_ -> Expect.equal (Just Page)
-      <| let (result,_) = transition_ (Just (Page, Dict.empty)) (state_ NotFound) in result.router.route
+      <| \_ -> Expect.equal (Just <| Category "bear")
+      <| let (result,_) = transition_ (Just <| Matcher.route (Category "bear") Dict.empty) (state_ Home) in result.router.route
   , test "params setted"
       <| \_ -> Expect.equal (Dict.fromList [("param1", "value1")])
-      <| let (result,_) = transition_ (Just (Subpage, Dict.fromList [("param1", "value1")])) init in result.router.params
+      <| let (result,_) = transition_ (Just <| Matcher.route Post (Dict.fromList [("param1", "value1")])) init in result.router.arguments
   , test "route actions"
       <| \_ -> Expect.equal 1
-      <| let (result,_) = transition_ (Just (Page, Dict.empty)) init in result.sum
+      <| let (result,_) = transition_ (Just <| Matcher.route Post Dict.empty) init in result.sum
   , test "route actions"
-      <| \_ -> Expect.equal (2,"foo")
-      <| let (result,_) = transition_ (Just (Subpage, Dict.empty)) init in (result.sum, result.str)
+      <| \_ -> Expect.equal (1,"animalanimalarticle")
+      <| let (result,_) = transition_ (Just <| Matcher.route (Article "animal") Dict.empty) init in (result.sum, result.str)
   , test "route actions"
-      <| \_ -> Expect.equal (1,"foo")
-      <| let (result,_) = transition_ (Just (Subpage, Dict.empty)) (state_ Page) in (result.sum, result.str)
+      <| \_ -> Expect.equal (1,"animalanimalarticle")
+      <| let (result,_) = transition_ (Just <| Matcher.route (Article "animal") Dict.empty) (state_ Post) in (result.sum, result.str)
   , test "route actions"
       <| \_ -> Expect.equal (0,"")
-      <| let (result,_) = transition_ (Just (Subpage, Dict.empty)) (state_ Subpage) in (result.sum, result.str)
+      <| let (result,_) = transition_ (Just <| Matcher.route (Article "animal") Dict.empty) (state_ <| Article "animal") in (result.sum, result.str)
   , test "notFound"
       <| \_ -> Expect.equal Nothing
-      <| let (result,_) = transition_ Nothing (state_ Subpage) in result.router.route
+      <| let (result,_) = transition_ Nothing (state_ <| Article "animal") in result.router.route
   ]

@@ -6,7 +6,7 @@ module Router.Types exposing (..)
 @docs Msg
 
 # Actions and handlers
-@docs WithRouter, Handler, Action, Transition
+@docs WithRouter, GetConfig, RouteConfig, Action, Transition, Render
 
 # Router
 @docs Router, RouterConfig, RouterState
@@ -16,27 +16,33 @@ import Dict           exposing (Dict)
 import Html           exposing (Html)
 import Navigation
 
-import Matcher.Matcher exposing (GetConfig, Route, URL)
+import Matcher.Matcher as Matcher exposing (Route, URL)
 import Matcher.Arguments exposing (Arguments)
-
 
 {-| `Action` represents function that prforms something with application state, and might contain side efects -}
 type alias Action state msg = state -> (state, Cmd msg)
+
+{-| `Action` represents function that prforms something with application state, and might contain side efects -}
+type alias Render route state msg = state -> Dict String (Html (Msg route msg)) -> Dict String (Html (Msg route msg))
+
+{-| `Action` represents function that prforms something with application state, and might contain side efects -}
+type alias GetConfig route state msg = route -> RouteConfig route state msg
 
 {-|
   A `Handler` is a piece of functionality binded to specific route
   * `render` &mdash; Function that describes how to render application state to map of named views
   * `actions` &mdash; A set of necessary to perform actions
 -}
-type alias Handler route state msg = {
-    render: state -> Dict String (Html (Msg route msg)) -> Dict String (Html (Msg route msg))
+type alias RouteConfig route state msg = {
+    route: Matcher.RouteConfig route
+  , render: Render route state msg
   , actions: List msg
   }
 
 {-| A state of router -}
 type alias RouterState route = {
     route: Maybe route
-  , params: Arguments
+  , arguments: Arguments
   }
 
 {-| Type extension for the application state -}
@@ -65,7 +71,7 @@ type RouterConfig route state msg = RouterConfig {
   , update : msg -> Action state (Msg route msg)
   , layout: Router route state msg -> state -> Dict String (Html (Msg route msg)) -> (Html (Msg route msg))
   , onTransition: Router route state msg -> Transition route msg
-  , routeConfig: GetConfig route
+  , routeConfig: GetConfig route state msg
   , routes: List route
   , subscriptions : state -> Sub (Msg route msg)
   }

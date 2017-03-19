@@ -36,7 +36,7 @@ buildUrl : RouterConfig route state msg -> Route route -> String
 buildUrl routerConfig route =
   let
     (RouterConfig config) = routerConfig
-    url = Matcher.buildURL config.routeConfig route
+    url = Matcher.buildURL (.route << config.routeConfig) route
     url_new = if config.removeTrailingSlash then Matcher.removeTrailingSlash url else url
   in if config.html5 then url_new else String.cons Arguments.hash url_new
 

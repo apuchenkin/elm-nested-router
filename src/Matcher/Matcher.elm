@@ -21,6 +21,12 @@ type alias Sitemap route = List route
 
 type alias GetConfig route = route -> RouteConfig route
 
+routeConfig : Maybe route -> Segments.Segment -> RouteConfig route
+routeConfig parent segment = {
+    segment = segment
+  , parent = parent
+  }
+
 isChild : GetConfig route -> Maybe route -> route -> Bool
 isChild getConfig parent child = parent == (.parent << getConfig) child
 
