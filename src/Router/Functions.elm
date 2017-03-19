@@ -9,6 +9,23 @@ import Matcher.Utils as Utils
 import Router.Types exposing (..)
 import Router.Navigation exposing (..)
 
+{-| Initial state for router. Fed this into your application state -}
+initialState : RouterState route
+initialState = {
+    route = Nothing
+  , arguments = Dict.empty
+  }
+
+{-| Router constructor -}
+constructor : RouterConfig route state msg -> Router route state msg
+constructor config = {
+    config = config
+  , bindForward = bindForward config
+  , buildUrl = buildUrl config
+  , forward = forward config
+  , redirect = redirect config
+  }
+
 {-| @Private
   Renders handlers for current route
  -}
@@ -19,8 +36,8 @@ render :
 render router state =
     let
       (RouterConfig config) = router.config
-      route       = state.router.route
-      handlers    = Maybe.withDefault [] <| Maybe.map ((List.map config.routeConfig) << (Utils.traverse (.route << config.routeConfig) config.routes)) route
+      route = state.router.route
+      handlers = Maybe.withDefault [] <| Maybe.map ((List.map config.routeConfig) << (Utils.traverse (.route << config.routeConfig) config.routes)) route
       views       = List.map .render handlers
       htmlParts   = List.foldr (\view parsed -> Dict.union parsed <| view state parsed) Dict.empty views
     in config.layout router state htmlParts
@@ -59,12 +76,5 @@ transition router to state =
     onTransition = config.onTransition router from to
     msgs  = onTransition ++ (List.concat <| List.map .actions handlers)
     actions = List.map config.update msgs
-
-  in foldActions actions state_new
-
--- createHandlers :
---     Router route (WithRouter route state) msg ->
---     (route -> Handler route (WithRouter route state) msg)
--- createHandlers router matcher =
---     let getHandlers = Matcher.memoFallback (\sid -> ((\h -> h router) << .handler << matcher.getConfig) (matcher.stringToRoute sid)) matcher.sids
---     in getHandlers << toString
+  in
+    foldActions actions state_new

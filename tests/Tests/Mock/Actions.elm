@@ -1,12 +1,11 @@
 module Tests.Mock.Actions exposing (..)
 
-import Dict
-
 import Tests.Mock.Routes exposing (Route)
 
 import Router.Types    exposing (Action, WithRouter)
 import Router.Types as Router
 import Router.Helpers  exposing (noFx)
+import Router.Functions exposing (initialState)
 
 type Msg = NoOp | Succ | Append String
 
@@ -18,10 +17,7 @@ type alias State = WithRouter Route
 
 init : State
 init = {
-    router = {
-      route = Nothing
-    , arguments = Dict.empty
-    },
+    router = initialState,
     str = "",
     sum = 0
   }

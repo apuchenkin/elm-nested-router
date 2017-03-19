@@ -94,5 +94,5 @@ type alias Router route state msg = {
   , buildUrl : Route route -> URL
   , forward : Route route -> Cmd (Msg route msg)
   , redirect : Route route -> Cmd (Msg route msg)
-  , match : String -> Maybe (Route route)
+  -- , match : String -> Maybe (Route route)
   }
