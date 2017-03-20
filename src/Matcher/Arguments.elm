@@ -1,4 +1,23 @@
-module Matcher.Arguments exposing (..)
+module Matcher.Arguments exposing (
+    Name, Argument, Arguments, Constraint,
+    int, string, enum, regex, slash, hash, query,
+    getName, toString, getParser
+  )
+
+{-| URL arguments
+
+# Types
+@docs Name, Argument, Arguments, Constraint,
+
+# constructors
+@docs int, string, enum, regex
+
+# characters
+@docs slash, hash, query
+
+# Functions
+@docs getName, toString, getParser
+-}
 
 import Dict exposing (Dict)
 import Combine exposing (Parser, many1, (<$>), (<*))

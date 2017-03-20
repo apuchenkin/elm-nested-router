@@ -35,7 +35,7 @@ type alias GetConfig route state msg = route -> RouteConfig route state msg
 -}
 type alias RouteConfig route state msg = {
     route: Matcher.RouteConfig route
-  , render: Render route state msg
+  , render: Router route state msg -> Render route state msg
   , actions: List msg
   }
 

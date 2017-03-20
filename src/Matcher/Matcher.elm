@@ -63,19 +63,11 @@ matchOne getConfig routes url route =
     segment = List.foldr (</>) Segments.end <| segments ++ [config.segment]
     result = Segments.parse (removeLeadingSlash url) segment
   in case result of
-    Err err -> Nothing -- matchChilds getConfig routes (Just route) url
+    Err err -> Nothing
     Ok (_, _, arguments) -> Just {
       route = route
     , arguments = arguments
     }
-
--- matchChilds : GetConfig route -> Sitemap route -> Maybe route -> URL -> Maybe (Route route)
--- matchChilds getConfig sitemap parent url = List.head
---   <| List.filterMap identity
---   <| List.map (matchOne getConfig sitemap url)
---   <| childs getConfig sitemap parent
-
--- match getConfig sitemap url = matchChilds getConfig sitemap Nothing url
 
 match : GetConfig route -> Sitemap route -> URL -> Maybe (Route route)
 match getConfig sitemap url = List.head

@@ -38,7 +38,7 @@ render router state =
       (RouterConfig config) = router.config
       route = state.router.route
       handlers = Maybe.withDefault [] <| Maybe.map ((List.map config.routeConfig) << (Utils.traverse (.route << config.routeConfig) config.routes)) route
-      views       = List.map .render handlers
+      views       = List.map (\h -> h.render router) handlers
       htmlParts   = List.foldr (\view parsed -> Dict.union parsed <| view state parsed) Dict.empty views
     in config.layout router state htmlParts
 

@@ -34,8 +34,8 @@ type Msg = LoadCategories | LoadPosts | LoadPost | UpdateCategories (List Catego
 getCategory : State -> Maybe String
 getCategory state =
   let
-    param = case Dict.get "subcategory" state.router.params of
-      Nothing -> Dict.get "category"    state.router.params
+    param = case Dict.get "subcategory" state.router.arguments of
+      Nothing -> Dict.get "category"    state.router.arguments
       category -> category
   in param
 
@@ -70,7 +70,7 @@ loadPosts state =
 loadPost :  State -> (State, Cmd (Router.Msg Route Msg))
 loadPost state =
   let
-    postId = Dict.get "postId" state.router.params
+    postId = Dict.get "postId" state.router.arguments
     task = flip Maybe.map postId <| \pid ->
       Task.onError (\_ -> Task.succeed Nothing) <| Http.toTask <| Http.get ("data/post/" ++ pid ++ ".json") (Json.maybe <| decodePost)
 

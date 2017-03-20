@@ -4,54 +4,17 @@ import App.Routes as Route exposing (..)
 import App.Handlers exposing (..)
 import App.Actions exposing (..)
 import App.Layout exposing (..)
+import App.RouteConfig exposing (..)
 
 import Router
-import Router.Types  exposing (Router, RouterConfig (..), RouteConfig, Constraint (..))
+import Router.Types  exposing (Router, RouterConfig (..), RouteConfig)
 import Router.Helpers exposing (noFx)
 import Router.Types as Router
-import UrlParser exposing (..)
-
-config : Route -> RouteConfig Route State Msg
-config route = case route of
-  Home -> {
-      segment = s "",
-      bypass = False,
-      parent = Nothing,
-      constraints = Dict.empty,
-      handler = homeHandler
-    }
-  NotFound -> {
-      segment = "/404",
-      bypass = False,
-      parent = Nothing,
-      constraints = Dict.empty,
-      handler = notFoundHandler
-    }
-  Static page -> {
-      segment = "/" ++ page,
-      bypass = False,
-      parent = Nothing,
-      constraints = Dict.empty,
-      handler = staticHandler page
-    }
-  Category -> {
-      segment = "/:category[/:subcategory]",
-      bypass = False,
-      parent = Just Home,
-      constraints = Dict.fromList [("category", Enum ["animals", "flowers", "colors"])],
-      handler = categoryHandler
-    }
-  Post -> {
-      segment = "/post/:postId",
-      bypass = False,
-      parent = Just Route.Category,
-      constraints = Dict.fromList [("postId", Int)],
-      handler = postHandler
-    }
+import Router.Functions as Functions
 
 initialState : State
 initialState = {
-    router      = Router.initialState
+    router      = Functions.initialState
   , categories  = []
   , posts       = []
   , post        = Nothing

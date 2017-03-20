@@ -1,4 +1,23 @@
-module Matcher.Segments exposing (..)
+module Matcher.Segments exposing (
+    Segment,
+    end, static, int, string, enum, regex, maybe, combine, (</>),
+    getConstraints, toString, parse
+  )
+
+{-| URL segments
+
+# Types
+@docs Segment
+
+# constructors
+@docs end, static, int, string, enum, regex
+
+#combinators
+@docs maybe, combine, (</>),
+
+# Functions
+@docs getConstraints, toString, parse
+-}
 
 import Matcher.Arguments as Arguments exposing (Name, Arguments)
 
