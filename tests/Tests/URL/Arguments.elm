@@ -1,10 +1,10 @@
-module Tests.Matcher.Arguments exposing (..)
+module Tests.URL.Arguments exposing (..)
 
 import Expect
 import Dict
 import Test exposing (..)
 
-import Matcher.Arguments as Arguments exposing (..)
+import URL.Arguments as Arguments exposing (..)
 
 testSuite : Test
 testSuite = describe "Arguments" [

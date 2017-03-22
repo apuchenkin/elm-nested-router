@@ -1,9 +1,10 @@
-module Matcher.Utils exposing (..)
+module URL.Utils exposing (..)
 
 import Dict
-import Matcher.Matcher as Matcher exposing (Route, GetConfig)
-import Matcher.Arguments as Arguments exposing (Arguments)
-import Matcher.Segments as Segments
+
+import URL.Matcher as Matcher exposing (Route, GetConfig)
+import URL.Arguments as Arguments exposing (Arguments)
+import URL.Segments as Segments
 
 {-| @Private
   Combine route wit a provided params -}

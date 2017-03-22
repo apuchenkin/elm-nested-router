@@ -17,8 +17,8 @@ import Html.Events      exposing (onWithOptions)
 import Html.Attributes  as Attr
 import Json.Decode      as Json
 
-import Matcher.Matcher   as Matcher exposing (Route, URL)
-import Matcher.Arguments as Arguments
+import URL.Matcher   as Matcher exposing (Route, URL)
+import URL.Arguments as Arguments
 import Router.Types        exposing (..)
 
 getPath : RouterConfig route state msg -> Location -> URL

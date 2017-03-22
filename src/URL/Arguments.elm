@@ -1,4 +1,4 @@
-module Matcher.Arguments exposing (
+module URL.Arguments exposing (
     Name, Argument, Arguments, Constraint,
     int, string, enum, regex, slash, hash, query,
     getName, toString, getParser

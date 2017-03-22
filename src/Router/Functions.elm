@@ -3,10 +3,12 @@ module Router.Functions exposing (..)
 import Dict
 import Html             exposing (Html)
 
-import Router.Helpers exposing (foldActions)
-import Matcher.Matcher as Matcher exposing (Route, URL)
-import Matcher.Utils as Utils
+
+import URL.Matcher as Matcher exposing (Route, URL)
+import URL.Utils as Utils
+
 import Router.Types exposing (..)
+import Router.Helpers exposing (foldActions)
 import Router.Navigation exposing (..)
 
 {-| Initial state for router. Fed this into your application state -}

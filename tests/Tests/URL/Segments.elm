@@ -1,11 +1,11 @@
-module Tests.Matcher.Segments exposing (..)
+module Tests.URL.Segments exposing (..)
 
 import Expect exposing (Expectation)
 
 -- import Dict exposing (Dict)
 import Test exposing (..)
 import Dict
-import Matcher.Segments as Segments exposing (..)
+import URL.Segments as Segments exposing (..)
 
 testSuite : Test
 testSuite = describe "Segments" [

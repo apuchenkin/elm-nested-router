@@ -1,7 +1,7 @@
-module Matcher.Matcher exposing (..)
+module URL.Matcher exposing (..)
 
-import Matcher.Arguments as Arguments exposing (Arguments)
-import Matcher.Segments as Segments exposing ((</>))
+import URL.Arguments as Arguments exposing (Arguments)
+import URL.Segments as Segments exposing ((</>))
 
 type alias URL = String
 

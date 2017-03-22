@@ -6,7 +6,7 @@ import Test exposing (..)
 import Expect
 
 import Router.Functions exposing (..)
-import Matcher.Matcher as Matcher
+import URL.Matcher as Matcher
 
 import Tests.Mock.Actions exposing (..)
 import Tests.Mock.Routes exposing (..)

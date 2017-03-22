@@ -1,10 +1,10 @@
-module Tests.Matcher.Utils exposing (..)
+module Tests.URL.Utils exposing (..)
 
 import Expect
 import Dict
 import Test exposing (..)
-import Matcher.Matcher as Matcher
-import Matcher.Utils exposing (..)
+import URL.Matcher as Matcher
+import URL.Utils exposing (..)
 import Tests.Mock.RouteConfig exposing (..)
 import Tests.Mock.Routes exposing (..)
 

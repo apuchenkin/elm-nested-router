@@ -16,8 +16,8 @@ import Dict           exposing (Dict)
 import Html           exposing (Html)
 import Navigation
 
-import Matcher.Matcher as Matcher exposing (Route, URL)
-import Matcher.Arguments exposing (Arguments)
+import URL.Matcher as Matcher exposing (Route, URL)
+import URL.Arguments exposing (Arguments)
 
 {-| `Action` represents function that prforms something with application state, and might contain side efects -}
 type alias Action state msg = state -> (state, Cmd msg)

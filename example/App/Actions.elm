@@ -11,17 +11,16 @@ import Router.Types as Router
 
 import App.Routes as Routes exposing (Route)
 
-type alias State = WithRouter Route
-  {
-    categories: List Category,
-    posts: List Post,
-    post: Maybe Post
-  }
+type alias State = WithRouter Route {
+  categories: List Category,
+  posts: List Post,
+  post: Maybe Post
+}
 
 type alias Category = {
-    id: String,
-    title: String
-  }
+  id: String,
+  title: String
+}
 
 type alias Post = {
   id: Int,
