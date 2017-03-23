@@ -17,9 +17,10 @@ import Html.Events      exposing (onWithOptions)
 import Html.Attributes  as Attr
 import Json.Decode      as Json
 
-import URL.Matcher   as Matcher exposing (Route, URL)
+import URL.Route exposing (Route)
+import URL.Matcher as Matcher exposing (URL)
 import URL.Arguments as Arguments
-import Router.Types        exposing (..)
+import Router.Types exposing (..)
 
 getPath : RouterConfig route state msg -> Location -> URL
 getPath config location =

@@ -4,7 +4,7 @@ import Dict
 import Html
 
 import Router.Types exposing (GetConfig)
-import URL.Matcher exposing ((//>))
+import URL.Route exposing ((//>))
 import URL.Segments exposing (..)
 
 import Tests.Mock.Routes exposing (..)

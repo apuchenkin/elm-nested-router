@@ -14,16 +14,17 @@ module Router.Types exposing (..)
 
 import Dict           exposing (Dict)
 import Html           exposing (Html)
-import Navigation
+import Navigation     exposing (Location)
 
-import URL.Matcher as Matcher exposing (Route, URL)
+import URL.Route as Route exposing (Route)
+import URL.Matcher as Matcher exposing (URL)
 import URL.Arguments exposing (Arguments)
 
 {-| `Action` represents function that prforms something with application state, and might contain side efects -}
 type alias Action state msg = state -> (state, Cmd msg)
 
 {-| `Action` represents function that prforms something with application state, and might contain side efects -}
-type alias Render route state msg = state -> Dict String (Html (Msg route msg)) -> Dict String (Html (Msg route msg))
+type alias Render route state msg = Router route state msg -> state -> Dict String (Html (Msg route msg)) -> Dict String (Html (Msg route msg))
 
 {-| `Action` represents function that prforms something with application state, and might contain side efects -}
 type alias GetConfig route state msg = route -> RouteConfig route state msg
@@ -34,8 +35,8 @@ type alias GetConfig route state msg = route -> RouteConfig route state msg
   * `actions` &mdash; A set of necessary to perform actions
 -}
 type alias RouteConfig route state msg = {
-    route: Matcher.RouteConfig route
-  , render: Router route state msg -> Render route state msg
+    route: Route.Config route
+  , render: Render route state msg
   , actions: List msg
   }
 
@@ -52,7 +53,7 @@ type alias WithRouter route state = { state | router : RouterState route}
 type alias Transition route msg = Maybe (Route route) -> Maybe (Route route) -> List msg
 
 {-| A state of router -}
-type Msg route msg = AppMsg msg | Transition Navigation.Location | Forward (Route route) | Redirect (Route route)
+type Msg route msg = AppMsg msg | Transition Location | Forward (Route route) | Redirect (Route route)
 
 {-|
   `RouterConfig` is configuration for the router:
@@ -94,5 +95,4 @@ type alias Router route state msg = {
   , buildUrl : Route route -> URL
   , forward : Route route -> Cmd (Msg route msg)
   , redirect : Route route -> Cmd (Msg route msg)
-  -- , match : String -> Maybe (Route route)
   }

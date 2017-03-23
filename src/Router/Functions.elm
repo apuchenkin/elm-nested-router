@@ -3,8 +3,8 @@ module Router.Functions exposing (..)
 import Dict
 import Html             exposing (Html)
 
-
-import URL.Matcher as Matcher exposing (Route, URL)
+import URL.Route as Route exposing (Route)
+import URL.Matcher as Matcher exposing (URL)
 import URL.Utils as Utils
 
 import Router.Types exposing (..)
@@ -39,7 +39,7 @@ render router state =
     let
       (RouterConfig config) = router.config
       route = state.router.route
-      handlers = Maybe.withDefault [] <| Maybe.map ((List.map config.routeConfig) << (Utils.traverse (.route << config.routeConfig) config.routes)) route
+      handlers = Maybe.withDefault [] <| Maybe.map ((List.map config.routeConfig) << (Route.traverse (.route << config.routeConfig) config.routes)) route
       views       = List.map (\h -> h.render router) handlers
       htmlParts   = List.foldr (\view parsed -> Dict.union parsed <| view state parsed) Dict.empty views
     in config.layout router state htmlParts
@@ -70,7 +70,7 @@ transition router to state =
     (RouterConfig config) = router.config
     rs = state.router
     toParams = Maybe.withDefault Dict.empty <| Maybe.map .arguments to
-    from  = Maybe.map (\r -> Matcher.route r rs.arguments) rs.route
+    from  = Maybe.map (\r -> Route.route r rs.arguments) rs.route
     state_new = { state | router = { rs | route = Maybe.map .route to, arguments = toParams }}
 
     diff = Maybe.withDefault [] <| Maybe.map (Utils.routeDiff (.route << config.routeConfig) config.routes from) to

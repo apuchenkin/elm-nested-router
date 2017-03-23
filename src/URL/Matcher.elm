@@ -1,52 +1,35 @@
-module URL.Matcher exposing (..)
+module URL.Matcher exposing (
+    URL,
+    hasTrailingSlash, removeTrailingSlash,
+    match, buildURL
+  )
 
+{-| Module for working with URLs
+
+# Types
+@docs URL
+
+# Utility functions
+@docs hasTrailingSlash, removeTrailingSlash
+
+# Main functions
+@docs match, buildURL
+-}
+
+import URL.Route as Route exposing (..)
 import URL.Arguments as Arguments exposing (Arguments)
-import URL.Segments as Segments exposing ((</>))
+import URL.Segments as Segments exposing (Segment, (</>))
 
+{-| An URL -}
 type alias URL = String
 
-{-| combined abstract route type with params -}
-type alias Route route = {
-    route: route
-  , arguments: Arguments
-  -- , query: Arguments
-  }
-
-type alias RouteConfig route = {
-    segment: Segments.Segment
-  , parent: Maybe route
-  }
-
-type alias Sitemap route = List route
-
-type alias GetConfig route = route -> RouteConfig route
-
-routeConfig : Maybe route -> Segments.Segment -> RouteConfig route
-routeConfig parent segment = {
-    segment = segment
-  , parent = parent
-  }
-
-(//>) : Maybe route -> Segments.Segment -> RouteConfig route
-(//>) = routeConfig
-infixl 6 //>
-
-isChild : GetConfig route -> Maybe route -> route -> Bool
-isChild getConfig parent child = parent == (.parent << getConfig) child
-
-childs : GetConfig route -> List route -> Maybe route -> List route
-childs getConfig routes route = List.filter (isChild getConfig route) routes
-
-parents : GetConfig route -> List route -> route -> List route
-parents getConfig routes route = case (.parent << getConfig) route of
-  Nothing -> []
-  Just parent -> parents getConfig routes parent ++ [parent]
-
+{-| Checks whether URL has trailing slash -}
 hasTrailingSlash : URL -> Bool
 hasTrailingSlash url = case String.right 1 url of
     "/" -> True
     _ -> False
 
+{-| Removes trailing slash from URL if any -}
 removeTrailingSlash : URL -> URL
 removeTrailingSlash url = if hasTrailingSlash url then String.dropRight 1 url else url
 
@@ -64,12 +47,10 @@ matchOne getConfig routes url route =
     result = Segments.parse (removeLeadingSlash url) segment
   in case result of
     Err err -> Nothing
-    Ok (_, _, arguments) -> Just {
-      route = route
-    , arguments = arguments
-    }
+    Ok (_, _, arguments) -> Just <| Route.route route arguments
 
-match : GetConfig route -> Sitemap route -> URL -> Maybe (Route route)
+{-| Tries to match given URL into route -}
+match : GetConfig route -> List route -> URL -> Maybe (Route route)
 match getConfig sitemap url = List.head
   <| List.filterMap identity
   <| List.map (matchOne getConfig sitemap url)
@@ -86,10 +67,8 @@ composeURL getConfig {route, arguments} = let
     Just parent -> String.concat
       <| List.intersperse "/"
       <| List.filter (not << String.isEmpty)
-      <| [composeURL getConfig { route = parent, arguments = arguments }, url]
+      <| [composeURL getConfig (Route.route parent arguments), url]
 
+{-| Build URL for specified route -}
 buildURL : GetConfig route -> Route route -> URL
 buildURL getConfig route = String.cons Arguments.slash <| composeURL getConfig route
-
-route : route -> Arguments -> Route route
-route route arguments = { route = route, arguments = arguments }

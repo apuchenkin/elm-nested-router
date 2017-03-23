@@ -6,7 +6,7 @@ import Test exposing (..)
 import Expect
 
 import Router.Functions exposing (..)
-import URL.Matcher as Matcher
+import URL.Route as Route
 
 import Tests.Mock.Actions exposing (..)
 import Tests.Mock.Routes exposing (..)
@@ -62,25 +62,25 @@ testTransition =
   [
     test "route setted"
       <| \_ -> Expect.equal (Just Home)
-      <| let (result,_) = transition_ (Just <| Matcher.route Home Dict.empty) init in result.router.route
+      <| let (result,_) = transition_ (Just <| Route.route Home Dict.empty) init in result.router.route
   , test "route setted"
       <| \_ -> Expect.equal (Just <| Category "bear")
-      <| let (result,_) = transition_ (Just <| Matcher.route (Category "bear") Dict.empty) (state_ Home) in result.router.route
+      <| let (result,_) = transition_ (Just <| Route.route (Category "bear") Dict.empty) (state_ Home) in result.router.route
   , test "params setted"
       <| \_ -> Expect.equal (Dict.fromList [("param1", "value1")])
-      <| let (result,_) = transition_ (Just <| Matcher.route Post (Dict.fromList [("param1", "value1")])) init in result.router.arguments
+      <| let (result,_) = transition_ (Just <| Route.route Post (Dict.fromList [("param1", "value1")])) init in result.router.arguments
   , test "route actions"
       <| \_ -> Expect.equal 1
-      <| let (result,_) = transition_ (Just <| Matcher.route Post Dict.empty) init in result.sum
+      <| let (result,_) = transition_ (Just <| Route.route Post Dict.empty) init in result.sum
   , test "route actions"
       <| \_ -> Expect.equal (1,"animalanimalarticle")
-      <| let (result,_) = transition_ (Just <| Matcher.route (Article "animal") Dict.empty) init in (result.sum, result.str)
+      <| let (result,_) = transition_ (Just <| Route.route (Article "animal") Dict.empty) init in (result.sum, result.str)
   , test "route actions"
       <| \_ -> Expect.equal (1,"animalanimalarticle")
-      <| let (result,_) = transition_ (Just <| Matcher.route (Article "animal") Dict.empty) (state_ Post) in (result.sum, result.str)
+      <| let (result,_) = transition_ (Just <| Route.route (Article "animal") Dict.empty) (state_ Post) in (result.sum, result.str)
   , test "route actions"
       <| \_ -> Expect.equal (0,"")
-      <| let (result,_) = transition_ (Just <| Matcher.route (Article "animal") Dict.empty) (state_ <| Article "animal") in (result.sum, result.str)
+      <| let (result,_) = transition_ (Just <| Route.route (Article "animal") Dict.empty) (state_ <| Article "animal") in (result.sum, result.str)
   , test "notFound"
       <| \_ -> Expect.equal Nothing
       <| let (result,_) = transition_ Nothing (state_ <| Article "animal") in result.router.route
