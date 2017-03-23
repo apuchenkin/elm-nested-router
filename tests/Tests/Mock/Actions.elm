@@ -2,10 +2,10 @@ module Tests.Mock.Actions exposing (..)
 
 import Tests.Mock.Routes exposing (Route)
 
-import Router.Types    exposing (Action, WithRouter)
+import Router.Types exposing (Action, WithRouter)
 import Router.Types as Router
-import Router.Helpers  exposing (noFx)
-import Router.Functions exposing (initialState)
+import Router.Helpers exposing (noFx)
+import Router exposing (initialState)
 
 type Msg = NoOp | Succ | Append String
 

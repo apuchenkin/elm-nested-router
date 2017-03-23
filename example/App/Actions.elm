@@ -6,7 +6,6 @@ import Task exposing (Task)
 
 import Json.Decode  as Json exposing (field)
 import Router.Types exposing (WithRouter, Router)
-import Router.Helpers exposing (noFx)
 import Router.Types as Router
 
 import App.Routes as Routes exposing (Route)
@@ -29,6 +28,10 @@ type alias Post = {
 }
 
 type Msg = LoadCategories | LoadPosts | LoadPost | UpdateCategories (List Category) | UpdatePosts (List Post) | UpdatePost (Maybe Post)
+
+{-| An action without side effects -}
+noFx : Router.Action State (Router.Msg Route Msg)
+noFx state = (state, Cmd.none)
 
 getCategory : State -> Maybe String
 getCategory state =

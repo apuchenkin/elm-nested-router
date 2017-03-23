@@ -6,7 +6,7 @@ import App.Actions exposing (State, Msg)
 import App.Routes as Route exposing (Route)
 import Router.Types exposing (Router)
 import Router.Types as Router
-import Matcher.Matcher exposing (route)
+import URL.Route exposing (route)
 
 footer : Router Route State Msg -> Html (Router.Msg Route Msg)
 footer router =

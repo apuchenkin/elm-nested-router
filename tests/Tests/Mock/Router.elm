@@ -7,7 +7,7 @@ import Router.Types as Router
 import Tests.Mock.Actions exposing (..)
 import Tests.Mock.Routes exposing (..)
 import Tests.Mock.RouteConfig exposing (routeConfig)
-import Router.Functions exposing (constructor)
+import Router exposing (constructor)
 
 layout : a -> b -> Dict String (Html msg) -> Html msg
 layout _ _ views =

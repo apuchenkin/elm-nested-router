@@ -1,17 +1,36 @@
-module Router exposing ( dispatch, dispatchWithFlags )
+module Router exposing ( dispatch, dispatchWithFlags, initialState, constructor )
 {-| A simple nested router for single page applications.
 
 See [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/example) ([Live demo](http://apuchenkin.github.io/elm-nested-router/example))
 and [Tests](https://github.com/apuchenkin/elm-nested-router/tree/master/test/Test) for more details
 
-@docs dispatch, dispatchWithFlags
+@docs dispatch, dispatchWithFlags, initialState, constructor
 -}
 
+import Dict
 import Task
-import Navigation       exposing (Location)
+import Navigation exposing (Location)
 
-import Router.Types        exposing (..)
-import Router.Functions    exposing (..)
+import Router.Types exposing (..)
+import Router.Functions exposing (..)
+import Router.Navigation exposing (..)
+
+{-| Initial state for router. Fed this into your application state -}
+initialState : RouterState route
+initialState = {
+    route = Nothing
+  , arguments = Dict.empty
+  }
+
+{-| Router constructor -}
+constructor : RouterConfig route state msg -> Router route state msg
+constructor config = {
+    config = config
+  , bindForward = bindForward config
+  , buildUrl = buildUrl config
+  , forward = forward config
+  , redirect = redirect config
+  }
 
 {-| Launches the router.
   Provide `init` function and router config as parameters

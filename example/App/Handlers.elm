@@ -4,12 +4,12 @@ import Dict
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Router.Types as Router exposing (Router, Render)
-import Matcher.Matcher exposing (route)
+import URL.Route exposing (route)
 
 import App.Routes as Route exposing (Route)
 import App.Actions exposing (..)
 
-renderStatic : String -> Router Route State Msg -> Render Route State Msg
+renderStatic : String -> Render Route State Msg
 renderStatic page router state _ =
   let
     body = Html.text page
@@ -18,7 +18,7 @@ renderStatic page router state _ =
     , ("body", body)
     ]
 
-notFound : Router Route State Msg -> Render Route State Msg
+notFound : Render Route State Msg
 notFound router state _ =
   let
     body = Html.text "404"
@@ -65,10 +65,10 @@ renderPosts router state posts = Html.div [Attr.class "posts"] [
         <| posts
       ]
 
-renderHome : Router Route State Msg -> Render Route State Msg
+renderHome : Render Route State Msg
 renderHome router state _ = Dict.fromList [("body", renderCategories router state.categories)]
 
-renderCategory : Router Route State Msg -> Render Route State Msg
+renderCategory : Render Route State Msg
 renderCategory router =
   let
     render state parsed =
@@ -79,7 +79,7 @@ renderCategory router =
     ]
   in render
 
-renderPost : Router Route State Msg -> Render Route State Msg
+renderPost : Render Route State Msg
 renderPost router state _ =
   let
     category = getCategory state

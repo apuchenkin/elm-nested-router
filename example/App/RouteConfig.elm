@@ -4,8 +4,8 @@ import App.Actions exposing (..)
 import App.Routes as Route exposing (..)
 import App.Handlers exposing (..)
 import Router.Types exposing (RouteConfig)
-import Matcher.Segments as Segments exposing ((</>))
-import Matcher.Matcher exposing ((//>))
+import URL.Segments as Segments exposing ((</>))
+import URL.Route exposing ((//>))
 
 config : Route -> RouteConfig Route State Msg
 config route = case route of

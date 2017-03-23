@@ -11,23 +11,6 @@ import Router.Types exposing (..)
 import Router.Helpers exposing (foldActions)
 import Router.Navigation exposing (..)
 
-{-| Initial state for router. Fed this into your application state -}
-initialState : RouterState route
-initialState = {
-    route = Nothing
-  , arguments = Dict.empty
-  }
-
-{-| Router constructor -}
-constructor : RouterConfig route state msg -> Router route state msg
-constructor config = {
-    config = config
-  , bindForward = bindForward config
-  , buildUrl = buildUrl config
-  , forward = forward config
-  , redirect = redirect config
-  }
-
 {-| @Private
   Renders handlers for current route
  -}

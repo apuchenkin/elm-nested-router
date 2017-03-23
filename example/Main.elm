@@ -1,4 +1,4 @@
-import Dict     exposing (Dict)
+import Dict exposing (Dict)
 
 import App.Routes as Route exposing (..)
 import App.Handlers exposing (..)
@@ -7,14 +7,12 @@ import App.Layout exposing (..)
 import App.RouteConfig exposing (..)
 
 import Router
-import Router.Types  exposing (Router, RouterConfig (..), RouteConfig)
-import Router.Helpers exposing (noFx)
+import Router.Types exposing (Router, RouterConfig (..), RouteConfig)
 import Router.Types as Router
-import Router.Functions as Functions
 
 initialState : State
 initialState = {
-    router      = Functions.initialState
+    router      = Router.initialState
   , categories  = []
   , posts       = []
   , post        = Nothing
