@@ -1,15 +1,13 @@
-module Router.Helpers exposing (
-  noFx,
-  chainAction,
-  foldActions
-  )
+module Router.Actions exposing (..)
 
-{-| A set of utility functions
-@docs noFx, chainAction, foldActions
--}
+import Navigation     exposing (Location)
+import URL.Route as Route exposing (Route)
 
--- import Task exposing (Task)
-import Router.Types exposing (Action)
+{-| `Action` represents function that prforms something with application state, and might contain side efects -}
+type alias Action state msg = state -> (state, Cmd msg)
+
+{-| A state of router -}
+type Msg route msg = AppMsg msg | Transition Location | Forward (Route route) | Redirect (Route route)
 
 {-| An action without side effects -}
 noFx : Action state msg

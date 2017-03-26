@@ -1,12 +1,15 @@
-module Router.Types exposing (..)
+module Router.Types exposing (
+
+  WithRouter, GetConfig, RouteConfig,
+  Router, RouterConfig (..), RouterState
+  )
 
 {-| Router types
 
 # URL parts
-@docs Msg
 
 # Actions and handlers
-@docs WithRouter, GetConfig, RouteConfig, Action, Transition, Render
+@docs WithRouter, GetConfig, RouteConfig
 
 # Router
 @docs Router, RouterConfig, RouterState
@@ -14,17 +17,17 @@ module Router.Types exposing (..)
 
 import Dict           exposing (Dict)
 import Html           exposing (Html)
-import Navigation     exposing (Location)
 
 import URL.Route as Route exposing (Route)
 import URL.Matcher as Matcher exposing (URL)
 import URL.Arguments exposing (Arguments)
+import Router.Actions as Actions exposing (Msg)
+
+{-| A named views collections -}
+type alias Views route msg = Dict String (Html (Msg route msg))
 
 {-| `Action` represents function that prforms something with application state, and might contain side efects -}
-type alias Action state msg = state -> (state, Cmd msg)
-
-{-| `Action` represents function that prforms something with application state, and might contain side efects -}
-type alias Render route state msg = Router route state msg -> state -> Dict String (Html (Msg route msg)) -> Dict String (Html (Msg route msg))
+type alias Render route state msg = Router route state msg -> state -> Views route msg -> Views route msg
 
 {-| `Action` represents function that prforms something with application state, and might contain side efects -}
 type alias GetConfig route state msg = route -> RouteConfig route state msg
@@ -52,9 +55,6 @@ type alias WithRouter route state = { state | router : RouterState route}
 {-| A transition from route A to route B -}
 type alias Transition route msg = Maybe (Route route) -> Maybe (Route route) -> List msg
 
-{-| A state of router -}
-type Msg route msg = AppMsg msg | Transition Location | Forward (Route route) | Redirect (Route route)
-
 {-|
   `RouterConfig` is configuration for the router:
 
@@ -69,8 +69,8 @@ type Msg route msg = AppMsg msg | Transition Location | Forward (Route route) | 
 type RouterConfig route state msg = RouterConfig {
     html5: Bool
   , removeTrailingSlash: Bool
-  , update : msg -> Action state (Msg route msg)
-  , layout: Router route state msg -> state -> Dict String (Html (Msg route msg)) -> (Html (Msg route msg))
+  , update : msg -> state -> (state, Cmd msg)
+  , layout: Router route state msg -> state -> Views route msg -> (Html (Msg route msg))
   , onTransition: Router route state msg -> Transition route msg
   , routeConfig: GetConfig route state msg
   , routes: List route

@@ -2,9 +2,9 @@ module Tests.Mock.Actions exposing (..)
 
 import Tests.Mock.Routes exposing (Route)
 
-import Router.Types exposing (Action, WithRouter)
+import Router.Types exposing (WithRouter)
 import Router.Types as Router
-import Router.Helpers exposing (noFx)
+import Router.Actions exposing (..)
 import Router exposing (initialState)
 
 type Msg = NoOp | Succ | Append String
@@ -22,17 +22,17 @@ init = {
     sum = 0
   }
 
-noAction : Action State (Router.Msg Route Msg)
-noAction state = noFx state
+none : Action State Msg
+none state = (state, Cmd.none)
 
-succ : Action State (Router.Msg Route Msg)
+succ : Action State Msg
 succ state = noFx {state | sum = state.sum + 1}
 
-append : String -> Action State (Router.Msg Route Msg)
+append : String -> Action State Msg
 append string state = noFx {state | str = state.str ++ string}
 
-update : Msg -> Action State (Router.Msg Route Msg)
+update : Msg -> Action State Msg
 update msg = case msg of
-  NoOp -> noAction
+  NoOp -> noFx
   Succ -> succ
   Append s -> append s

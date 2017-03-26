@@ -24,7 +24,7 @@ testRunAction = describe "runAction"
   [
     test "noAction"
       <| \_ -> Expect.equal init
-      <| let (r,_) = noAction init in r
+      <| let (r,_) = none init in r
   , test "succ"
       <| \_ -> Expect.equal 1
       <| let (r,_) = succ init in r.sum

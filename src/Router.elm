@@ -1,19 +1,20 @@
-module Router exposing ( dispatch, dispatchWithFlags, initialState, constructor )
+module Router exposing ( dispatch, dispatchWithFlags, initialState )
 {-| A simple nested router for single page applications.
 
 See [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/example) ([Live demo](http://apuchenkin.github.io/elm-nested-router/example))
 and [Tests](https://github.com/apuchenkin/elm-nested-router/tree/master/test/Test) for more details
 
-@docs dispatch, dispatchWithFlags, initialState, constructor
+@docs dispatch, dispatchWithFlags, initialState
 -}
 
 import Dict
 import Task
 import Navigation exposing (Location)
 
-import Router.Types exposing (..)
+import Router.Types exposing (RouterState, Router, RouterConfig (..), WithRouter)
 import Router.Functions exposing (..)
 import Router.Navigation exposing (..)
+import Router.Actions exposing (..)
 
 {-| Initial state for router. Fed this into your application state -}
 initialState : RouterState route
@@ -32,26 +33,25 @@ constructor config = {
   , redirect = redirect config
   }
 
+bootstrap : (state, Cmd (Msg route msg)) -> Location -> (state, Cmd (Msg route msg))
+bootstrap (state, cmd) location = (state, Cmd.batch [cmd, Task.perform identity <| Task.succeed <| Transition location])
+
 {-| Launches the router.
   Provide `init` function and router config as parameters
  -}
 dispatch : (WithRouter route state, Cmd (Msg route msg))
     -> RouterConfig route (WithRouter route state) msg
     -> Program Never (WithRouter route state) (Msg route msg)
-dispatch (state, cmd) config =
+dispatch initial config =
   let
     (RouterConfig c) = config
     router = constructor config
-    init location = (state, Cmd.batch [cmd, Task.perform identity <| Task.succeed <| Transition location])
-
-    args = {
-      init = init
-    , update = update router
-    , view = render router
-    , subscriptions = c.subscriptions
-    }
-
-  in Navigation.program Transition args
+  in Navigation.program Transition {
+    init = bootstrap initial
+  , update = update router
+  , view = render router
+  , subscriptions = c.subscriptions
+  }
 
 {-| Launches the router.
   Provide `init` function and router config as parameters
@@ -59,19 +59,13 @@ dispatch (state, cmd) config =
 dispatchWithFlags : (flags -> (WithRouter route state, Cmd (Msg route msg)))
     -> RouterConfig route (WithRouter route state) msg
     -> Program flags (WithRouter route state) (Msg route msg)
-dispatchWithFlags getInitialState config =
+dispatchWithFlags initial config =
   let
     (RouterConfig c) = config
     router = constructor config
-    init_mod flags location =
-      let (state, cmd) = getInitialState flags
-      in (state, Cmd.batch [cmd, Task.perform identity <| Task.succeed <| Transition location])
-
-    args = {
-      init = init_mod
-    , update = update router
-    , view = render router
-    , subscriptions = c.subscriptions
-    }
-
-  in Navigation.programWithFlags Transition args
+  in Navigation.programWithFlags Transition {
+    init = bootstrap << initial
+  , update = update router
+  , view = render router
+  , subscriptions = c.subscriptions
+  }

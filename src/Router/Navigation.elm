@@ -20,17 +20,8 @@ import Json.Decode      as Json
 import URL.Route exposing (Route)
 import URL.Matcher as Matcher exposing (URL)
 import URL.Arguments as Arguments
-import Router.Types exposing (..)
-
-getPath : RouterConfig route state msg -> Location -> URL
-getPath config location =
-    let
-      (RouterConfig c) = config
-      urlPath = if c.html5
-        then location.pathname
-        else Maybe.withDefault "/" <| Maybe.map Tuple.second <| String.uncons location.hash
-    in
-      if c.removeTrailingSlash then Matcher.removeTrailingSlash urlPath else urlPath
+import Router.Types exposing (RouterConfig (..))
+import Router.Actions exposing (..)
 
 {-| Decomposes Route to string. Exposed by `Router` -}
 buildUrl : RouterConfig route state msg -> Route route -> String
@@ -39,14 +30,14 @@ buildUrl routerConfig route =
     (RouterConfig config) = routerConfig
     url = Matcher.buildURL (.route << config.routeConfig) route
     url_new = if config.removeTrailingSlash then Matcher.removeTrailingSlash url else url
-  in if config.html5 then url_new else String.cons Arguments.hash url_new
+  in
+    if config.html5 then url_new else String.cons Arguments.hash url_new
 
 {-| binds forward action to existing HTML attributes. Exposed by `Router` -}
 bindForward : RouterConfig route state msg -> Route route -> List (Html.Attribute (Msg route msg)) -> List (Html.Attribute (Msg route msg))
 bindForward config route attrs =
   let
     options = {stopPropagation = True, preventDefault = True}
-    -- action = forward config matcher route
   in
     Attr.href (buildUrl config route)
     :: onWithOptions "click" options (Json.succeed <| Forward route)

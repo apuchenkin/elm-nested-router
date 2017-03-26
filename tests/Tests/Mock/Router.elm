@@ -7,7 +7,7 @@ import Router.Types as Router
 import Tests.Mock.Actions exposing (..)
 import Tests.Mock.Routes exposing (..)
 import Tests.Mock.RouteConfig exposing (routeConfig)
-import Router exposing (constructor)
+import Router.Navigation exposing (..)
 
 layout : a -> b -> Dict String (Html msg) -> Html msg
 layout _ _ views =
@@ -31,4 +31,10 @@ routerConfig = Router.RouterConfig {
   }
 
 router : Router.Router Route State Msg
-router = constructor routerConfig
+router = {
+    config = routerConfig
+  , bindForward = bindForward routerConfig
+  , buildUrl = buildUrl routerConfig
+  , forward = forward routerConfig
+  , redirect = redirect routerConfig
+  }

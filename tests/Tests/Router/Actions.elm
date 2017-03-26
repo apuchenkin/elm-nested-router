@@ -1,9 +1,9 @@
-module Tests.Router.Helpers exposing (..)
+module Tests.Router.Actions exposing (..)
 
 import Expect
 import Test exposing (..)
 
-import Router.Helpers   exposing (..)
+import Router.Actions exposing (..)
 import Tests.Mock.Actions exposing (..)
 
 testSuite : Test
@@ -33,10 +33,10 @@ testChainAction = describe "chainAction"
   [
     test "noAction"
       <| \_ -> Expect.equal init
-      <| let (result,_) = (noAction |> chainAction noAction) init in result
+      <| let (result,_) = (none |> chainAction none) init in result
   , test "one succ"
       <| \_ -> Expect.equal 1
-      <| let (result,_) = (succ |> chainAction noAction) init in result.sum
+      <| let (result,_) = (succ |> chainAction none) init in result.sum
   , test "two succ"
       <| \_ -> Expect.equal 2
       <| let (result,_) = (succ |> chainAction succ) init in result.sum
@@ -56,10 +56,10 @@ testFoldActions = describe "foldActions"
   [
     test "noAction"
       <| \_ -> Expect.equal init
-      <| let (result,_) = (foldActions [noAction, noAction, noAction]) init in result
+      <| let (result,_) = (foldActions [none, none, none]) init in result
   , test "one succ"
       <| \_ -> Expect.equal 1
-      <| let (result,_) = (foldActions [succ, noAction]) init in result.sum
+      <| let (result,_) = (foldActions [succ, none]) init in result.sum
   , test "two succ"
       <| \_ -> Expect.equal 2
       <| let (result,_) = (foldActions [succ, succ]) init in result.sum
