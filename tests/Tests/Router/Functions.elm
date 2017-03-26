@@ -1,9 +1,10 @@
 module Tests.Router.Functions exposing (..)
 
 import Dict
-import Html
 import Test exposing (..)
 import Expect
+import Test.Html.Query as Query
+import Test.Html.Selector exposing (text, tag)
 
 import Router.Functions exposing (..)
 import URL.Route as Route
@@ -40,17 +41,21 @@ testRender =
     state_ route = let rs = init.router in {init | router = {rs | route = Just route}}
   in describe "render" [
     test "fail render"
-      <| \_ -> Expect.equal (toString <| Html.text "error")
-      <| toString <| render_ init
+      <| \_ -> render_ init
+      |> Query.fromHtml
+      |> Query.has [ text "error" ]
   , test "render home"
-      <| \_ -> Expect.equal (toString <| Html.text "home")
-      <| toString <| render_ (state_ Home)
+      <| \_ -> render_ (state_ Home)
+      |> Query.fromHtml
+      |> Query.has [ text "home" ]
   , test "render post"
-      <| \_ -> Expect.equal (toString <| Html.text "post")
-      <| toString <| render_ (state_ Post)
+      <| \_ -> render_ (state_ Post)
+      |> Query.fromHtml
+      |> Query.has [ text "post" ]
   , test "render article"
-      <| \_ -> Expect.equal (toString <| Html.text "animal")
-      <| toString <| render_ (state_ <| Article "animal")
+      <| \_ -> render_ (state_ <| Article "animal")
+      |> Query.fromHtml
+      |> Query.has [ text "animal" ]
   ]
 
 testTransition : Test

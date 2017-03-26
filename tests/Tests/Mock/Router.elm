@@ -33,7 +33,7 @@ routerConfig = Router.RouterConfig {
 router : Router.Router Route State Msg
 router = {
     config = routerConfig
-  , bindForward = bindForward routerConfig
+  -- , bindForward = bindForward routerConfig
   , buildUrl = buildUrl routerConfig
   , forward = forward routerConfig
   , redirect = redirect routerConfig

@@ -27,19 +27,18 @@ initialState = {
 constructor : RouterConfig route state msg -> Router route state msg
 constructor config = {
     config = config
-  , bindForward = bindForward config
   , buildUrl = buildUrl config
   , forward = forward config
   , redirect = redirect config
   }
 
-bootstrap : (state, Cmd (Msg route msg)) -> Location -> (state, Cmd (Msg route msg))
-bootstrap (state, cmd) location = (state, Cmd.batch [cmd, Task.perform identity <| Task.succeed <| Transition location])
+bootstrap : (state, Cmd msg) -> Location -> (state, Cmd (Msg route msg))
+bootstrap (state, cmd) location = (state, Cmd.batch [Cmd.map AppMsg cmd, Task.perform identity <| Task.succeed <| Transition location])
 
 {-| Launches the router.
   Provide `init` function and router config as parameters
  -}
-dispatch : (WithRouter route state, Cmd (Msg route msg))
+dispatch : (WithRouter route state, Cmd msg)
     -> RouterConfig route (WithRouter route state) msg
     -> Program Never (WithRouter route state) (Msg route msg)
 dispatch initial config =
@@ -56,7 +55,7 @@ dispatch initial config =
 {-| Launches the router.
   Provide `init` function and router config as parameters
  -}
-dispatchWithFlags : (flags -> (WithRouter route state, Cmd (Msg route msg)))
+dispatchWithFlags : (flags -> (WithRouter route state, Cmd msg))
     -> RouterConfig route (WithRouter route state) msg
     -> Program flags (WithRouter route state) (Msg route msg)
 dispatchWithFlags initial config =

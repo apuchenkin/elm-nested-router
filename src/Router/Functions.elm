@@ -43,7 +43,7 @@ render router state =
     handlers = getHandlers router.config route
     views = List.map (\h -> h.render router) handlers
     htmlParts = List.foldr (\view parsed -> Dict.union parsed <| view state parsed) Dict.empty views
-  in config.layout router state htmlParts
+  in Html.map AppMsg <| config.layout router state htmlParts
 
 update :
   Router route (WithRouter route state) msg ->
@@ -55,8 +55,8 @@ update router msg =
     updateAction = transition router << (Matcher.match (.route << config.routeConfig) config.routes) << getPath router.config
   in case msg of
     Transition location -> updateAction location
-    Forward route -> \state -> (state, forward router.config route)
-    Redirect route -> \state -> (state, redirect router.config route)
+    Forward route -> \state -> (state, Cmd.map AppMsg <| forward router.config route)
+    Redirect route -> \state -> (state,  Cmd.map AppMsg <| redirect router.config route)
     AppMsg appMsg -> \state ->
       let
         (state_, cmd) = config.update appMsg state

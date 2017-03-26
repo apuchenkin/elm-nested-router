@@ -1,18 +1,15 @@
 module Router.Types exposing (
-
-  WithRouter, GetConfig, RouteConfig,
-  Router, RouterConfig (..), RouterState
+    RouterState, WithRouter,
+    Router, RouterConfig (..), RouteConfig
   )
 
 {-| Router types
 
-# URL parts
+# Router state
+@docs RouterState, WithRouter
 
-# Actions and handlers
-@docs WithRouter, GetConfig, RouteConfig
-
-# Router
-@docs Router, RouterConfig, RouterState
+# Router and configs
+@docs Router, RouterConfig, RouteConfig
 -}
 
 import Dict           exposing (Dict)
@@ -21,27 +18,6 @@ import Html           exposing (Html)
 import URL.Route as Route exposing (Route)
 import URL.Matcher as Matcher exposing (URL)
 import URL.Arguments exposing (Arguments)
-import Router.Actions as Actions exposing (Msg)
-
-{-| A named views collections -}
-type alias Views route msg = Dict String (Html (Msg route msg))
-
-{-| `Action` represents function that prforms something with application state, and might contain side efects -}
-type alias Render route state msg = Router route state msg -> state -> Views route msg -> Views route msg
-
-{-| `Action` represents function that prforms something with application state, and might contain side efects -}
-type alias GetConfig route state msg = route -> RouteConfig route state msg
-
-{-|
-  A `Handler` is a piece of functionality binded to specific route
-  * `render` &mdash; Function that describes how to render application state to map of named views
-  * `actions` &mdash; A set of necessary to perform actions
--}
-type alias RouteConfig route state msg = {
-    route: Route.Config route
-  , render: Render route state msg
-  , actions: List msg
-  }
 
 {-| A state of router -}
 type alias RouterState route = {
@@ -52,8 +28,19 @@ type alias RouterState route = {
 {-| Type extension for the application state -}
 type alias WithRouter route state = { state | router : RouterState route}
 
-{-| A transition from route A to route B -}
-type alias Transition route msg = Maybe (Route route) -> Maybe (Route route) -> List msg
+{-|
+  A `Handler` is a piece of functionality binded to specific route
+  * `render` &mdash; Function that describes how to render application state to map of named views
+  * `actions` &mdash; A set of necessary to perform actions
+-}
+type alias RouteConfig route state msg = {
+    route: Route.Config route
+  , render: Router route state msg -> state -> Dict String (Html msg) -> Dict String (Html msg)
+  , actions: List msg
+  }
+
+-- {-| `Action` represents function that prforms something with application state, and might contain side efects -}
+-- type alias GetConfig route state msg = route -> RouteConfig route state msg
 
 {-|
   `RouterConfig` is configuration for the router:
@@ -70,9 +57,9 @@ type RouterConfig route state msg = RouterConfig {
     html5: Bool
   , removeTrailingSlash: Bool
   , update : msg -> state -> (state, Cmd msg)
-  , layout: Router route state msg -> state -> Views route msg -> (Html (Msg route msg))
-  , onTransition: Router route state msg -> Transition route msg
-  , routeConfig: GetConfig route state msg
+  , layout: Router route state msg -> state -> Dict String (Html msg) -> Html msg
+  , onTransition: Router route state msg -> Maybe (Route route) -> Maybe (Route route) -> List msg
+  , routeConfig: route -> RouteConfig route state msg
   , routes: List route
   , subscriptions : state -> Sub msg
   }
@@ -91,8 +78,7 @@ type RouterConfig route state msg = RouterConfig {
 -}
 type alias Router route state msg = {
     config : RouterConfig route state msg
-  , bindForward : Route route -> List (Html.Attribute (Msg route msg)) -> List (Html.Attribute (Msg route msg))
   , buildUrl : Route route -> URL
-  , forward : Route route -> Cmd (Msg route msg)
-  , redirect : Route route -> Cmd (Msg route msg)
+  , forward : Route route -> Cmd msg
+  , redirect : Route route -> Cmd msg
   }

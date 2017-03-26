@@ -3,14 +3,14 @@ module Tests.Mock.RouteConfig exposing (..)
 import Dict
 import Html
 
-import Router.Types exposing (GetConfig)
+import Router.Types exposing (RouteConfig)
 import URL.Route exposing ((//>))
 import URL.Segments exposing (..)
 
 import Tests.Mock.Routes exposing (..)
 import Tests.Mock.Actions exposing (..)
 
-routeConfig : GetConfig Route State Msg
+routeConfig : Route -> RouteConfig Route State Msg
 routeConfig route = case route of
   Home -> {
     route = Nothing //> end
