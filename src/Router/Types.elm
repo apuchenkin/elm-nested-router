@@ -74,7 +74,7 @@ type RouterConfig route state msg = RouterConfig {
   , onTransition: Router route state msg -> Transition route msg
   , routeConfig: GetConfig route state msg
   , routes: List route
-  , subscriptions : state -> Sub (Msg route msg)
+  , subscriptions : state -> Sub msg
   }
 
 {-|

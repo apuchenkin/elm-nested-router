@@ -50,7 +50,7 @@ dispatch initial config =
     init = bootstrap initial
   , update = update router
   , view = render router
-  , subscriptions = c.subscriptions
+  , subscriptions = Sub.map AppMsg << c.subscriptions
   }
 
 {-| Launches the router.
@@ -67,5 +67,5 @@ dispatchWithFlags initial config =
     init = bootstrap << initial
   , update = update router
   , view = render router
-  , subscriptions = c.subscriptions
+  , subscriptions = Sub.map AppMsg << c.subscriptions
   }
