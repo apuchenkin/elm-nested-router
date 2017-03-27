@@ -4,6 +4,7 @@ import Dict exposing (Dict)
 import Html exposing (Html)
 import App.Actions exposing (State, Msg)
 import App.Routes as Route exposing (Route)
+import App.Handlers exposing (bindForward)
 import Router.Types exposing (Router)
 import Router.Types as Router
 import URL.Route exposing (route)
@@ -11,8 +12,8 @@ import URL.Route exposing (route)
 footer : Router Route State Msg -> Html Msg
 footer router =
   let
-    about    = Html.a (router.bindForward (route (Route.Static "about") Dict.empty) []) [Html.text "About"]
-    contacts = Html.a (router.bindForward (route (Route.Static "contacts") Dict.empty) []) [Html.text "Contacts"]
+    about = Html.a (bindForward router <| route (Route.Static "about") Dict.empty) [Html.text "About"]
+    contacts = Html.a (bindForward router <| route (Route.Static "contacts") Dict.empty) [Html.text "Contacts"]
     sep = Html.text " | "
   in Html.footer [] [
     about, sep, contacts

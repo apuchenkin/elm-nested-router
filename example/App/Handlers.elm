@@ -1,8 +1,10 @@
 module App.Handlers exposing (..)
 
+import Json.Decode as Json
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Html.Attributes as Attr
+import Html.Events exposing (onWithOptions)
 import Router.Types as Router exposing (Router)
 import URL.Route exposing (route)
 
@@ -12,14 +14,14 @@ import App.Actions exposing (..)
 type alias Render = Router Route State Msg -> State -> Dict String (Html Msg) -> Dict String (Html Msg)
 
 {-| binds forward action to existing HTML attributes. Exposed by `Router` -}
-bindForward : RouterConfig route state msg -> Route route -> List (Html.Attribute (Msg route msg)) -> List (Html.Attribute (Msg route msg))
-bindForward config route attrs =
+bindForward : Router Route State Msg -> URL.Route.Route Route -> List (Html.Attribute Msg)
+bindForward router route =
   let
     options = {stopPropagation = True, preventDefault = True}
-  in
-    Attr.href (buildUrl config route)
-    :: onWithOptions "click" options (Json.succeed <| Forward route)
-    :: attrs
+  in [
+    Attr.href (router.buildUrl route)
+  , onWithOptions "click" options (Json.succeed <| Forward route)
+  ]
 
 renderStatic : String -> Render
 renderStatic page router state _ =
@@ -41,23 +43,21 @@ notFound router state _ =
 
 homeLink : Router Route State Msg -> Html Msg
 homeLink router =
-    Html.a (router.bindForward (route Route.Home Dict.empty) []) [Html.text "Home"]
+    Html.a (bindForward router <| route Route.Home Dict.empty) [Html.text "Home"]
 
 categoryLink : Router Route State Msg-> Category -> Html Msg
 categoryLink router category =
   let
     params = Dict.fromList [("category", category.id)]
-    attributes = []
   in
-    Html.a (router.bindForward (route Route.Category params) attributes) [Html.text category.title]
+    Html.a (bindForward router <| route Route.Category params) [Html.text category.title]
 
 postLink : Router Route State Msg -> State -> Post -> Html Msg
 postLink router state post =
   let
     params = Dict.fromList [("postId", toString post.id)]
-    attributes = []
   in
-    Html.a (router.bindForward (route Route.Post (Dict.union params state.router.arguments)) attributes) [Html.text post.title]
+    Html.a (bindForward router <| route Route.Post (Dict.union params state.router.arguments)) [Html.text post.title]
 
 -- can be easily lazified
 renderCategories : Router Route State Msg -> List Category -> Html Msg

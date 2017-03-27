@@ -1,10 +1,9 @@
 import Dict exposing (Dict)
 
 import App.Routes as Route exposing (routes)
--- import App.Handlers exposing (..)
-import App.Actions exposing (update)
+import App.Actions exposing (update, noFx, State)
 import App.Layout exposing (layout)
--- import App.RouteConfig exposing (..)
+import App.RouteConfig exposing (config)
 
 import Router
 import Router.Types exposing (Router, RouterConfig (..), RouteConfig)

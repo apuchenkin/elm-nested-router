@@ -7,6 +7,7 @@ import Task exposing (Task)
 import Json.Decode  as Json exposing (field)
 import Router.Types exposing (WithRouter, Router)
 import Router.Types as Router
+import URL.Route as Route
 
 import App.Routes as Routes exposing (Route)
 
@@ -28,7 +29,7 @@ type alias Post = {
 }
 
 type Msg =
-    Forward
+    Forward (Route.Route Route)
   | LoadCategories
   | LoadPosts
   | LoadPost
@@ -96,9 +97,9 @@ updatePost post state = noFx {state | post = post}
 updateCategories : List Category -> Action
 updateCategories categories state = noFx {state | categories = categories}
 
-update : Msg -> Action
-update msg = case msg of
-  Forward -> loadPosts
+update : Router Route State Msg -> Msg -> Action
+update router msg = case msg of
+  Forward location -> \state -> (state, router.forward location)
   LoadCategories -> loadCategories
   LoadPosts -> loadPosts
   LoadPost -> loadPost
