@@ -27,10 +27,19 @@ type alias Post = {
   text: Maybe String
 }
 
-type Msg = LoadCategories | LoadPosts | LoadPost | UpdateCategories (List Category) | UpdatePosts (List Post) | UpdatePost (Maybe Post)
+type Msg =
+    Forward
+  | LoadCategories
+  | LoadPosts
+  | LoadPost
+  | UpdateCategories (List Category)
+  | UpdatePosts (List Post)
+  | UpdatePost (Maybe Post)
+
+type alias Action = State -> (State, Cmd Msg)
 
 {-| An action without side effects -}
-noFx : Router.Action State (Router.Msg Route Msg)
+noFx : Action
 noFx state = (state, Cmd.none)
 
 getCategory : State -> Maybe String
@@ -55,34 +64,44 @@ decodePost = Json.map3 Post
 decodePosts : Json.Decoder (List Post)
 decodePosts = Json.list decodePost
 
-loadCategories : State -> (State, Cmd (Router.Msg Route Msg))
+loadCategories : Action
 loadCategories state =
   let
     fetch = Task.onError (\_ -> Task.succeed []) <| Http.toTask <| Http.get "data/categories.json" decodeCategories
-  in (state, Task.perform (Router.AppMsg << UpdateCategories) fetch)
+  in (state, Task.perform UpdateCategories fetch)
 
-loadPosts : State -> (State, Cmd (Router.Msg Route Msg))
+loadPosts : Action
 loadPosts state =
   let
     fetchTask = flip Maybe.map (getCategory state)
       <| \category -> Task.onError (\_ -> Task.succeed []) <| Http.toTask <| Http.get ("data/category/" ++ category ++ ".json") decodePosts
 
-  in (state, Maybe.withDefault Cmd.none <| Maybe.map (Task.perform (Router.AppMsg << UpdatePosts)) fetchTask)
+  in (state, Maybe.withDefault Cmd.none <| Maybe.map (Task.perform UpdatePosts) fetchTask)
 
-loadPost :  State -> (State, Cmd (Router.Msg Route Msg))
+loadPost : Action
 loadPost state =
   let
     postId = Dict.get "postId" state.router.arguments
     task = flip Maybe.map postId <| \pid ->
       Task.onError (\_ -> Task.succeed Nothing) <| Http.toTask <| Http.get ("data/post/" ++ pid ++ ".json") (Json.maybe <| decodePost)
 
-  in (state, Maybe.withDefault Cmd.none <| Maybe.map (Task.perform (Router.AppMsg << UpdatePost)) task)
+  in (state, Maybe.withDefault Cmd.none <| Maybe.map (Task.perform UpdatePost) task)
 
-updatePosts : List Post -> State -> (State, Cmd (Router.Msg Route Msg))
+updatePosts : List Post -> Action
 updatePosts posts state = noFx {state | posts = posts}
 
-updatePost : Maybe Post -> State -> (State, Cmd (Router.Msg Route Msg))
+updatePost : Maybe Post -> Action
 updatePost post state = noFx {state | post = post}
 
-updateCategories : List Category -> State -> (State, Cmd (Router.Msg Route Msg))
+updateCategories : List Category -> Action
 updateCategories categories state = noFx {state | categories = categories}
+
+update : Msg -> Action
+update msg = case msg of
+  Forward -> loadPosts
+  LoadCategories -> loadCategories
+  LoadPosts -> loadPosts
+  LoadPost -> loadPost
+  UpdateCategories categories  -> updateCategories categories
+  UpdatePosts posts -> updatePosts posts
+  UpdatePost post -> updatePost post

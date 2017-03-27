@@ -16,7 +16,6 @@ module URL.Route exposing (
 @docs isChild, childs, parents, traverse
 -}
 
-
 import Dict
 import URL.Arguments as Arguments exposing (Arguments)
 import URL.Segments as Segments exposing (Segment, (</>))

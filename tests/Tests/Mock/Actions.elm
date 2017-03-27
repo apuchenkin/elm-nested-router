@@ -31,8 +31,8 @@ succ state = noFx {state | sum = state.sum + 1}
 append : String -> Action State Msg
 append string state = noFx {state | str = state.str ++ string}
 
-update : Msg -> Action State Msg
-update msg = case msg of
+update : router -> Msg -> Action State Msg
+update _ msg = case msg of
   NoOp -> noFx
   Succ -> succ
   Append s -> append s

@@ -10,7 +10,6 @@ import URL.Utils as Utils
 
 import Router.Types exposing (RouterConfig (..), RouteConfig, Router, WithRouter)
 import Router.Actions exposing (..)
-import Router.Navigation exposing (..)
 
 getPath : RouterConfig route state msg -> Location -> URL
 getPath config location =
@@ -52,16 +51,13 @@ update :
 update router msg =
   let
     (RouterConfig config) = router.config
-    updateAction = transition router << (Matcher.match (.route << config.routeConfig) config.routes) << getPath router.config
+    updateAction = transition router << router.match << getPath router.config
   in case msg of
     Transition location -> updateAction location
-    Forward route -> \state -> (state, Cmd.map AppMsg <| forward router.config route)
-    Redirect route -> \state -> (state,  Cmd.map AppMsg <| redirect router.config route)
-    AppMsg appMsg -> \state ->
-      let
-        (state_, cmd) = config.update appMsg state
-      in
-        (state_, Cmd.map AppMsg cmd)
+    Forward route -> \state -> (state, Cmd.map AppMsg <| router.forward route)
+    Redirect route -> \state -> (state,  Cmd.map AppMsg <| router.redirect route)
+    AppMsg appMsg -> \state -> Tuple.mapSecond (Cmd.map AppMsg)
+      <| config.update router appMsg state
 
 {-| @Private
   Sets provided route ro the state and return state transition from previous route to new one

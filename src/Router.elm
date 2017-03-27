@@ -30,6 +30,7 @@ constructor config = {
   , buildUrl = buildUrl config
   , forward = forward config
   , redirect = redirect config
+  , match = match config
   }
 
 bootstrap : (state, Cmd msg) -> Location -> (state, Cmd (Msg route msg))

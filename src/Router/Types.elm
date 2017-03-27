@@ -56,11 +56,11 @@ type alias RouteConfig route state msg = {
 type RouterConfig route state msg = RouterConfig {
     html5: Bool
   , removeTrailingSlash: Bool
-  , update : msg -> state -> (state, Cmd msg)
+  , routes: List route
+  , routeConfig: route -> RouteConfig route state msg
+  , update : Router route state msg -> msg -> state -> (state, Cmd msg)
   , layout: Router route state msg -> state -> Dict String (Html msg) -> Html msg
   , onTransition: Router route state msg -> Maybe (Route route) -> Maybe (Route route) -> List msg
-  , routeConfig: route -> RouteConfig route state msg
-  , routes: List route
   , subscriptions : state -> Sub msg
   }
 
@@ -81,4 +81,5 @@ type alias Router route state msg = {
   , buildUrl : Route route -> URL
   , forward : Route route -> Cmd msg
   , redirect : Route route -> Cmd msg
+  , match: URL -> Maybe (Route route)
   }

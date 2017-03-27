@@ -1,10 +1,10 @@
 import Dict exposing (Dict)
 
-import App.Routes as Route exposing (..)
-import App.Handlers exposing (..)
-import App.Actions exposing (..)
-import App.Layout exposing (..)
-import App.RouteConfig exposing (..)
+import App.Routes as Route exposing (routes)
+-- import App.Handlers exposing (..)
+import App.Actions exposing (update)
+import App.Layout exposing (layout)
+-- import App.RouteConfig exposing (..)
 
 import Router
 import Router.Types exposing (Router, RouterConfig (..), RouteConfig)
@@ -17,14 +17,6 @@ initialState = {
   , posts       = []
   , post        = Nothing
   }
-
-update msg = case msg of
-  LoadCategories -> loadCategories
-  LoadPosts -> loadPosts
-  LoadPost -> loadPost
-  UpdateCategories categories  -> updateCategories categories
-  UpdatePosts posts -> updatePosts posts
-  UpdatePost post -> updatePost post
 
 -- main : Program Never State (Router.Types.Action State)
 main = Router.dispatch

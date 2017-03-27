@@ -50,3 +50,6 @@ forward config = Navigation.newUrl << buildUrl config
 {-| Redirects to provided `Route`. Exposed by `Router` -}
 redirect : RouterConfig route state msg -> Route route -> Cmd msg
 redirect config = Navigation.modifyUrl << buildUrl config
+
+match : RouterConfig route state msg -> URL -> Maybe (Route route)
+match (RouterConfig config) = Matcher.match (.route << config.routeConfig) config.routes

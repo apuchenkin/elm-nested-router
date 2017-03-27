@@ -8,7 +8,7 @@ import Router.Types exposing (Router)
 import Router.Types as Router
 import URL.Route exposing (route)
 
-footer : Router Route State Msg -> Html (Router.Msg Route Msg)
+footer : Router Route State Msg -> Html Msg
 footer router =
   let
     about    = Html.a (router.bindForward (route (Route.Static "about") Dict.empty) []) [Html.text "About"]
@@ -18,7 +18,7 @@ footer router =
     about, sep, contacts
   ]
 
-layout : Router Route State Msg -> State -> Dict String (Html (Router.Msg Route Msg)) -> Html (Router.Msg Route Msg)
+layout : Router Route State Msg -> State -> Dict String (Html Msg) -> Html Msg
 layout router _ parsed =
   let
     defaultHeader = Html.header [] [Html.text "Default header"]
