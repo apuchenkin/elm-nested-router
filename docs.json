@@ -8,12 +8,12 @@
       {
         "name": "dispatch",
         "comment": " Launches the router.\n  Provide `init` function and router config as parameters\n ",
-        "type": "( Router.Types.WithRouter route state , Platform.Cmd.Cmd (Router.Actions.Msg route msg) ) -> Router.Types.RouterConfig route (Router.Types.WithRouter route state) msg -> Platform.Program Basics.Never (Router.Types.WithRouter route state) (Router.Actions.Msg route msg)"
+        "type": "( Router.Types.WithRouter route state, Platform.Cmd.Cmd msg ) -> Router.Types.RouterConfig route (Router.Types.WithRouter route state) msg -> Platform.Program Basics.Never (Router.Types.WithRouter route state) (Router.Actions.Msg route msg)"
       },
       {
         "name": "dispatchWithFlags",
         "comment": " Launches the router.\n  Provide `init` function and router config as parameters\n ",
-        "type": "(flags -> ( Router.Types.WithRouter route state , Platform.Cmd.Cmd (Router.Actions.Msg route msg) )) -> Router.Types.RouterConfig route (Router.Types.WithRouter route state) msg -> Platform.Program flags (Router.Types.WithRouter route state) (Router.Actions.Msg route msg)"
+        "type": "(flags -> ( Router.Types.WithRouter route state, Platform.Cmd.Cmd msg )) -> Router.Types.RouterConfig route (Router.Types.WithRouter route state) msg -> Platform.Program flags (Router.Types.WithRouter route state) (Router.Actions.Msg route msg)"
       },
       {
         "name": "initialState",
@@ -25,37 +25,27 @@
   },
   {
     "name": "Router.Types",
-    "comment": " Router types\n\n# URL parts\n\n# Actions and handlers\n@docs WithRouter, GetConfig, RouteConfig\n\n# Router\n@docs Router, RouterConfig, RouterState\n",
+    "comment": " Router types\n\n# Router state\n@docs RouterState, WithRouter\n\n# Router and configs\n@docs Router, RouterConfig, RouteConfig, Views\n",
     "aliases": [
       {
-        "name": "GetConfig",
-        "comment": " `Action` represents function that prforms something with application state, and might contain side efects ",
-        "args": [
-          "route",
-          "state",
-          "msg"
-        ],
-        "type": "route -> Router.Types.RouteConfig route state msg"
-      },
-      {
         "name": "RouteConfig",
-        "comment": "\n  A `Handler` is a piece of functionality binded to specific route\n  * `render` &mdash; Function that describes how to render application state to map of named views\n  * `actions` &mdash; A set of necessary to perform actions\n",
+        "comment": "\n  `RouteConfig` is a configuration related to specific route\n  * `route` &mdash; Describes route structure (see: [`URL.Route.Config`][doc] for details)\n  * `render` &mdash; Function that describes how to render application state as named views\n  * `actions` &mdash; List of messages to execute\n\n  [doc]: http://package.elm-lang.org/packages/apuchenkin/elm-nested-router/latest/URL-Route#Config\n",
         "args": [
           "route",
           "state",
           "msg"
         ],
-        "type": "{ route : URL.Route.Config route , render : Router.Types.Render route state msg , actions : List msg }"
+        "type": "{ route : URL.Route.Config route , render : Router.Types.Router route state msg -> state -> Router.Types.Views msg -> Router.Types.Views msg , actions : List msg }"
       },
       {
         "name": "Router",
-        "comment": "\n  A `Router` is a provider of following functions:\n\n  * `bindForward` &mdash; Binds a `forward` action to a provided `Route` with a list of html attributes.\n    This is useful to create links in application\n  * `buildUrl` &mdash; Builds an URL for provided `Route`\n  * `forward` &mdash; Preforms a transition to provided `Route`\n  * `redirect` &mdash; Redirects to provided `Route`\n  * `match` &mdash; Performs attempt to match provided URL.\n\n  Router also provide it's `config`\n",
+        "comment": "\n  A `Router` is a provider of following functions:\n\n  * `buildUrl` &mdash; Builds an URL for provided `Route`\n  * `forward` &mdash; Preforms a transition to provided `Route`\n  * `redirect` &mdash; Redirects to provided `Route`\n  * `match` &mdash; Performs attempt to match provided URL.\n\n  Router also exposes it's `config`\n",
         "args": [
           "route",
           "state",
           "msg"
         ],
-        "type": "{ config : Router.Types.RouterConfig route state msg , bindForward : URL.Route.Route route -> List (Html.Attribute (Router.Actions.Msg route msg)) -> List (Html.Attribute (Router.Actions.Msg route msg)) , buildUrl : URL.Route.Route route -> URL.Matcher.URL , forward : URL.Route.Route route -> Platform.Cmd.Cmd (Router.Actions.Msg route msg) , redirect : URL.Route.Route route -> Platform.Cmd.Cmd (Router.Actions.Msg route msg) }"
+        "type": "{ config : Router.Types.RouterConfig route state msg , buildUrl : URL.Route.Route route -> URL.Matcher.URL , forward : URL.Route.Route route -> Platform.Cmd.Cmd msg , redirect : URL.Route.Route route -> Platform.Cmd.Cmd msg , match : URL.Matcher.URL -> Maybe.Maybe (URL.Route.Route route) }"
       },
       {
         "name": "RouterState",
@@ -64,6 +54,14 @@
           "route"
         ],
         "type": "{ route : Maybe.Maybe route, arguments : URL.Arguments.Arguments }"
+      },
+      {
+        "name": "Views",
+        "comment": " Collection of named views ",
+        "args": [
+          "msg"
+        ],
+        "type": "Dict.Dict String (Html.Html msg)"
       },
       {
         "name": "WithRouter",
@@ -78,7 +76,7 @@
     "types": [
       {
         "name": "RouterConfig",
-        "comment": "\n  `RouterConfig` is configuration for the router:\n\n  * `html5` &mdash; Use html5 pushState.\n  * `removeTrailingSlash` &mdash; Trailing slashes will be removed from matched and builded urls\n  * `layout` &mdash; Main rendered function that combines named views gathered from Handlers in a single HTML\n  * `transition` &mdash; An action that should be executed on every router transition\n  * `routeConfig` &mdash; A mapping between route and route configuration\n  * `routes` &mdash; A list of routes available for routing\n  * `subscriptions` &mdash; A list of subscriptions (see: [elm-lang/html](http://package.elm-lang.org/packages/elm-lang/html/1.1.0/Html-App) for details)\n",
+        "comment": "\n  `RouterConfig` is configuration for the router:\n\n  * `html5` &mdash; Use html5 pushState.\n  * `removeTrailingSlash` &mdash; Trailing slashes will be removed from matched and builded urls\n  * `routes` &mdash; A list of routes available for routing\n  * `routeConfig` &mdash; A mapping between route and route configuration\n  * `update` &mdash; Function that describes how to handle specific application message\n  * `layout` &mdash; Main renderer function that combines named views into a single HTML\n  * `onTransition` &mdash; List of default mesasges that should be executed on every router transition\n  * `subscriptions` &mdash; A list of subscriptions (see: [elm-lang/html](doc) for details)\n\n  [doc]: http://package.elm-lang.org/packages/apuchenkin/elm-nested-router/latest/URL-Route#Config\n",
         "args": [
           "route",
           "state",
@@ -88,7 +86,7 @@
           [
             "RouterConfig",
             [
-              "{ html5 : Bool , removeTrailingSlash : Bool , update : msg -> state -> ( state, Platform.Cmd.Cmd msg ) , layout : Router.Types.Router route state msg -> state -> Router.Types.Views route msg -> Html.Html (Router.Actions.Msg route msg) , onTransition : Router.Types.Router route state msg -> Router.Types.Transition route msg , routeConfig : Router.Types.GetConfig route state msg , routes : List route , subscriptions : state -> Platform.Sub.Sub (Router.Actions.Msg route msg) }"
+              "{ html5 : Bool , removeTrailingSlash : Bool , routes : List route , routeConfig : route -> Router.Types.RouteConfig route state msg , update : Router.Types.Router route state msg -> msg -> state -> ( state, Platform.Cmd.Cmd msg ) , layout : Router.Types.Router route state msg -> state -> Router.Types.Views msg -> Html.Html msg , onTransition : Router.Types.Router route state msg -> Maybe.Maybe (URL.Route.Route route) -> Maybe.Maybe (URL.Route.Route route) -> List msg , subscriptions : state -> Platform.Sub.Sub msg }"
             ]
           ]
         ]
