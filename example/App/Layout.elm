@@ -1,22 +1,25 @@
-module App.Layout where
+module App.Layout exposing (..)
 
 import Dict exposing (Dict)
 import Html exposing (Html)
-import App.Actions exposing (State)
+import App.Actions exposing (State, Msg)
 import App.Routes as Route exposing (Route)
+import App.Handlers exposing (bindForward)
 import Router.Types exposing (Router)
+import Router.Types as Router
+import URL.Route exposing (route)
 
-footer : Router Route State -> Html
+footer : Router Route State Msg -> Html Msg
 footer router =
   let
-    about    = Html.a (router.bindForward (Route.Static "about",    Dict.empty) []) [Html.text "About"]
-    contacts = Html.a (router.bindForward (Route.Static "contacts", Dict.empty) []) [Html.text "Contacts"]
+    about = Html.a (bindForward router <| route (Route.Static "about") Dict.empty) [Html.text "About"]
+    contacts = Html.a (bindForward router <| route (Route.Static "contacts") Dict.empty) [Html.text "Contacts"]
     sep = Html.text " | "
   in Html.footer [] [
     about, sep, contacts
   ]
 
-layout : Router Route State -> State -> Dict String Html -> Html
+layout : Router Route State Msg -> State -> Dict String (Html Msg) -> Html Msg
 layout router _ parsed =
   let
     defaultHeader = Html.header [] [Html.text "Default header"]

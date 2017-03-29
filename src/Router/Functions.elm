@@ -1,96 +1,83 @@
-module Router.Functions where
+module Router.Functions exposing (..)
 
 import Dict
-import Effects          exposing (Effects)
-import Html             exposing (Html)
+import Html exposing (Html)
+import Navigation exposing (Location)
 
-import Router.Matcher      as Matcher exposing (Matcher)
-import Router.Types        exposing (..)
-import Router.Helpers      exposing (..)
+import URL.Route as Route exposing (Route)
+import URL.Matcher as Matcher exposing (URL)
+import URL.Utils as Utils
 
-{-| @Private
-  Runs the action for the specified state and initial effects
- -}
-runAction : Action state -> (state, ActionEffects state) -> (state, ActionEffects state)
-runAction action (state, effects) =
-    let
-      (Response (state', effects')) = action state
-    in
-      (state', Effects.batch [effects, effects'])
+import Router.Types exposing (RouterConfig (..), RouteConfig, Router, WithRouter)
+import Router.Actions exposing (..)
 
-{-| @Private
-  Folds actions for a handlers into a single action
--}
-combineActions : List (Action state) -> Action state
-combineActions actions = \state -> Response <| List.foldl runAction (noFx state) actions
+getPath : RouterConfig route state msg -> Location -> URL
+getPath config location =
+  let
+    (RouterConfig c) = config
+    urlPath = if c.html5
+      then location.pathname
+      else Maybe.withDefault "/" <| Maybe.map Tuple.second <| String.uncons location.hash
+  in
+    if c.removeTrailingSlash then Matcher.removeTrailingSlash urlPath else urlPath
+
+getHandlers
+  : RouterConfig route state msg
+  -> Maybe route
+  -> List (RouteConfig route state msg)
+getHandlers (RouterConfig config) route = Maybe.withDefault []
+  <| Maybe.map ((List.map config.routeConfig) << (Route.traverse (.route << config.routeConfig) config.routes)) route
 
 {-| @Private
   Renders handlers for current route
  -}
-render : Router route (WithRouter route state) -> (route -> List (Handler (WithRouter route state))) -> (WithRouter route state) -> Html
-render router getHandlers state =
-    let
-      (RouterConfig config) = router.config
-      route       = state.router.route
-      handlers    = Maybe.withDefault [] <| Maybe.map getHandlers route
-      views       = List.map .view handlers
-      htmlParts   = List.foldr (\view parsed -> Dict.union parsed <| view state parsed) Dict.empty views
-    in config.layout router state htmlParts
-
-{-| @Private
-  Performs attempt to match provided url, returns fallback action on fail
-  -}
-setUrl : Dependencies route (WithRouter route state) -> String -> Action (WithRouter route state)
-setUrl deps url =
+render :
+  Router route (WithRouter route state) msg ->
+  WithRouter route state ->
+  Html (Msg route msg)
+render router state =
   let
-    (RouterConfig config) = deps.router.config
-  in case deps.router.match url of
-    Nothing               -> deps.router.redirect config.fallback
-    Just route            -> setRoute deps route
+    (RouterConfig config) = router.config
+    route = state.router.route
+    handlers = getHandlers router.config route
+    views = List.map (\h -> h.render router) handlers
+    htmlParts = List.foldr (\view parsed -> Dict.union parsed <| view state parsed) Dict.empty views
+  in Html.map AppMsg <| config.layout router state htmlParts
+
+update :
+  Router route (WithRouter route state) msg ->
+  Msg route msg ->
+  Action (WithRouter route state) (Msg route msg)
+update router msg =
+  let
+    (RouterConfig config) = router.config
+    updateAction = transition router << router.match << getPath router.config
+  in case msg of
+    Transition location -> updateAction location
+    Forward route -> \state -> (state, Cmd.map AppMsg <| router.forward route)
+    Redirect route -> \state -> (state,  Cmd.map AppMsg <| router.redirect route)
+    AppMsg appMsg -> \state -> Tuple.mapSecond (Cmd.map AppMsg)
+      <| config.update router appMsg state
 
 {-| @Private
   Sets provided route ro the state and return state transition from previous route to new one
 -}
-setRoute : Dependencies route (WithRouter route state) -> Route route -> Action (WithRouter route state)
-setRoute deps route state =
+transition :
+  Router route (WithRouter route state) msg ->
+  Maybe (Route route) ->
+  Action (WithRouter route state) (Msg route msg)
+transition router to state =
   let
+    (RouterConfig config) = router.config
     rs = state.router
-    (toRoute, toParams) = route
-    from  = Maybe.map (\r -> (r, rs.params)) rs.route
-    state' = { state | router = { rs | route = Just toRoute, params = toParams }}
+    toParams = Maybe.withDefault Dict.empty <| Maybe.map .arguments to
+    from  = Maybe.map (\r -> Route.route r rs.arguments) rs.route
+    state_new = { state | router = { rs | route = Maybe.map .route to, arguments = toParams }}
+
+    diff = Maybe.withDefault [] <| Maybe.map (Utils.routeDiff (.route << config.routeConfig) config.routes from) to
+    handlers = List.map config.routeConfig diff
+    onTransition = config.onTransition router from to
+    msgs  = onTransition ++ (List.concat <| List.map .actions handlers)
+    actions = List.map (update router << AppMsg) msgs
   in
-    transition deps from route state'
-
-{-| @Private
-  A composite transition action between "from" and "to" routes
-  Resulting action is composed from handlers, applicable for transistion
--}
-transition : Dependencies route (WithRouter route state) -> Transition route (WithRouter route state)
-transition deps from to state =
-  let
-    (RouterConfig config) = deps.router.config
-    diff = Matcher.routeDiff deps.matcher from to
-    handlers = List.map deps.getHandlers diff
-    actions  =
-      (config.onTransition deps.router from to)
-      :: List.map (combineActions << .actions) handlers
-
-  in Response <| List.foldl runAction (noFx state) actions
-
--- An ulitity record. Required mostly for caching of common fucntions output
-type alias Dependencies route state = {
-    router: Router route state
-  , matcher: Matcher route state
-  , getHandlers: (route -> Handler state)
-  }
-
-dependencies : Router route state -> Matcher route state -> Dependencies route state
-dependencies router matcher =
-  let
-    getHandler = memoFallback (\sid -> ((\h -> h router) << .handler << matcher.getConfig) (matcher.stringToRoute sid)) matcher.sids
-    getHandler' = getHandler << toString
-  in {
-    router = router,
-    matcher = matcher,
-    getHandlers = getHandler'
-  }
+    foldActions actions state_new

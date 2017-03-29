@@ -1,30 +1,26 @@
-module App.Actions where
+module App.Actions exposing (..)
 
 import Http
 import Dict exposing (Dict)
 import Task exposing (Task)
-import Effects exposing (Never)
 
-import Json.Decode  as Json exposing ((:=))
-import Router.Types exposing (WithRouter, Action, Response (..), Router)
-import Router.Helpers exposing (noFx, chainAction)
+import Json.Decode  as Json exposing (field)
+import Router.Types exposing (WithRouter, Router)
+import Router.Types as Router
+import URL.Route as Route
 
 import App.Routes as Routes exposing (Route)
 
-(&>) : Maybe a -> (a -> Maybe b) -> Maybe b
-(&>) = Maybe.andThen
-
-type alias State = WithRouter Route
-  {
-    categories: List Category,
-    posts: List Post,
-    post: Maybe Post
-  }
+type alias State = WithRouter Route {
+  categories: List Category,
+  posts: List Post,
+  post: Maybe Post
+}
 
 type alias Category = {
-    id: String,
-    title: String
-  }
+  id: String,
+  title: String
+}
 
 type alias Post = {
   id: Int,
@@ -32,68 +28,81 @@ type alias Post = {
   text: Maybe String
 }
 
+type Msg =
+    Forward (Route.Route Route)
+  | LoadCategories
+  | LoadPosts
+  | LoadPost
+  | UpdateCategories (List Category)
+  | UpdatePosts (List Post)
+  | UpdatePost (Maybe Post)
+
+type alias Action = State -> (State, Cmd Msg)
+
+{-| An action without side effects -}
+noFx : Action
+noFx state = (state, Cmd.none)
+
 getCategory : State -> Maybe String
 getCategory state =
   let
-    param = case Dict.get "subcategory" state.router.params of
-      Nothing -> Dict.get "category"    state.router.params
+    param = case Dict.get "subcategory" state.router.arguments of
+      Nothing -> Dict.get "category"    state.router.arguments
       category -> category
   in param
 
 decodeCategories : Json.Decoder (List Category)
-decodeCategories = Json.list <| Json.object2 Category
-  ("id"     := Json.string)
-  ("title"  := Json.string)
+decodeCategories = Json.list <| Json.map2 Category
+  (field "id"    Json.string)
+  (field "title" Json.string)
 
 decodePost : Json.Decoder Post
-decodePost = Json.object3 Post
-  ("id"     := Json.int)
-  ("title"  := Json.string)
-  (Json.maybe ("text"   := Json.string))
+decodePost = Json.map3 Post
+  (field "id"     Json.int)
+  (field "title"  Json.string)
+  (Json.maybe <| field "text" Json.string)
 
 decodePosts : Json.Decoder (List Post)
 decodePosts = Json.list decodePost
 
-loadCategories : Router Route State -> Action State
-loadCategories router state =
+loadCategories : Action
+loadCategories state =
   let
-    fetch = Task.toMaybe <| Http.get decodeCategories "data/categories.json"
-    task = fetch `Task.andThen` \mcategories ->
-      let
-        categories = Maybe.withDefault [] mcategories
-        update = updateCategories categories
-        categoryParam = getCategory state
-        action = Maybe.withDefault update <| flip Maybe.map categoryParam <| \category ->
-          update `chainAction` (loadPosts router)
-      in Task.succeed <| action
+    fetch = Task.onError (\_ -> Task.succeed []) <| Http.toTask <| Http.get "data/categories.json" decodeCategories
+  in (state, Task.perform UpdateCategories fetch)
 
-  in Response (state, Effects.task task)
-
-loadPosts : Router Route State -> Action State
-loadPosts router state =
+loadPosts : Action
+loadPosts state =
   let
-    category = getCategory state
-    fetch = flip Maybe.map category <| \c ->
-      let fetch = Task.toMaybe <| Http.get decodePosts ("data/category/" ++ c ++ ".json")
-      in fetch `Task.andThen` \posts -> Task.succeed <| updatePosts <| Maybe.withDefault [] posts
+    fetchTask = flip Maybe.map (getCategory state)
+      <| \category -> Task.onError (\_ -> Task.succeed []) <| Http.toTask <| Http.get ("data/category/" ++ category ++ ".json") decodePosts
 
-  in Response (state, Maybe.withDefault Effects.none <| Maybe.map Effects.task fetch)
+  in (state, Maybe.withDefault Cmd.none <| Maybe.map (Task.perform UpdatePosts) fetchTask)
 
-loadPost : Action State
+loadPost : Action
 loadPost state =
   let
-    postId = Dict.get "postId" state.router.params
+    postId = Dict.get "postId" state.router.arguments
     task = flip Maybe.map postId <| \pid ->
-      let fetch = Task.toMaybe <| Http.get decodePost ("data/post/" ++ pid ++ ".json")
-      in fetch `Task.andThen` \post -> Task.succeed <| updatePost post
+      Task.onError (\_ -> Task.succeed Nothing) <| Http.toTask <| Http.get ("data/post/" ++ pid ++ ".json") (Json.maybe <| decodePost)
 
-  in Response (state, Maybe.withDefault Effects.none <| Maybe.map Effects.task task)
+  in (state, Maybe.withDefault Cmd.none <| Maybe.map (Task.perform UpdatePost) task)
 
-updatePosts : List Post -> Action State
-updatePosts posts state = Response <| noFx {state | posts = posts}
+updatePosts : List Post -> Action
+updatePosts posts state = noFx {state | posts = posts}
 
-updatePost : Maybe Post -> Action State
-updatePost post state = Response <| noFx {state | post = post}
+updatePost : Maybe Post -> Action
+updatePost post state = noFx {state | post = post}
 
-updateCategories : List Category -> Action State
-updateCategories categories state = Response <| noFx {state | categories = categories}
+updateCategories : List Category -> Action
+updateCategories categories state = noFx {state | categories = categories}
+
+update : Router Route State Msg -> Msg -> Action
+update router msg = case msg of
+  Forward location -> \state -> (state, router.forward location)
+  LoadCategories -> loadCategories
+  LoadPosts -> loadPosts
+  LoadPost -> loadPost
+  UpdateCategories categories  -> updateCategories categories
+  UpdatePosts posts -> updatePosts posts
+  UpdatePost post -> updatePost post

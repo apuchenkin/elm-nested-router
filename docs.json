@@ -1,0 +1,283 @@
+[
+  {
+    "name": "Router",
+    "comment": " A simple nested router for single page applications.\n\nSee [Example](https://github.com/apuchenkin/elm-nested-router/tree/master/example) ([Live demo](http://apuchenkin.github.io/elm-nested-router/example))\nand [Tests](https://github.com/apuchenkin/elm-nested-router/tree/master/test/Test) for more details\n\n@docs dispatch, dispatchWithFlags, initialState\n",
+    "aliases": [],
+    "types": [],
+    "values": [
+      {
+        "name": "dispatch",
+        "comment": " Launches the router.\n  Provide `init` function and router config as parameters\n ",
+        "type": "( Router.Types.WithRouter route state, Platform.Cmd.Cmd msg ) -> Router.Types.RouterConfig route (Router.Types.WithRouter route state) msg -> Platform.Program Basics.Never (Router.Types.WithRouter route state) (Router.Actions.Msg route msg)"
+      },
+      {
+        "name": "dispatchWithFlags",
+        "comment": " Launches the router.\n  Provide `init` function and router config as parameters\n ",
+        "type": "(flags -> ( Router.Types.WithRouter route state, Platform.Cmd.Cmd msg )) -> Router.Types.RouterConfig route (Router.Types.WithRouter route state) msg -> Platform.Program flags (Router.Types.WithRouter route state) (Router.Actions.Msg route msg)"
+      },
+      {
+        "name": "initialState",
+        "comment": " Initial state for router. Fed this into your application state ",
+        "type": "Router.Types.RouterState route"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  },
+  {
+    "name": "Router.Types",
+    "comment": " Router types\n\n# Router state\n@docs RouterState, WithRouter\n\n# Router and configs\n@docs Router, RouterConfig, RouteConfig, Views\n",
+    "aliases": [
+      {
+        "name": "RouteConfig",
+        "comment": "\n  `RouteConfig` is a configuration related to specific route\n  * `route` &mdash; Describes route structure (see: [`URL.Route.Config`][doc] for details)\n  * `render` &mdash; Function that describes how to render application state as named views\n  * `actions` &mdash; List of messages to execute\n\n  [doc]: http://package.elm-lang.org/packages/apuchenkin/elm-nested-router/latest/URL-Route#Config\n",
+        "args": [
+          "route",
+          "state",
+          "msg"
+        ],
+        "type": "{ route : URL.Route.Config route , render : Router.Types.Router route state msg -> state -> Router.Types.Views msg -> Router.Types.Views msg , actions : List msg }"
+      },
+      {
+        "name": "Router",
+        "comment": "\n  A `Router` is a provider of following functions:\n\n  * `buildUrl` &mdash; Builds an URL for provided `Route`\n  * `forward` &mdash; Preforms a transition to provided `Route`\n  * `redirect` &mdash; Redirects to provided `Route`\n  * `match` &mdash; Performs attempt to match provided URL.\n\n  Router also exposes it's `config`\n",
+        "args": [
+          "route",
+          "state",
+          "msg"
+        ],
+        "type": "{ config : Router.Types.RouterConfig route state msg , buildUrl : URL.Route.Route route -> URL.Matcher.URL , forward : URL.Route.Route route -> Platform.Cmd.Cmd msg , redirect : URL.Route.Route route -> Platform.Cmd.Cmd msg , match : URL.Matcher.URL -> Maybe.Maybe (URL.Route.Route route) }"
+      },
+      {
+        "name": "RouterState",
+        "comment": " A state of router ",
+        "args": [
+          "route"
+        ],
+        "type": "{ route : Maybe.Maybe route, arguments : URL.Arguments.Arguments }"
+      },
+      {
+        "name": "Views",
+        "comment": " Collection of named views ",
+        "args": [
+          "msg"
+        ],
+        "type": "Dict.Dict String (Html.Html msg)"
+      },
+      {
+        "name": "WithRouter",
+        "comment": " Type extension for the application state ",
+        "args": [
+          "route",
+          "state"
+        ],
+        "type": "{ state | router : Router.Types.RouterState route }"
+      }
+    ],
+    "types": [
+      {
+        "name": "RouterConfig",
+        "comment": "\n  `RouterConfig` is configuration for the router:\n\n  * `html5` &mdash; Use html5 pushState.\n  * `removeTrailingSlash` &mdash; Trailing slashes will be removed from matched and builded urls\n  * `routes` &mdash; A list of routes available for routing\n  * `routeConfig` &mdash; A mapping between route and route configuration\n  * `update` &mdash; Function that describes how to handle specific application message\n  * `layout` &mdash; Main renderer function that combines named views into a single HTML\n  * `onTransition` &mdash; List of default mesasges that should be executed on every router transition\n  * `subscriptions` &mdash; A list of subscriptions (see: [elm-lang/html](doc) for details)\n\n  [doc]: http://package.elm-lang.org/packages/apuchenkin/elm-nested-router/latest/URL-Route#Config\n",
+        "args": [
+          "route",
+          "state",
+          "msg"
+        ],
+        "cases": [
+          [
+            "RouterConfig",
+            [
+              "{ html5 : Bool , removeTrailingSlash : Bool , routes : List route , routeConfig : route -> Router.Types.RouteConfig route state msg , update : Router.Types.Router route state msg -> msg -> state -> ( state, Platform.Cmd.Cmd msg ) , layout : Router.Types.Router route state msg -> state -> Router.Types.Views msg -> Html.Html msg , onTransition : Router.Types.Router route state msg -> Maybe.Maybe (URL.Route.Route route) -> Maybe.Maybe (URL.Route.Route route) -> List msg , subscriptions : state -> Platform.Sub.Sub msg }"
+            ]
+          ]
+        ]
+      }
+    ],
+    "values": [],
+    "generated-with-elm-version": "0.18.0"
+  },
+  {
+    "name": "URL.Matcher",
+    "comment": " Module for working with URLs\n\n# Types\n@docs URL\n\n# Utility functions\n@docs hasTrailingSlash, removeTrailingSlash\n\n# Main functions\n@docs match, buildURL\n",
+    "aliases": [
+      {
+        "name": "URL",
+        "comment": " An URL ",
+        "args": [],
+        "type": "String"
+      }
+    ],
+    "types": [],
+    "values": [
+      {
+        "name": "buildURL",
+        "comment": " Build URL for specified route ",
+        "type": "URL.Route.GetConfig route -> URL.Route.Route route -> URL.Matcher.URL"
+      },
+      {
+        "name": "hasTrailingSlash",
+        "comment": " Checks whether URL has trailing slash ",
+        "type": "URL.Matcher.URL -> Bool"
+      },
+      {
+        "name": "match",
+        "comment": " Tries to match given URL into route ",
+        "type": "URL.Route.GetConfig route -> List route -> URL.Matcher.URL -> Maybe.Maybe (URL.Route.Route route)"
+      },
+      {
+        "name": "removeTrailingSlash",
+        "comment": " Removes trailing slash from URL if any ",
+        "type": "URL.Matcher.URL -> URL.Matcher.URL"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  },
+  {
+    "name": "URL.Route",
+    "comment": " Module for defining routes with Segments\n\n# Types\n@docs Route, Config, GetConfig\n\n# Constructors\n@docs route, config, (//>)\n\n# Traversal utilities\n@docs isChild, childs, parents, traverse\n",
+    "aliases": [
+      {
+        "name": "Config",
+        "comment": " Route config ",
+        "args": [
+          "route"
+        ],
+        "type": "{ segment : URL.Segments.Segment, parent : Maybe.Maybe route }"
+      },
+      {
+        "name": "GetConfig",
+        "comment": " Retreives config for specified route ",
+        "args": [
+          "route"
+        ],
+        "type": "route -> URL.Route.Config route"
+      },
+      {
+        "name": "Route",
+        "comment": " combined abstract route type with params ",
+        "args": [
+          "route"
+        ],
+        "type": "{ route : route , arguments : URL.Arguments.Arguments , query : URL.Arguments.Arguments }"
+      }
+    ],
+    "types": [],
+    "values": [
+      {
+        "name": "//>",
+        "comment": " Infix version of config, combines parent and segment in route config ",
+        "type": "Maybe.Maybe route -> URL.Segments.Segment -> URL.Route.Config route",
+        "associativity": "left",
+        "precedence": 6
+      },
+      {
+        "name": "childs",
+        "comment": " Retreives direct childs for a given route ",
+        "type": "URL.Route.GetConfig route -> List route -> Maybe.Maybe route -> List route"
+      },
+      {
+        "name": "config",
+        "comment": " Route config constructor ",
+        "type": "Maybe.Maybe route -> URL.Segments.Segment -> URL.Route.Config route"
+      },
+      {
+        "name": "isChild",
+        "comment": " Checks whether route is a child of another route ",
+        "type": "URL.Route.GetConfig route -> Maybe.Maybe route -> route -> Bool"
+      },
+      {
+        "name": "parents",
+        "comment": " Retreives parents chain of a givent route ",
+        "type": "URL.Route.GetConfig route -> List route -> route -> List route"
+      },
+      {
+        "name": "route",
+        "comment": " Route constructor ",
+        "type": "route -> URL.Arguments.Arguments -> URL.Route.Route route"
+      },
+      {
+        "name": "traverse",
+        "comment": " Retreives route traversal from top up to a given route ",
+        "type": "URL.Route.GetConfig route -> List route -> route -> List route"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  },
+  {
+    "name": "URL.Segments",
+    "comment": " URL segments\n\n# Types\n@docs Segment\n\n# Constructors\n@docs end, static, int, string, enum, regex\n\n# Combinators\n@docs maybe, combine, (</>)\n\n# Utils\n@docs getConstraints, toString, parse\n",
+    "aliases": [],
+    "types": [
+      {
+        "name": "Segment",
+        "comment": " A part of an URL ",
+        "args": [],
+        "cases": []
+      }
+    ],
+    "values": [
+      {
+        "name": "</>",
+        "comment": " Infix version of `combine` ",
+        "type": "URL.Segments.Segment -> URL.Segments.Segment -> URL.Segments.Segment",
+        "associativity": "left",
+        "precedence": 8
+      },
+      {
+        "name": "combine",
+        "comment": " Combines two URL segments ",
+        "type": "URL.Segments.Segment -> URL.Segments.Segment -> URL.Segments.Segment"
+      },
+      {
+        "name": "end",
+        "comment": " URL end ",
+        "type": "URL.Segments.Segment"
+      },
+      {
+        "name": "enum",
+        "comment": " URL arguments that matches one of provided strings ",
+        "type": "URL.Arguments.Name -> List String -> URL.Segments.Segment"
+      },
+      {
+        "name": "getConstraints",
+        "comment": " Returns list of constraints, of a given segment ",
+        "type": "URL.Segments.Segment -> List URL.Arguments.Constraint"
+      },
+      {
+        "name": "int",
+        "comment": " URL arguments that matches integers ",
+        "type": "URL.Arguments.Name -> URL.Segments.Segment"
+      },
+      {
+        "name": "maybe",
+        "comment": " Marks segment as optional ",
+        "type": "URL.Segments.Segment -> URL.Segments.Segment"
+      },
+      {
+        "name": "parse",
+        "comment": " Attempts to parse a string (URL part) into Result ",
+        "type": "String -> URL.Segments.Segment -> Result.Result (Combine.ParseErr ()) (Combine.ParseOk () URL.Arguments.Arguments)"
+      },
+      {
+        "name": "regex",
+        "comment": " URL arguments that matches provided regexp ",
+        "type": "URL.Arguments.Name -> String -> URL.Segments.Segment"
+      },
+      {
+        "name": "static",
+        "comment": " Static segment of URL ",
+        "type": "String -> URL.Segments.Segment"
+      },
+      {
+        "name": "string",
+        "comment": " URL arguments that matches string characters ",
+        "type": "URL.Arguments.Name -> URL.Segments.Segment"
+      },
+      {
+        "name": "toString",
+        "comment": " Returns a string builded on the base of segment and its arguments ",
+        "type": "URL.Arguments.Arguments -> URL.Segments.Segment -> Result.Result String String"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  }
+]
