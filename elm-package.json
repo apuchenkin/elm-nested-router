@@ -9,6 +9,7 @@
     "exposed-modules": [
         "Router",
         "Router.Types",
+        "Router.Actions",
         "URL.Segments",
         "URL.Route",
         "URL.Matcher"
